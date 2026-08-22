@@ -1,8 +1,13 @@
 name: Deploy to GitHub Pages
 
+# Dual-environment publish (mirrors the pattern in pawansikawat.github.io):
+#   main → site root            → https://faucet-hq.github.io/
+#   dev  → /dev/ subdirectory   → https://faucet-hq.github.io/dev/  (staging preview)
+# The dev deploy is optional — if the dev branch is absent, only production ships.
+
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +15,6 @@ permissions:
   pages: write
   id-token: write
 
-# Only one concurrent deployment; don't cancel an in-progress run.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -19,16 +23,64 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Detect dev branch
+        id: dev
+        run: |
+          if git ls-remote --exit-code --heads "https://github.com/${{ github.repository }}.git" dev >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout dev
+        if: steps.dev.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: dev
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
-      - run: npm run build
+          cache-dependency-path: main/package-lock.json
+
+      - name: Build main (base /)
+        working-directory: main
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble site root
+        run: |
+          mkdir -p site
+          cp -r main/dist/. site/
+
+      - name: Build dev (base /dev/)
+        if: steps.dev.outputs.exists == 'true'
+        working-directory: dev
+        env:
+          BASE_PATH: /dev/
+        run: |
+          npm ci
+          npm run build
+
+      - name: Add dev preview under /dev/
+        if: steps.dev.outputs.exists == 'true'
+        run: |
+          mkdir -p site/dev
+          cp -r dev/dist/. site/dev/
+
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build
