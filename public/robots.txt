@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://faucet-hq.github.io/sitemap-index.xml

@@ -1,5 +1,6 @@
 ---
 const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
+const OPENAPI = 'https://raw.githubusercontent.com/faucet-hq/faucet-stream/main/docs/openapi.yaml';
 ---
 
 <section class="section" id="config">
@@ -11,7 +12,8 @@ const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
         Describe source, in-flight transforms, write mode, and durable state in YAML —
         then <code>faucet run</code>. Incremental replication, upsert, secrets, and
         bookmarks are config, not glue code. Prefer Rust? The same engine drops into
-        your service through typed <code>Source</code> / <code>Sink</code> traits.
+        your service through typed <code>Source</code> / <code>Sink</code> traits — or
+        drive it over HTTP with <code>faucet serve</code>.
       </p>
       <ul class="ticks">
         <li>Resumable incremental &amp; CDC replication</li>
@@ -20,6 +22,10 @@ const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
         <li>Page-level embedded-DuckDB <code>sql</code> transform</li>
       </ul>
       <a class="btn btn--ghost" href={CLI}>Full config grammar →</a>
+      <p class="api-note">
+        Running it as a service? The control plane ships a full
+        <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — import it into Postman, Insomnia, or Bruno.
+      </p>
     </div>
 
     <div class="code-card" data-reveal style="--reveal-delay:.08s">
@@ -28,6 +34,8 @@ const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
         <label for="ex-yaml" role="tab">pipeline.yaml</label>
         <input type="radio" name="ex" id="ex-rust" />
         <label for="ex-rust" role="tab">main.rs</label>
+        <input type="radio" name="ex" id="ex-api" />
+        <label for="ex-api" role="tab">POST /v1/runs</label>
 
         <pre class="pane pane-yaml"><code><span class="c"># orders → warehouse, incremental + upsert</span>
 <span class="k">version:</span> <span class="n">1</span>
@@ -69,6 +77,19 @@ Pipeline::new(&source, &sink)
 
 <span class="c">// → streams pages, checkpoints after each</span>
 <span class="c">//   confirmed write. Bounded memory throughout.</span></code></pre>
+
+        <pre class="pane pane-api"><code><span class="c"># run it over the HTTP control plane (faucet serve)</span>
+curl -X POST <span class="v">http://localhost:8080/v1/runs</span> \
+  -H <span class="s">'authorization: Bearer $FAUCET_TOKEN'</span> \
+  -H <span class="s">'content-type: application/json'</span> \
+  --data-binary <span class="s">@pipeline.json</span>
+
+<span class="c"># → 202 Accepted</span>
+<span class="c">#   {'{'} <span class="k">"id"</span>: <span class="s">"run_01H..."</span>, <span class="k">"status"</span>: <span class="s">"queued"</span> {'}'}</span>
+
+<span class="c"># then poll / stream:</span>
+curl <span class="v">http://localhost:8080/v1/runs/run_01H...</span>
+curl -N <span class="v">.../v1/runs/run_01H.../logs</span>   <span class="c"># SSE</span></code></pre>
       </div>
     </div>
   </div>
@@ -77,10 +98,11 @@ Pipeline::new(&source, &sink)
 <style>
   .code-grid {
     display: grid;
-    grid-template-columns: 0.85fr 1.15fr;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
     gap: clamp(2rem, 5vw, 3.5rem);
     align-items: center;
   }
+  .code-copy { min-width: 0; }
   .code-copy p {
     margin-top: 1rem;
     color: var(--ink-soft);
@@ -122,6 +144,17 @@ Pipeline::new(&source, &sink)
     background-position: center;
   }
   .code-copy .btn { margin-top: 1.6rem; }
+  .api-note {
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+  .api-note a {
+    color: var(--teal-deep);
+    font-weight: 550;
+    border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent);
+  }
+  .api-note a:hover { border-color: var(--teal-deep); }
 
   /* ---- code card with CSS-only tabs ---- */
   .code-card {
@@ -130,6 +163,7 @@ Pipeline::new(&source, &sink)
     border-radius: var(--radius);
     box-shadow: var(--shadow-md);
     overflow: hidden;
+    min-width: 0;
   }
   .tabs { display: flex; flex-wrap: wrap; }
   .tabs input { position: absolute; opacity: 0; pointer-events: none; }
@@ -150,6 +184,7 @@ Pipeline::new(&source, &sink)
     margin: 0;
     padding: 1.2rem 1.35rem 1.5rem;
     overflow-x: auto;
+    min-width: 0;
     border-top: 1px solid #1c2740;
   }
   .pane code {
@@ -159,12 +194,14 @@ Pipeline::new(&source, &sink)
     white-space: pre;
   }
   #ex-yaml:checked ~ label[for='ex-yaml'],
-  #ex-rust:checked ~ label[for='ex-rust'] {
+  #ex-rust:checked ~ label[for='ex-rust'],
+  #ex-api:checked ~ label[for='ex-api'] {
     color: #fff;
     border-color: var(--teal);
   }
   #ex-yaml:checked ~ .pane-yaml { display: block; }
   #ex-rust:checked ~ .pane-rust { display: block; }
+  #ex-api:checked ~ .pane-api { display: block; }
   .tabs label:focus-visible {
     outline: 2px solid var(--teal);
     outline-offset: -2px;

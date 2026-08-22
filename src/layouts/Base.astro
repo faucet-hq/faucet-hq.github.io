@@ -12,6 +12,22 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'faucet-stream',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'Linux, macOS, Windows',
+  description,
+  url: 'https://faucet-hq.github.io/',
+  softwareHelp: 'https://faucet-hq.github.io/faucet-stream/',
+  codeRepository: 'https://github.com/faucet-hq/faucet-stream',
+  programmingLanguage: 'Rust',
+  license: 'https://opensource.org/license/apache-2-0',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
 ---
 
 <!doctype html>
@@ -32,13 +48,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="faucet-stream" />
-    <meta property="og:image" content="/og.png" />
+    <meta property="og:image" content={ogImage} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin />
+
+    <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -65,6 +84,26 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
           { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
         );
         items.forEach((el) => io.observe(el));
+      })();
+
+      // Live GitHub star count — progressive enhancement on [data-stars].
+      (() => {
+        const els = document.querySelectorAll('[data-stars]');
+        if (!els.length) return;
+        fetch('https://api.github.com/repos/faucet-hq/faucet-stream', {
+          headers: { accept: 'application/vnd.github+json' },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => {
+            const n = d && d.stargazers_count;
+            if (typeof n !== 'number') return;
+            const label = n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+            els.forEach((el) => {
+              el.textContent = label;
+              el.removeAttribute('hidden');
+            });
+          })
+          .catch(() => {});
       })();
 
       // Copy-to-clipboard for install commands.

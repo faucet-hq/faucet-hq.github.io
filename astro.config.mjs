@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 // Deployed to GitHub Pages (faucet-hq/faucet-hq.github.io) as a static build.
 // This is an org *user site*, so it serves at the root — base stays "/".
@@ -13,6 +14,7 @@ export default defineConfig({
   site: 'https://faucet-hq.github.io',
   base,
   trailingSlash: 'ignore',
+  integrations: [sitemap()],
   build: {
     inlineStylesheets: 'auto',
   },

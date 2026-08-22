@@ -1,13 +1,15 @@
 ---
 const BENCH = 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md';
-// bar widths are relative to the faster tool (log-ish, tuned for legibility)
+// Bar length tracks the raw value, so the "better" tool is visibly bigger for
+// throughput (higher = better) and visibly *smaller* for memory (lower = better).
+// A tiny floor keeps the losing/winning sliver visible.
 const rows = [
   { tool: 'faucet-stream', val: '712,000', unit: 'rows/s', pct: 100, self: true },
-  { tool: 'Meltano (Singer)', val: '7,400', unit: 'rows/s', pct: 6 },
+  { tool: 'Meltano (Singer)', val: '7,400', unit: 'rows/s', pct: 4 },
 ];
 const mem = [
-  { tool: 'faucet-stream', val: '11.8', unit: 'MiB', pct: 100, self: true },
-  { tool: 'Meltano (Singer)', val: '724', unit: 'MiB', pct: 24 },
+  { tool: 'faucet-stream', val: '11.8', unit: 'MiB', pct: 3, self: true },
+  { tool: 'Meltano (Singer)', val: '724', unit: 'MiB', pct: 100 },
 ];
 ---
 

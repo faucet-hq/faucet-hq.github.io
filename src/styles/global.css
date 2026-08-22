@@ -22,11 +22,15 @@
   /* ink */
   --ink: #0f172a;
   --ink-soft: #475569;
-  --ink-faint: #94a3b8;
+  /* --ink-faint darkened from #94a3b8 (2.5:1, failed AA) to #64748b so mono
+     captions and sublabels clear WCAG AA for small text. */
+  --ink-faint: #64748b;
 
-  /* brand */
+  /* brand — --teal is the vibrant signature (logo, bars, packets);
+     --teal-deep is the *text/hover* teal, darkened to clear WCAG AA (4.5:1)
+     for small text like eyebrows, links, and labels. */
   --teal: #14b8a6;
-  --teal-deep: #0d9488;
+  --teal-deep: #0f766e;
   --teal-wash: #e6faf6;
 
   /* surfaces */
@@ -231,4 +235,20 @@ code, kbd, pre {
   height: 1px;
   background: var(--line);
   border: 0;
+}
+
+/* live GitHub star count pill (revealed by JS) */
+.stars {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.2em 0.5em;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 13%, transparent);
+}
+.stars::before {
+  content: '★';
+  margin-right: 0.28em;
+  color: var(--teal);
 }

@@ -2,7 +2,13 @@
 import PipelineFlow from './PipelineFlow.astro';
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const GITHUB = 'https://github.com/faucet-hq/faucet-stream';
-const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
+const DEPLOY_DOCS = 'https://faucet-hq.github.io/faucet-stream/operations/deploying.html';
+
+const installs = [
+  { id: 'brew', label: 'Homebrew', cmd: 'brew install faucet-hq/faucet-stream/faucet-cli' },
+  { id: 'cargo', label: 'Cargo', cmd: 'cargo install faucet-cli' },
+  { id: 'docker', label: 'Docker', cmd: 'docker run --rm -v "$PWD:/w" ghcr.io/faucet-hq/faucet-stream:full run /w/pipeline.yaml' },
+];
 ---
 
 <section class="hero" id="main">
@@ -22,26 +28,34 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
         own service. No Python runtime, no platform to stand up.
       </p>
 
-      <div class="install" data-reveal style="--reveal-delay:.15s">
-        <span class="prompt" aria-hidden="true">$</span>
-        <code>{INSTALL}</code>
-        <button
-          class="copy"
-          data-copy={INSTALL}
-          aria-label="Copy install command"
-          title="Copy"
-        >
-          <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-          <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+      <div class="install-tabs" data-reveal style="--reveal-delay:.15s">
+        {installs.map((it, i) => (
+          <input type="radio" name="inst" id={`inst-${it.id}`} checked={i === 0} />
+        ))}
+        <div class="install-labels" role="tablist" aria-label="Install method">
+          {installs.map((it) => (
+            <label for={`inst-${it.id}`} role="tab">{it.label}</label>
+          ))}
+        </div>
+        {installs.map((it) => (
+          <div class={`install pane-${it.id}`}>
+            <span class="prompt" aria-hidden="true">$</span>
+            <code>{it.cmd}</code>
+            <button class="copy" data-copy={it.cmd} aria-label={`Copy ${it.label} command`} title="Copy">
+              <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+              <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        ))}
       </div>
       <p class="install-alt" data-reveal style="--reveal-delay:.18s">
-        or <code>cargo install faucet-cli</code> · <code>cargo add faucet-stream</code>
+        or embed the library — <code>cargo add faucet-stream</code> ·
+        <a href={DEPLOY_DOCS}>deploy with Docker or Helm&nbsp;→</a>
       </p>
 
       <div class="hero-cta" data-reveal style="--reveal-delay:.22s">
         <a class="btn" href={DOCS}>Read the guide →</a>
-        <a class="btn btn--ghost" href={GITHUB}>Star on GitHub</a>
+        <a class="btn btn--ghost" href={GITHUB}>Star on GitHub <span class="stars" data-stars hidden></span></a>
       </div>
     </div>
 
@@ -73,7 +87,7 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     gap: clamp(2rem, 5vw, 4rem);
     align-items: center;
   }
@@ -99,18 +113,49 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
     border-radius: 5px;
   }
 
+  /* install method tabs (CSS-only) */
+  .install-tabs {
+    margin-top: 1.9rem;
+    max-width: 34rem;
+  }
+  .install-tabs > input { position: absolute; opacity: 0; pointer-events: none; }
+  .install-labels { display: flex; gap: 0.35rem; margin-bottom: 0.55rem; }
+  .install-labels label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    padding: 0.28rem 0.7rem;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .install-labels label:hover { color: var(--ink); border-color: var(--teal); }
+  .install-labels label:focus-visible { outline: 2px solid var(--teal-deep); outline-offset: 2px; }
+  #inst-brew:checked ~ .install-labels label[for='inst-brew'],
+  #inst-cargo:checked ~ .install-labels label[for='inst-cargo'],
+  #inst-docker:checked ~ .install-labels label[for='inst-docker'] {
+    color: #fff;
+    background: var(--teal-deep);
+    border-color: var(--teal-deep);
+  }
+
   .install {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 0.6rem;
-    margin-top: 1.9rem;
     padding: 0.7rem 0.7rem 0.7rem 1rem;
     background: var(--ink);
     border-radius: 11px;
     box-shadow: var(--shadow-md);
+    width: 100%;
     max-width: 34rem;
     overflow: hidden;
   }
+  #inst-brew:checked ~ .pane-brew,
+  #inst-cargo:checked ~ .pane-cargo,
+  #inst-docker:checked ~ .pane-docker { display: flex; }
   .install .prompt { color: var(--teal); font-family: var(--font-mono); font-weight: 600; }
   .install code {
     color: #eef6f4;
@@ -118,6 +163,7 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
     white-space: nowrap;
     overflow-x: auto;
     flex: 1;
+    min-width: 0; /* allow the flex child to shrink so it scrolls instead of forcing page width */
     scrollbar-width: none;
   }
   .install code::-webkit-scrollbar { display: none; }
@@ -141,14 +187,21 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
   .copy.copied .i-check { display: block; }
 
   .install-alt {
-    margin-top: 0.75rem;
+    margin-top: 0.85rem;
     font-size: 0.85rem;
-    color: var(--ink-faint);
+    color: var(--ink-soft);
   }
   .install-alt code {
     font-family: var(--font-mono);
     color: var(--ink-soft);
   }
+  .install-alt a {
+    color: var(--teal-deep);
+    font-weight: 550;
+    border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent);
+    transition: border-color 0.15s ease;
+  }
+  .install-alt a:hover { border-color: var(--teal-deep); }
 
   .hero-cta {
     display: flex;
@@ -157,8 +210,22 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
     margin-top: 1.8rem;
   }
 
+  /* both grid children must be allowed to shrink below their min-content,
+     or the nowrap install command forces the track wider than the viewport. */
+  .hero-copy,
+  .hero-visual { min-width: 0; }
+
   @media (max-width: 900px) {
-    .hero-grid { grid-template-columns: 1fr; }
-    .hero-visual { order: -1; max-width: 30rem; }
+    .hero-grid { grid-template-columns: minmax(0, 1fr); }
+    /* hard viewport cap so the card can never exceed the phone width,
+       independent of how the grid track resolves its content size */
+    .hero-visual {
+      order: -1;
+      justify-self: stretch;
+      max-width: calc(100vw - 2 * var(--gutter));
+    }
+  }
+  @media (max-width: 480px) {
+    .install-labels { flex-wrap: wrap; }
   }
 </style>

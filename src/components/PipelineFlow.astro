@@ -69,7 +69,13 @@ const nodes = [
     box-shadow: var(--shadow-md);
     overflow: hidden;
     position: relative;
+    max-width: 100%;
   }
+  /* node rows must never push the card wider than its container */
+  .node { min-width: 0; }
+  .node-text { min-width: 0; }
+  .node-name,
+  .node-sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .flow::before {
     /* subtle top accent rail */
     content: '';
