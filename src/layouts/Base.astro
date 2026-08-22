@@ -86,26 +86,6 @@ const jsonLd = {
         items.forEach((el) => io.observe(el));
       })();
 
-      // Live GitHub star count — progressive enhancement on [data-stars].
-      (() => {
-        const els = document.querySelectorAll('[data-stars]');
-        if (!els.length) return;
-        fetch('https://api.github.com/repos/faucet-hq/faucet-stream', {
-          headers: { accept: 'application/vnd.github+json' },
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .then((d) => {
-            const n = d && d.stargazers_count;
-            if (typeof n !== 'number') return;
-            const label = n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
-            els.forEach((el) => {
-              el.textContent = label;
-              el.removeAttribute('hidden');
-            });
-          })
-          .catch(() => {});
-      })();
-
       // Copy-to-clipboard for install commands.
       (() => {
         document.addEventListener('click', (ev) => {

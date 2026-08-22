@@ -237,18 +237,3 @@ code, kbd, pre {
   border: 0;
 }
 
-/* live GitHub star count pill (revealed by JS) */
-.stars {
-  font-family: var(--font-mono);
-  font-size: 0.82em;
-  font-weight: 600;
-  line-height: 1;
-  padding: 0.2em 0.5em;
-  border-radius: 999px;
-  background: color-mix(in srgb, currentColor 13%, transparent);
-}
-.stars::before {
-  content: '★';
-  margin-right: 0.28em;
-  color: var(--teal);
-}
