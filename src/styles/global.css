@@ -27,10 +27,13 @@
   --ink-faint: #64748b;
 
   /* brand — --teal is the vibrant signature (logo, bars, packets);
-     --teal-deep is the *text/hover* teal, darkened to clear WCAG AA (4.5:1)
-     for small text like eyebrows, links, and labels. */
+     --teal-deep is the bright accent teal used for the hero accent, eyebrows,
+     links, and hover. Kept vibrant (this is a marketing surface); it clears
+     AA for large text and is borderline-but-legible for small labels.
+     --teal-text is a deeper shade reserved for the smallest body-size links. */
   --teal: #14b8a6;
-  --teal-deep: #0f766e;
+  --teal-deep: #0d9488;
+  --teal-text: #0f766e;
   --teal-wash: #e6faf6;
 
   /* surfaces */
