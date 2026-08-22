@@ -1,0 +1,107 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'faucet-stream — move data at Rust speed',
+  description = 'A fast, config-driven data-movement platform for Rust. 66 source & sink connectors, governance in flight, shipped as a single binary. 712k rows/s on a 1M-row move — ~96× faster than Meltano.',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={canonical} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#14b8a6" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="faucet-stream" />
+    <meta property="og:image" content="/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="preload" href="/fonts/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+
+    <script is:inline>
+      // Scroll reveal — progressive enhancement, respects reduced motion.
+      (() => {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const items = document.querySelectorAll('[data-reveal]');
+        if (reduce || !('IntersectionObserver' in window)) {
+          items.forEach((el) => el.classList.add('is-in'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-in');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+        );
+        items.forEach((el) => io.observe(el));
+      })();
+
+      // Copy-to-clipboard for install commands.
+      (() => {
+        document.addEventListener('click', (ev) => {
+          const btn = ev.target.closest('[data-copy]');
+          if (!btn) return;
+          const text = btn.getAttribute('data-copy');
+          navigator.clipboard?.writeText(text).then(() => {
+            btn.classList.add('copied');
+            const prev = btn.getAttribute('aria-label');
+            btn.setAttribute('aria-label', 'Copied');
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              if (prev) btn.setAttribute('aria-label', prev);
+            }, 1600);
+          });
+        });
+      })();
+    </script>
+
+    <style>
+      .skip-link {
+        position: absolute;
+        left: 0.75rem;
+        top: -3rem;
+        z-index: 100;
+        background: var(--ink);
+        color: #fff;
+        padding: 0.5rem 0.9rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: top 0.16s ease;
+      }
+      .skip-link:focus {
+        top: 0.75rem;
+      }
+    </style>
+  </body>
+</html>

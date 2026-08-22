@@ -1,0 +1,112 @@
+---
+const guards = [
+  { name: 'Quality checks', desc: 'Assert row- and batch-level rules; route failures to a DLQ.' },
+  { name: 'Data contracts', desc: 'Versioned schemas enforced on the wire, not downstream.' },
+  { name: 'PII masking', desc: 'Redact or hash sensitive fields before any sink sees a row.' },
+  { name: 'Schema-drift policy', desc: 'Detect drift and decide: pass, quarantine, or stop.' },
+  { name: 'Column lineage', desc: 'OpenLineage events + a movement catalog, per column.' },
+  { name: 'SLA monitors', desc: 'Freshness and volume checks with built-in metrics.' },
+];
+---
+
+<section class="section gov" id="governance">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Governance in flight</span>
+      <h2>The guardrails live in the pipe — not bolted on downstream.</h2>
+      <p>
+        Everything that usually needs a second platform runs inside the movement path,
+        with zero per-connector code. A masked field never reaches the sink in the clear.
+      </p>
+    </div>
+
+    <div class="gate" data-reveal aria-hidden="true">
+      <span class="gate-node">source</span>
+      <span class="gate-line"><i></i><i></i><i></i></span>
+      <span class="gate-core">governance</span>
+      <span class="gate-line"><i></i><i></i><i></i></span>
+      <span class="gate-node">sink</span>
+    </div>
+
+    <div class="gov-grid">
+      {guards.map((g, i) => (
+        <article class="gov-item" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+          <h3>{g.name}</h3>
+          <p>{g.desc}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: clamp(2rem, 4vw, 3rem);
+    flex-wrap: wrap;
+  }
+  .gate-node,
+  .gate-core {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+  }
+  .gate-core {
+    color: #fff;
+    background: linear-gradient(90deg, var(--teal-deep), var(--teal));
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: var(--shadow-teal);
+  }
+  .gate-line {
+    display: inline-flex;
+    gap: 0.35rem;
+  }
+  .gate-line i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--teal);
+    opacity: 0.35;
+    animation: gate-move 1.5s ease-in-out infinite;
+  }
+  .gate-line i:nth-child(2) { animation-delay: 0.2s; }
+  .gate-line i:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes gate-move {
+    0%, 100% { opacity: 0.25; transform: translateX(-2px); }
+    50% { opacity: 1; transform: translateX(2px); }
+  }
+
+  .gov-grid {
+    margin-top: clamp(2.2rem, 4vw, 3.2rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem 1.4rem;
+  }
+  .gov-item {
+    padding: 1.3rem 1.4rem;
+    border-left: 2px solid var(--teal);
+    background: linear-gradient(90deg, var(--teal-wash), transparent 90%);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .gov-item h3 { font-size: 1.05rem; font-weight: 600; }
+  .gov-item p { margin-top: 0.4rem; color: var(--ink-soft); font-size: 0.93rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gate-line i { animation: none; opacity: 0.6; }
+  }
+  @media (max-width: 860px) {
+    .gov-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .gov-grid { grid-template-columns: 1fr; }
+    .gate-node, .gate-core { font-size: 0.75rem; padding: 0.45rem 0.8rem; }
+  }
+</style>

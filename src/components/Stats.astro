@@ -1,0 +1,64 @@
+---
+const stats = [
+  { n: '66', l: 'connectors', s: '37 sources · 29 sinks' },
+  { n: '712k', l: 'rows / second', s: '1M-row CSV → JSONL' },
+  { n: '~96×', l: 'faster than Meltano', s: 'exact row parity' },
+  { n: '1', l: 'binary to ship', s: 'no daemon, no runtime' },
+];
+---
+
+<section class="stats" aria-label="At a glance">
+  <div class="wrap grid">
+    {stats.map((s, i) => (
+      <div class="stat" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
+        <span class="stat-n">{s.n}</span>
+        <span class="stat-l">{s.l}</span>
+        <span class="stat-s">{s.s}</span>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .stats {
+    border-block: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 1.9rem 1.5rem;
+    border-left: 1px solid var(--line-soft);
+  }
+  .stat:first-child { border-left: 0; padding-left: 0; }
+  .stat-n {
+    font-family: var(--font-display);
+    font-weight: 680;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .stat-l {
+    font-weight: 550;
+    font-size: 0.98rem;
+    color: var(--teal-deep);
+  }
+  .stat-s {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--ink-faint);
+    margin-top: 0.15rem;
+  }
+
+  @media (max-width: 720px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .stat { border-left: 1px solid var(--line-soft); padding: 1.4rem 1.2rem; }
+    .stat:first-child { padding-left: 1.2rem; }
+    .stat:nth-child(odd) { border-left: 0; padding-left: 0; }
+  }
+</style>

@@ -1,0 +1,123 @@
+---
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+const GITHUB = 'https://github.com/faucet-hq/faucet-stream';
+const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
+---
+
+<section class="section cta-section">
+  <div class="wrap cta-card" data-reveal>
+    <div class="cta-glow" aria-hidden="true"></div>
+    <span class="eyebrow eyebrow--dark">Get started</span>
+    <h2>Your first pipeline runs in five minutes.</h2>
+    <p>Install the CLI, scaffold a config, and move real data — no platform to stand up.</p>
+
+    <div class="install install--dark">
+      <span class="prompt" aria-hidden="true">$</span>
+      <code>{INSTALL}</code>
+      <button class="copy" data-copy={INSTALL} aria-label="Copy install command" title="Copy">
+        <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="cta-actions">
+      <a class="btn btn--onDark" href={DOCS}>Read the guide →</a>
+      <a class="btn btn--onGlass" href={GITHUB}>Star on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cta-card {
+    position: relative;
+    text-align: center;
+    background:
+      radial-gradient(80% 120% at 50% -10%, var(--night-2), transparent 60%),
+      var(--night);
+    color: var(--night-ink);
+    border-radius: 22px;
+    padding: clamp(2.8rem, 6vw, 4.5rem) var(--gutter);
+    overflow: hidden;
+    border: 1px solid var(--night-line);
+  }
+  .cta-glow {
+    position: absolute;
+    inset: auto 0 -60% 0;
+    height: 100%;
+    background: radial-gradient(50% 60% at 50% 100%, rgba(20, 184, 166, 0.28), transparent 70%);
+    pointer-events: none;
+  }
+  .cta-card > * { position: relative; z-index: 1; }
+  .eyebrow--dark { color: var(--teal); justify-content: center; }
+  .eyebrow--dark::before { display: none; }
+  .cta-card h2 {
+    color: #fff;
+    font-size: clamp(1.9rem, 4.2vw, 3rem);
+    margin-top: 0.9rem;
+  }
+  .cta-card > p {
+    color: var(--night-soft);
+    font-size: 1.1rem;
+    margin-top: 0.9rem;
+  }
+
+  .install--dark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 2rem auto 0;
+    padding: 0.7rem 0.7rem 0.7rem 1rem;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--night-line);
+    border-radius: 11px;
+    max-width: min(100%, 30rem);
+  }
+  .install--dark .prompt { color: var(--teal); font-family: var(--font-mono); font-weight: 600; }
+  .install--dark code {
+    color: #eef6f4;
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .install--dark code::-webkit-scrollbar { display: none; }
+  .install--dark .copy {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 8px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cfe9e3;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+  .install--dark .copy:hover { background: rgba(20, 184, 166, 0.3); color: #fff; }
+  .install--dark .copy .i-check { display: none; }
+  .install--dark .copy.copied { color: var(--teal); }
+  .install--dark .copy.copied .i-copy { display: none; }
+  .install--dark .copy.copied .i-check { display: block; }
+
+  .cta-actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+  .btn--onDark { background: var(--teal); color: #04140f; font-weight: 600; }
+  .btn--onDark:hover { background: #2fd4c1; box-shadow: var(--shadow-teal); }
+  .btn--onGlass {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    border: 1px solid var(--night-line);
+  }
+  .btn--onGlass:hover {
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: none;
+    color: #fff;
+  }
+</style>

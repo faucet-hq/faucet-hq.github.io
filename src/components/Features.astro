@@ -1,0 +1,115 @@
+---
+const features = [
+  {
+    title: 'Built for throughput',
+    body: 'Native streaming with bounded memory, connection pooling, multi-row inserts, bulk APIs, and parallel I/O. Throughput is a first-class design goal for every connector — not an afterthought.',
+    icon: 'bolt',
+  },
+  {
+    title: 'A runtime, not just connectors',
+    body: 'Incremental + resumable replication, change-data-capture, effectively-once delivery, dead-letter queues, automatic retries, adaptive batch sizing, secrets interpolation, and cron scheduling — with zero per-connector code.',
+    icon: 'gear',
+  },
+  {
+    title: 'Governance in the movement path',
+    body: 'Data-quality checks, versioned contracts, PII masking applied before any sink sees a row, schema-drift policy, column-level lineage (OpenLineage), and freshness/volume SLAs — native and zero-config.',
+    icon: 'shield',
+  },
+  {
+    title: 'Config-driven or embeddable',
+    body: 'Run faucet run pipeline.yaml, or call Pipeline::new(&source, &sink).run().await? from Rust. Same orchestration engine either way — a CLI you drop on any box, or a library you compile in.',
+    icon: 'code',
+  },
+  {
+    title: 'Bring your Singer taps',
+    body: 'The singer source runs any existing Singer / Meltano tap unchanged, so you can adopt incrementally — start with the taps you already have and move to native connectors where throughput matters.',
+    icon: 'plug',
+  },
+  {
+    title: 'Pay only for what you use',
+    body: 'Every connector is a Cargo feature. Compile a slim binary with just REST + JSONL, or pull in all 66 connectors with --features full. You ship exactly what you need — nothing more.',
+    icon: 'box',
+  },
+];
+
+const icons = {
+  bolt: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+  gear: '<circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v3m0 14v3M4.2 4.2l2.1 2.1m11.4 11.4 2.1 2.1M2 12h3m14 0h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  shield: '<path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+  code: '<path d="m8 8-4 4 4 4m8-8 4 4-4 4M14 6l-4 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+  plug: '<path d="M9 2v5m6-5v5M6 7h12v3a6 6 0 0 1-12 0V7Zm6 9v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>',
+  box: '<path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m3 7 9 5 9-5M12 22V12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+};
+---
+
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">Why faucet-stream</span>
+      <h2>One engine for the whole movement path.</h2>
+      <p>
+        Most stacks bolt movement, orchestration, and governance together from separate
+        tools. faucet-stream does all three in a single, fast Rust runtime.
+      </p>
+    </div>
+
+    <div class="cards">
+      {features.map((f, i) => (
+        <article class="card" data-reveal style={`--reveal-delay:${(i % 3) * 0.06}s`}>
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" set:html={icons[f.icon]} />
+          </span>
+          <h3>{f.title}</h3>
+          <p>{f.body}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .cards {
+    margin-top: clamp(2rem, 4vw, 3.2rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.6rem 1.5rem;
+    transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.18s ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+  }
+  .card-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 10px;
+    background: var(--teal-wash);
+    color: var(--teal-deep);
+    margin-bottom: 1.1rem;
+  }
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 620;
+  }
+  .card p {
+    margin-top: 0.6rem;
+    color: var(--ink-soft);
+    font-size: 0.96rem;
+  }
+
+  @media (max-width: 900px) {
+    .cards { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 620px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>

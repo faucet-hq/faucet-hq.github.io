@@ -1,0 +1,264 @@
+---
+// The signature: a live pipeline. Data packets stream source -> transform -> sink
+// while a throughput readout counts up to the real benchmark number.
+const nodes = [
+  { kind: 'source', name: 'Postgres', sub: 'source · CDC' },
+  { kind: 'transform', name: 'sql', sub: 'transform · DuckDB' },
+  { kind: 'sink', name: 'BigQuery', sub: 'sink · MERGE' },
+];
+---
+
+<figure class="flow" aria-label="A live data pipeline moving rows from Postgres through a SQL transform into BigQuery">
+  <div class="flow-top">
+    <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="flow-file">pipeline.yaml</span>
+    <span class="flow-run" aria-hidden="true">running</span>
+  </div>
+
+  <div class="flow-body">
+    {nodes.map((n, i) => (
+      <>
+        <div class={`node node--${n.kind}`}>
+          <span class="node-glyph" aria-hidden="true">
+            {n.kind === 'source' && (
+              <svg viewBox="0 0 24 24" width="20" height="20"><ellipse cx="12" cy="6" rx="7" ry="2.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 6v12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 12c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+            )}
+            {n.kind === 'transform' && (
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 8h9m0 0-3-3m3 3-3 3M20 16h-9m0 0 3-3m-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            )}
+            {n.kind === 'sink' && (
+              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3v11m0 0-4-4m4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            )}
+          </span>
+          <span class="node-text">
+            <span class="node-name">{n.name}</span>
+            <span class="node-sub">{n.sub}</span>
+          </span>
+          <span class="node-tag">{n.kind}</span>
+        </div>
+        {i < nodes.length - 1 && (
+          <div class="pipe" aria-hidden="true">
+            <span class="packet"></span>
+            <span class="packet"></span>
+            <span class="packet"></span>
+          </div>
+        )}
+      </>
+    ))}
+  </div>
+
+  <div class="flow-meter">
+    <div class="meter-main">
+      <span class="meter-num" data-countup="712412">0</span>
+      <span class="meter-unit">rows/s</span>
+    </div>
+    <div class="meter-side">
+      <span><b>11.8</b> MiB RAM</span>
+      <span class="meter-sep" aria-hidden="true">·</span>
+      <span>bounded &amp; streaming</span>
+    </div>
+  </div>
+</figure>
+
+<style>
+  .flow {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    position: relative;
+  }
+  .flow::before {
+    /* subtle top accent rail */
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--teal-deep));
+  }
+
+  .flow-top {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--surface-2);
+  }
+  .dots { display: inline-flex; gap: 0.35rem; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; background: #d6dee6; }
+  .flow-file {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .flow-run {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .flow-run::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5);
+    animation: pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.5); }
+    70% { box-shadow: 0 0 0 7px rgba(20, 184, 166, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
+  }
+
+  .flow-body {
+    padding: 1.5rem 1.4rem 0.4rem;
+  }
+
+  .node {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    position: relative;
+    z-index: 1;
+  }
+  .node--transform { border-color: color-mix(in srgb, var(--teal) 45%, var(--line)); }
+  .node-glyph {
+    display: inline-grid;
+    place-items: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 8px;
+    background: var(--teal-wash);
+    color: var(--teal-deep);
+    flex: none;
+  }
+  .node-text { display: flex; flex-direction: column; line-height: 1.25; }
+  .node-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.02rem;
+  }
+  .node-sub {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--ink-faint);
+  }
+  .node-tag {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+  }
+
+  .pipe {
+    position: relative;
+    height: 2.6rem;
+    margin-left: 2.1rem;
+    width: 2px;
+    background: linear-gradient(var(--line), var(--line));
+  }
+  .packet {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.6);
+    animation: drip 1.9s linear infinite;
+  }
+  .packet:nth-child(2) { animation-delay: 0.63s; }
+  .packet:nth-child(3) { animation-delay: 1.26s; }
+  @keyframes drip {
+    0% { transform: translateY(-6px) scale(0.7); opacity: 0; }
+    18% { opacity: 1; }
+    82% { opacity: 1; }
+    100% { transform: translateY(2.6rem) scale(0.7); opacity: 0; }
+  }
+
+  .flow-meter {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 0.8rem;
+    padding: 1.15rem 1.4rem;
+    border-top: 1px solid var(--line-soft);
+    background: var(--surface-2);
+  }
+  .meter-main { display: flex; align-items: baseline; gap: 0.45rem; }
+  .meter-num {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4vw, 2.2rem);
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .meter-unit {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--teal-deep);
+  }
+  .meter-side {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .meter-side b { color: var(--ink); }
+  .meter-sep { color: var(--ink-faint); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .packet, .flow-run::before { animation: none; }
+    .packet { opacity: 0.9; top: 1rem; }
+    .packet:nth-child(1) { top: 0.3rem; }
+    .packet:nth-child(3) { top: 1.8rem; }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const el = document.querySelector('[data-countup]');
+    if (!el) return;
+    const target = parseInt(el.getAttribute('data-countup'), 10);
+    const fmt = (n) => n.toLocaleString('en-US');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { el.textContent = fmt(target); return; }
+    const dur = 1400;
+    let start = null;
+    const step = (t) => {
+      if (start === null) start = t;
+      const p = Math.min((t - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(step);
+    };
+    // kick off shortly after paint
+    requestAnimationFrame(() => requestAnimationFrame(step));
+  })();
+</script>

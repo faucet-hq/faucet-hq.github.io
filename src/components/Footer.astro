@@ -1,0 +1,135 @@
+---
+const GITHUB = 'https://github.com/faucet-hq/faucet-stream';
+const cols = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Why faucet', href: '#why' },
+      { label: 'Benchmarks', href: '#benchmarks' },
+      { label: 'Connectors', href: '#connectors' },
+      { label: 'Governance', href: '#governance' },
+    ],
+  },
+  {
+    title: 'Docs',
+    links: [
+      { label: 'Guide', href: 'https://faucet-hq.github.io/faucet-stream/' },
+      { label: 'Getting started', href: 'https://faucet-hq.github.io/faucet-stream/getting-started/installation.html' },
+      { label: 'Config grammar', href: 'https://faucet-hq.github.io/faucet-stream/reference/config.html' },
+      { label: 'API reference', href: 'https://docs.rs/faucet-stream' },
+    ],
+  },
+  {
+    title: 'Project',
+    links: [
+      { label: 'GitHub', href: GITHUB },
+      { label: 'crates.io', href: 'https://crates.io/crates/faucet-stream' },
+      { label: 'Changelog', href: 'https://github.com/faucet-hq/faucet-stream/blob/main/CHANGELOG.md' },
+      { label: 'Benchmarks', href: 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md' },
+    ],
+  },
+];
+---
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <a class="brand" href="/" aria-label="faucet-stream home">
+        <svg viewBox="6 11 112 112" width="24" height="24" aria-hidden="true">
+          <g fill="none" stroke="#14B8A6" stroke-width="13" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M55 40 V24" /><path d="M43 24 H67" />
+            <path d="M32 40 H78 a15 15 0 0 1 15 15 V66" />
+          </g>
+          <g fill="#14B8A6">
+            <circle cx="93" cy="82" r="6" />
+            <circle cx="93" cy="99" r="5" opacity="0.7" />
+            <circle cx="93" cy="112" r="4" opacity="0.45" />
+          </g>
+        </svg>
+        <span class="brand-word"><strong>faucet</strong>stream</span>
+      </a>
+      <p>The fast, config-driven way to move data in Rust.</p>
+    </div>
+
+    {cols.map((c) => (
+      <nav class="footer-col" aria-label={c.title}>
+        <h4>{c.title}</h4>
+        <ul>
+          {c.links.map((l) => (
+            <li><a href={l.href}>{l.label}</a></li>
+          ))}
+        </ul>
+      </nav>
+    ))}
+  </div>
+
+  <div class="wrap footer-base">
+    <span>© {new Date().getFullYear()} faucet-stream · MIT / Apache-2.0</span>
+    <span class="footer-mono">built in Rust · runs anywhere</span>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    padding-block: clamp(2.8rem, 5vw, 4rem) 1.5rem;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.6fr repeat(3, 1fr);
+    gap: 2rem;
+  }
+  .footer-brand .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+  .footer-brand .brand-word strong { color: var(--ink); font-weight: 700; }
+  .footer-brand .brand-word { color: var(--teal-deep); font-weight: 400; }
+  .footer-brand p {
+    margin-top: 0.8rem;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    max-width: 20rem;
+  }
+  .footer-col h4 {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+  .footer-col ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.6rem; }
+  .footer-col a {
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    transition: color 0.15s ease;
+  }
+  .footer-col a:hover { color: var(--teal-deep); }
+
+  .footer-base {
+    margin-top: 2.5rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line-soft);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+  }
+  .footer-mono { font-family: var(--font-mono); }
+
+  @media (max-width: 760px) {
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .footer-brand { grid-column: 1 / -1; }
+  }
+  @media (max-width: 440px) {
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,164 @@
+---
+import PipelineFlow from './PipelineFlow.astro';
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+const GITHUB = 'https://github.com/faucet-hq/faucet-stream';
+const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
+---
+
+<section class="hero" id="main">
+  <div class="hero-grid wrap">
+    <div class="hero-copy">
+      <span class="eyebrow" data-reveal>Rust data-movement platform</span>
+
+      <h1 data-reveal style="--reveal-delay:.05s">
+        Move data at <span class="accent">Rust speed</span>.<br />
+        Govern it in flight.
+      </h1>
+
+      <p class="lede" data-reveal style="--reveal-delay:.1s">
+        A config-driven pipeline engine with <b>66 source &amp; sink connectors</b>,
+        change-data-capture, effectively-once delivery, and governance built into the
+        movement path — wired by a single <code>faucet</code> binary, or embedded in your
+        own service. No Python runtime, no platform to stand up.
+      </p>
+
+      <div class="install" data-reveal style="--reveal-delay:.15s">
+        <span class="prompt" aria-hidden="true">$</span>
+        <code>{INSTALL}</code>
+        <button
+          class="copy"
+          data-copy={INSTALL}
+          aria-label="Copy install command"
+          title="Copy"
+        >
+          <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <p class="install-alt" data-reveal style="--reveal-delay:.18s">
+        or <code>cargo install faucet-cli</code> · <code>cargo add faucet-stream</code>
+      </p>
+
+      <div class="hero-cta" data-reveal style="--reveal-delay:.22s">
+        <a class="btn" href={DOCS}>Read the guide →</a>
+        <a class="btn btn--ghost" href={GITHUB}>Star on GitHub</a>
+      </div>
+    </div>
+
+    <div class="hero-visual" data-reveal style="--reveal-delay:.12s">
+      <PipelineFlow />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-block: clamp(3rem, 8vw, 6rem) clamp(3.5rem, 8vw, 6rem);
+    overflow: hidden;
+  }
+  /* ambient flow field behind the hero */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 120%;
+    background:
+      radial-gradient(60% 50% at 78% 20%, rgba(20, 184, 166, 0.1), transparent 70%),
+      radial-gradient(50% 40% at 15% 5%, rgba(20, 184, 166, 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 6vw, 4.15rem);
+    font-weight: 680;
+    margin-top: 1.15rem;
+  }
+  h1 .accent { color: var(--teal-deep); }
+
+  .lede {
+    margin-top: 1.4rem;
+    font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+    color: var(--ink-soft);
+    max-width: 34rem;
+  }
+  .lede b { color: var(--ink); font-weight: 600; }
+  .lede code {
+    font-size: 0.92em;
+    background: var(--surface-2);
+    padding: 0.05em 0.35em;
+    border-radius: 5px;
+  }
+
+  .install {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.9rem;
+    padding: 0.7rem 0.7rem 0.7rem 1rem;
+    background: var(--ink);
+    border-radius: 11px;
+    box-shadow: var(--shadow-md);
+    max-width: 34rem;
+    overflow: hidden;
+  }
+  .install .prompt { color: var(--teal); font-family: var(--font-mono); font-weight: 600; }
+  .install code {
+    color: #eef6f4;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: none;
+  }
+  .install code::-webkit-scrollbar { display: none; }
+  .copy {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 8px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.08);
+    color: #cfe9e3;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+  .copy:hover { background: rgba(20, 184, 166, 0.25); color: #fff; }
+  .copy .i-check { display: none; }
+  .copy.copied { color: var(--teal); }
+  .copy.copied .i-copy { display: none; }
+  .copy.copied .i-check { display: block; }
+
+  .install-alt {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--ink-faint);
+  }
+  .install-alt code {
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+  }
+
+  .hero-cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.8rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-visual { order: -1; max-width: 30rem; }
+  }
+</style>

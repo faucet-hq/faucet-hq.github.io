@@ -1,0 +1,118 @@
+---
+const CONNECTORS = 'https://faucet-hq.github.io/faucet-stream/reference/connectors.html';
+const groups = [
+  {
+    name: 'Databases',
+    items: ['Postgres', 'MySQL', 'SQL Server', 'SQLite', 'MongoDB', 'Redis', 'DuckDB'],
+  },
+  {
+    name: 'Change data capture',
+    items: ['Postgres CDC', 'MySQL binlog', 'SQL Server CDC', 'MongoDB streams'],
+  },
+  {
+    name: 'Warehouses',
+    items: ['BigQuery', 'Snowflake', 'Databricks', 'Redshift', 'ClickHouse', 'Spanner'],
+  },
+  {
+    name: 'Streaming & queues',
+    items: ['Kafka', 'Kinesis', 'Pub/Sub', 'SQS', 'NATS'],
+  },
+  {
+    name: 'Files & object stores',
+    items: ['S3', 'GCS', 'Azure Blob', 'Parquet', 'Delta Lake', 'Iceberg', 'SFTP', 'CSV', 'JSONL'],
+  },
+  {
+    name: 'APIs & search',
+    items: ['REST', 'GraphQL', 'gRPC', 'XML / SOAP', 'WebSocket', 'Webhook', 'Elasticsearch'],
+  },
+];
+---
+
+<section class="section conn" id="connectors">
+  <div class="wrap">
+    <div class="conn-head" data-reveal>
+      <div class="section-head">
+        <span class="eyebrow">Connectors</span>
+        <h2>37 sources. 29 sinks. One config grammar.</h2>
+        <p>
+          Every connector shares the same auth, pagination, batching, and state model —
+          so what you learn on one applies to all of them. Arrow-native fast paths run
+          columnar end-to-end where both ends support it.
+        </p>
+      </div>
+      <a class="btn btn--ghost conn-all" href={CONNECTORS}>Browse the catalog →</a>
+    </div>
+
+    <div class="conn-grid">
+      {groups.map((g, i) => (
+        <article class="conn-card" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+          <h3>{g.name}</h3>
+          <ul>
+            {g.items.map((it) => <li>{it}</li>)}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .conn { background: var(--surface-2); border-block: 1px solid var(--line); }
+  .conn-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .conn-all { flex: none; }
+
+  .conn-grid {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
+  .conn-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.4rem 1.5rem;
+    transition: box-shadow 0.2s ease, border-color 0.18s ease;
+  }
+  .conn-card:hover {
+    box-shadow: var(--shadow-sm);
+    border-color: color-mix(in srgb, var(--teal) 35%, var(--line));
+  }
+  .conn-card h3 {
+    font-size: 0.78rem;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 1rem;
+  }
+  .conn-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .conn-card li {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 7px;
+    padding: 0.3rem 0.6rem;
+  }
+
+  @media (max-width: 900px) {
+    .conn-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 560px) {
+    .conn-grid { grid-template-columns: 1fr; }
+  }
+</style>

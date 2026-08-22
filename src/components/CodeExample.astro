@@ -1,0 +1,184 @@
+---
+const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
+---
+
+<section class="section" id="config">
+  <div class="wrap code-grid">
+    <div class="code-copy" data-reveal>
+      <span class="eyebrow">Declare it once</span>
+      <h2>A pipeline is a file, not a codebase.</h2>
+      <p>
+        Describe source, in-flight transforms, write mode, and durable state in YAML —
+        then <code>faucet run</code>. Incremental replication, upsert, secrets, and
+        bookmarks are config, not glue code. Prefer Rust? The same engine drops into
+        your service through typed <code>Source</code> / <code>Sink</code> traits.
+      </p>
+      <ul class="ticks">
+        <li>Resumable incremental &amp; CDC replication</li>
+        <li>Upsert / delete write modes with effectively-once delivery</li>
+        <li><code>${'{'}env:…{'}'}</code> &amp; secrets-manager interpolation</li>
+        <li>Page-level embedded-DuckDB <code>sql</code> transform</li>
+      </ul>
+      <a class="btn btn--ghost" href={CLI}>Full config grammar →</a>
+    </div>
+
+    <div class="code-card" data-reveal style="--reveal-delay:.08s">
+      <div class="tabs" role="tablist" aria-label="Example format">
+        <input type="radio" name="ex" id="ex-yaml" checked />
+        <label for="ex-yaml" role="tab">pipeline.yaml</label>
+        <input type="radio" name="ex" id="ex-rust" />
+        <label for="ex-rust" role="tab">main.rs</label>
+
+        <pre class="pane pane-yaml"><code><span class="c"># orders → warehouse, incremental + upsert</span>
+<span class="k">version:</span> <span class="n">1</span>
+<span class="k">name:</span> <span class="s">orders_to_warehouse</span>
+
+<span class="k">pipeline:</span>
+  <span class="k">source:</span>
+    <span class="k">type:</span> <span class="s">postgres</span>
+    <span class="k">config:</span>
+      <span class="k">connection_url:</span> <span class="v">${'{'}env:PG_URL{'}'}</span>
+      <span class="k">query:</span> <span class="s">SELECT * FROM orders</span>
+      <span class="k">replication:</span>
+        <span class="k">method:</span> <span class="s">incremental</span>
+        <span class="k">cursor_field:</span> <span class="s">updated_at</span>
+  <span class="k">transforms:</span>
+    - <span class="k">sql:</span> <span class="s">SELECT *, amount_cents/100.0 AS amount FROM batch</span>
+    - <span class="k">redact:</span> {'{'} <span class="k">fields:</span> [<span class="s">email</span>] {'}'}
+  <span class="k">sink:</span>
+    <span class="k">type:</span> <span class="s">bigquery</span>
+    <span class="k">config:</span>
+      <span class="k">dataset:</span> <span class="s">analytics</span>
+      <span class="k">table:</span> <span class="s">orders</span>
+      <span class="k">write_mode:</span> <span class="s">upsert</span>
+      <span class="k">primary_key:</span> [<span class="s">id</span>]
+  <span class="k">state:</span>
+    <span class="k">type:</span> <span class="s">file</span>
+    <span class="k">path:</span> <span class="s">.faucet/state</span></code></pre>
+
+        <pre class="pane pane-rust"><code><span class="c">// same engine, embedded in your service</span>
+<span class="kw">use</span> faucet_stream::prelude::*;
+
+<span class="kw">let</span> source = PostgresSource::new(pg_cfg)?;
+<span class="kw">let</span> sink   = BigQuerySink::new(bq_cfg)?;
+
+Pipeline::new(&source, &sink)
+    .with_state_store(state)   <span class="c">// durable bookmarks</span>
+    .run()
+    .<span class="kw">await</span>?;
+
+<span class="c">// → streams pages, checkpoints after each</span>
+<span class="c">//   confirmed write. Bounded memory throughout.</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .code-grid {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: clamp(2rem, 5vw, 3.5rem);
+    align-items: center;
+  }
+  .code-copy p {
+    margin-top: 1rem;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+  }
+  .code-copy code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--surface-2);
+    padding: 0.05em 0.3em;
+    border-radius: 5px;
+    color: var(--teal-deep);
+  }
+  .ticks {
+    list-style: none;
+    padding: 0;
+    margin: 1.4rem 0 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .ticks li {
+    position: relative;
+    padding-left: 1.7rem;
+    color: var(--ink-soft);
+    font-size: 0.97rem;
+  }
+  .ticks li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.35em;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 50%;
+    background: var(--teal-wash);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m5 13 4 4L19 7' fill='none' stroke='%230d9488' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: 0.75rem;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .code-copy .btn { margin-top: 1.6rem; }
+
+  /* ---- code card with CSS-only tabs ---- */
+  .code-card {
+    background: #0b1220;
+    border: 1px solid #1c2740;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+  }
+  .tabs { display: flex; flex-wrap: wrap; }
+  .tabs input { position: absolute; opacity: 0; pointer-events: none; }
+  .tabs label {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #8ba0c2;
+    padding: 0.85rem 1.15rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.16s ease, border-color 0.16s ease;
+  }
+  .tabs label:hover { color: #cbd8ee; }
+  .pane {
+    order: 9;
+    flex: 0 0 100%;
+    display: none;
+    margin: 0;
+    padding: 1.2rem 1.35rem 1.5rem;
+    overflow-x: auto;
+    border-top: 1px solid #1c2740;
+  }
+  .pane code {
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: #cdd9ee;
+    white-space: pre;
+  }
+  #ex-yaml:checked ~ label[for='ex-yaml'],
+  #ex-rust:checked ~ label[for='ex-rust'] {
+    color: #fff;
+    border-color: var(--teal);
+  }
+  #ex-yaml:checked ~ .pane-yaml { display: block; }
+  #ex-rust:checked ~ .pane-rust { display: block; }
+  .tabs label:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: -2px;
+  }
+
+  /* token colors */
+  .pane .c { color: #5f7599; font-style: italic; }
+  .pane .k { color: #7ee0d1; }
+  .pane .kw { color: #f0a35e; }
+  .pane .s { color: #e9d9a8; }
+  .pane .v { color: #9fd0ff; }
+  .pane .n { color: #c8a6ff; }
+
+  @media (max-width: 860px) {
+    .code-grid { grid-template-columns: 1fr; }
+  }
+</style>
