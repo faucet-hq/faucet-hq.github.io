@@ -21,24 +21,27 @@ const scenarios = [
     bottleneck: 'parse / serialize (best case)',
     faucet: '712,000',
     meltano: '7,400',
-    gap: '~96×',
+    tputGap: '~96×',
     mem: '11.8 vs 724 MiB',
+    memGap: '~62×',
   },
   {
     key: 'B — Postgres → JSONL',
     bottleneck: 'typed row decode',
-    faucet: '≈185,000',
-    meltano: '≈7,400',
-    gap: '~25×',
-    mem: '~53× less',
+    faucet: '179,700',
+    meltano: '7,184',
+    tputGap: '~25×',
+    mem: '13.9 vs 743 MiB',
+    memGap: '~53×',
   },
   {
     key: 'C — Postgres → Postgres',
     bottleneck: 'destination write (sink-bound)',
     faucet: '123,200 (copy) / 99,000 (insert)',
     meltano: '7,706',
-    gap: '~16× / ~13×',
+    tputGap: '~16× / ~13×',
     mem: '35.9 vs 485.7 MiB',
+    memGap: '~13.5×',
   },
 ];
 
@@ -122,7 +125,7 @@ const mem = [
         <div class="scroll" data-reveal>
           <table class="bench">
             <thead>
-              <tr><th>Scenario</th><th>Bottleneck</th><th>faucet (rows/s)</th><th>Meltano</th><th>Gap</th><th>Peak RAM</th></tr>
+              <tr><th>Scenario</th><th>Bottleneck</th><th>faucet (rows/s)</th><th>Meltano</th><th>Throughput gap</th><th>Peak RAM (faucet vs Meltano)</th><th>Memory gap</th></tr>
             </thead>
             <tbody>
               {scenarios.map((s) => (
@@ -131,8 +134,9 @@ const mem = [
                   <td>{s.bottleneck}</td>
                   <td class="mono strong">{s.faucet}</td>
                   <td class="mono">{s.meltano}</td>
-                  <td class="gap">{s.gap}</td>
+                  <td class="gap">{s.tputGap}</td>
                   <td class="mono">{s.mem}</td>
+                  <td class="gap">{s.memGap}</td>
                 </tr>
               ))}
             </tbody>
