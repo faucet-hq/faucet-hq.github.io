@@ -7,6 +7,7 @@ const guards = [
   { name: 'Column lineage', desc: 'OpenLineage events + a movement catalog, per column.' },
   { name: 'SLA monitors', desc: 'Freshness and volume checks with built-in metrics.' },
 ];
+const GOV = `${import.meta.env.BASE_URL}governance`;
 ---
 
 <section class="section gov" id="governance">
@@ -35,6 +36,10 @@ const guards = [
           <p>{g.desc}</p>
         </article>
       ))}
+    </div>
+
+    <div class="gov-cta" data-reveal>
+      <a class="btn btn--ghost" href={GOV}>Explore governance →</a>
     </div>
   </div>
 </section>
@@ -98,6 +103,11 @@ const guards = [
   }
   .gov-item h3 { font-size: 1.05rem; font-weight: 600; }
   .gov-item p { margin-top: 0.4rem; color: var(--ink-soft); font-size: 0.93rem; }
+
+  .gov-cta {
+    margin-top: 2rem;
+    text-align: center;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .gate-line i { animation: none; opacity: 0.6; }

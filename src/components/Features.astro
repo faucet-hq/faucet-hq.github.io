@@ -7,7 +7,7 @@ const features = [
   },
   {
     title: 'A runtime, not just connectors',
-    body: 'Incremental + resumable replication, change-data-capture, effectively-once delivery, dead-letter queues, automatic retries, adaptive batch sizing, secrets interpolation, and cron scheduling — with zero per-connector code.',
+    body: 'Incremental + resumable replication, change-data-capture, effectively-once delivery, dead-letter queues, automatic retries, adaptive batch sizing, secrets interpolation, cron scheduling, and built-in Prometheus metrics + tracing spans — with zero per-connector code.',
     icon: 'gear',
   },
   {
@@ -16,8 +16,8 @@ const features = [
     icon: 'shield',
   },
   {
-    title: 'Config-driven or embeddable',
-    body: 'Run faucet run pipeline.yaml, or call Pipeline::new(&source, &sink).run().await? from Rust. Same orchestration engine either way — a CLI you drop on any box, or a library you compile in.',
+    title: 'CLI, library, or HTTP API',
+    body: 'Run <code>faucet run pipeline.yaml</code>, call <code>Pipeline::new(&amp;source, &amp;sink).run().await?</code> from Rust, or drive it over HTTP with <code>faucet serve</code>. Same engine three ways — a CLI you drop on any box, a library you compile in, or a control-plane API.',
     icon: 'code',
   },
   {
@@ -27,7 +27,7 @@ const features = [
   },
   {
     title: 'Compile only what you need',
-    body: 'Every connector is a Cargo feature, so your binary contains exactly the sources and sinks you use — nothing else. Ship a lean REST-to-JSONL build, or switch on all 66 connectors with --features full.',
+    body: 'Almost every capability is a Cargo feature — connectors, transforms, state backends, governance, even the HTTP server — so your binary contains exactly what you switch on, nothing else. Ship a lean REST-to-JSONL build, or turn everything on with <code>--features full</code>.',
     icon: 'box',
   },
 ];
@@ -60,7 +60,7 @@ const icons = {
             <svg viewBox="0 0 24 24" width="22" height="22" set:html={icons[f.icon]} />
           </span>
           <h3>{f.title}</h3>
-          <p>{f.body}</p>
+          <p set:html={f.body}></p>
         </article>
       ))}
     </div>
@@ -104,6 +104,16 @@ const icons = {
     margin-top: 0.6rem;
     color: var(--ink-soft);
     font-size: 0.96rem;
+  }
+  /* visible inline-code chip: a clear teal tint + hairline border (on-brand) */
+  .card p code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: color-mix(in srgb, var(--teal) 20%, transparent);
+    color: var(--teal-deep);
+    padding: 0.08em 0.36em;
+    border-radius: 5px;
+    border: 1px solid color-mix(in srgb, var(--teal) 28%, transparent);
   }
 
   @media (max-width: 900px) {

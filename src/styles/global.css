@@ -43,6 +43,10 @@
   --line: #e2e8f0;
   --line-soft: #eef2f5;
 
+  /* terminal surface — always dark in both themes (install boxes) */
+  --term-bg: #0b1220;
+  --term-fg: #eef6f4;
+
   /* dark band */
   --night: #08201c;
   --night-2: #0c2a25;
@@ -64,6 +68,48 @@
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 8px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 8px 30px rgba(15, 23, 42, 0.08);
   --shadow-teal: 0 12px 40px rgba(20, 184, 166, 0.18);
+}
+
+/* ── Dark theme ────────────────────────────────────────────────────────────────
+   Three states: explicit [data-theme="dark"] wins; the default (no attribute)
+   follows the OS via prefers-color-scheme; [data-theme="light"] forces light.
+   Only the tokens change — components derive from them. The teal signature stays;
+   accents brighten for dark grounds. The --term-bg / --night* tokens are already
+   dark, so terminal boxes and dark bands are consistent across themes.
+   ──────────────────────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #e7f1ee;
+    --ink-soft: #a7c0ba;
+    --ink-faint: #7d9c95;
+    --teal-deep: #2dd4bf;
+    --teal-text: #5eead4;
+    --teal-wash: rgba(20, 184, 166, 0.14);
+    --paper: #08201c;
+    --surface: #0c2a25;
+    --surface-2: #0a221e;
+    --line: #16403a;
+    --line-soft: #12302a;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.32);
+    --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+    --shadow-teal: 0 12px 40px rgba(20, 184, 166, 0.26);
+  }
+}
+:root[data-theme='dark'] {
+  --ink: #e7f1ee;
+  --ink-soft: #a7c0ba;
+  --ink-faint: #7d9c95;
+  --teal-deep: #2dd4bf;
+  --teal-text: #5eead4;
+  --teal-wash: rgba(20, 184, 166, 0.14);
+  --paper: #08201c;
+  --surface: #0c2a25;
+  --surface-2: #0a221e;
+  --line: #16403a;
+  --line-soft: #12302a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-teal: 0 12px 40px rgba(20, 184, 166, 0.26);
 }
 
 *,

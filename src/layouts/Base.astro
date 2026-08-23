@@ -14,6 +14,11 @@ const {
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const ogImage = new URL('/og.png', Astro.site).href;
 
+// Privacy-friendly, cookieless analytics (Cloudflare Web Analytics).
+// Set the token via the CF_WEB_ANALYTICS_TOKEN build env to activate; empty = off
+// (no script, no cookies). Get a token at Cloudflare → Web Analytics (free).
+const cfAnalyticsToken = import.meta.env.CF_WEB_ANALYTICS_TOKEN || '';
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
@@ -36,6 +41,17 @@ const jsonLd = {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Apply the saved theme before paint so there's no flash (FOUC). -->
+    <script is:inline>
+      (() => {
+        try {
+          const t = localStorage.getItem('theme');
+          if (t === 'dark' || t === 'light')
+            document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="canonical" href={canonical} />
 
     <title>{title}</title>
@@ -58,6 +74,14 @@ const jsonLd = {
     <link rel="preload" href="/fonts/GeistMono-Variable.woff2" as="font" type="font/woff2" crossorigin />
 
     <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonLd)} />
+
+    {cfAnalyticsToken && (
+      <script
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${cfAnalyticsToken}"}`}
+      />
+    )}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -84,6 +108,24 @@ const jsonLd = {
           { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
         );
         items.forEach((el) => io.observe(el));
+      })();
+
+      // Theme toggle — flips between light/dark and persists the choice.
+      (() => {
+        const btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const current = () => {
+          const attr = document.documentElement.getAttribute('data-theme');
+          return attr || (mq.matches ? 'dark' : 'light');
+        };
+        btn.addEventListener('click', () => {
+          const next = current() === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          try {
+            localStorage.setItem('theme', next);
+          } catch (e) {}
+        });
       })();
 
       // Copy-to-clipboard for install commands.

@@ -1,0 +1,73 @@
+---
+const COMPARE = `${import.meta.env.BASE_URL}compare`;
+const points = [
+  { vs: 'vs Meltano', txt: 'Same config-driven ergonomics, ~2 orders of magnitude faster, no Python runtime.' },
+  { vs: 'vs Airbyte', txt: 'No platform to stand up — one binary or a library, governance native not paywalled.' },
+  { vs: 'vs Fivetran', txt: 'Self-hosted and open-source; your data never leaves your infra.' },
+];
+---
+
+<section class="section cmp-teaser">
+  <div class="wrap">
+    <div class="section-head" data-reveal>
+      <span class="eyebrow">How it compares</span>
+      <h2>An all-in-one platform — not a pile of services.</h2>
+      <p>
+        A single fast Rust binary <em>and</em> an embeddable library: connectors,
+        orchestration, governance, and delivery in one place.
+      </p>
+    </div>
+
+    <div class="cmp-points">
+      {points.map((p, i) => (
+        <div class="cmp-point" data-reveal style={`--reveal-delay:${(i % 3) * 0.06}s`}>
+          <span class="cmp-vs">{p.vs}</span>
+          <p>{p.txt}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="cmp-cta" data-reveal>
+      <a class="btn btn--ghost" href={COMPARE}>See the full comparison →</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cmp-points {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.1rem;
+  }
+  .cmp-point {
+    padding: 1.4rem 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    transition: border-color 0.18s ease, box-shadow 0.2s ease;
+  }
+  .cmp-point:hover {
+    border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+    box-shadow: var(--shadow-md);
+  }
+  .cmp-vs {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+  }
+  .cmp-point p {
+    margin-top: 0.6rem;
+    color: var(--ink-soft);
+    font-size: 0.96rem;
+  }
+  .cmp-cta {
+    margin-top: 1.8rem;
+  }
+
+  @media (max-width: 760px) {
+    .cmp-points { grid-template-columns: 1fr; }
+  }
+</style>

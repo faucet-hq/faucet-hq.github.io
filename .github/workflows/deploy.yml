@@ -47,9 +47,18 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: main/package-lock.json
+
+      # Publish the API control-plane spec on-domain (single source of truth is the
+      # library repo, fetched at build so it never drifts). Best-effort: a fetch
+      # failure must not fail the site build.
+      - name: Fetch OpenAPI spec (on-domain)
+        run: |
+          URL="https://raw.githubusercontent.com/faucet-hq/faucet-stream/main/docs/openapi.yaml"
+          curl -fsSL "$URL" -o main/public/openapi.yaml || echo "warn: OpenAPI fetch failed; keeping any committed copy"
+          if [ -d dev ]; then cp -f main/public/openapi.yaml dev/public/openapi.yaml 2>/dev/null || true; fi
 
       - name: Build main (base /)
         working-directory: main

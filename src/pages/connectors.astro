@@ -1,0 +1,264 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/reference/connectors.html';
+
+// src = has a source connector, sink = has a sink connector.
+// badges: cdc = change-data-capture source, arrow = columnar Arrow fast path.
+const groups = [
+  {
+    name: 'Databases',
+    items: [
+      { n: 'Postgres', src: true, sink: true },
+      { n: 'MySQL', src: true, sink: true },
+      { n: 'SQL Server', src: true, sink: true },
+      { n: 'SQLite', src: true, sink: true },
+      { n: 'DuckDB', src: true, sink: true },
+      { n: 'MongoDB', src: true, sink: true },
+      { n: 'Redis', src: true, sink: true },
+    ],
+  },
+  {
+    name: 'Change data capture',
+    items: [
+      { n: 'Postgres CDC', src: true, sink: false, badges: ['cdc'] },
+      { n: 'MySQL CDC', src: true, sink: false, badges: ['cdc'] },
+      { n: 'SQL Server CDC', src: true, sink: false, badges: ['cdc'] },
+      { n: 'MongoDB CDC', src: true, sink: false, badges: ['cdc'] },
+    ],
+  },
+  {
+    name: 'Warehouses',
+    items: [
+      { n: 'BigQuery', src: true, sink: true, badges: ['arrow'] },
+      { n: 'Snowflake', src: true, sink: true, badges: ['arrow'] },
+      { n: 'Databricks', src: true, sink: false, badges: ['arrow'] },
+      { n: 'Redshift', src: true, sink: true },
+      { n: 'ClickHouse', src: true, sink: true },
+      { n: 'Spanner', src: true, sink: true },
+    ],
+  },
+  {
+    name: 'Streaming & queues',
+    items: [
+      { n: 'Kafka', src: true, sink: true },
+      { n: 'Kinesis', src: true, sink: true },
+      { n: 'Pub/Sub', src: true, sink: true },
+      { n: 'SQS', src: true, sink: true },
+      { n: 'NATS', src: true, sink: true },
+    ],
+  },
+  {
+    name: 'Files & object stores',
+    items: [
+      { n: 'S3', src: true, sink: true, badges: ['arrow'] },
+      { n: 'GCS', src: true, sink: true, badges: ['arrow'] },
+      { n: 'Azure Blob', src: true, sink: true },
+      { n: 'Parquet', src: true, sink: true, badges: ['arrow'] },
+      { n: 'Delta Lake', src: true, sink: true, badges: ['arrow'] },
+      { n: 'Iceberg', src: false, sink: true },
+      { n: 'SFTP', src: true, sink: true },
+      { n: 'CSV', src: true, sink: true },
+      { n: 'JSON Lines', src: false, sink: true },
+    ],
+  },
+  {
+    name: 'APIs & web',
+    items: [
+      { n: 'REST', src: true, sink: false },
+      { n: 'GraphQL', src: true, sink: false },
+      { n: 'gRPC', src: true, sink: false },
+      { n: 'XML / SOAP', src: true, sink: false },
+      { n: 'WebSocket', src: true, sink: false },
+      { n: 'Webhook', src: true, sink: false },
+      { n: 'HTTP', src: false, sink: true },
+      { n: 'Elasticsearch', src: true, sink: true },
+    ],
+  },
+  {
+    name: 'Bridges & output',
+    items: [
+      { n: 'Singer bridge', src: true, sink: false },
+      { n: 'Stdout', src: false, sink: true },
+    ],
+  },
+];
+---
+
+<Base
+  title="Connectors — faucet-stream"
+  description="Every faucet-stream connector: 37 sources and 29 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Connectors</span>
+        <h1 data-reveal style="--reveal-delay:.05s">37 sources. 29 sinks. One config grammar.</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Every connector shares the same auth, pagination, batching, and state model —
+          learn one and you know them all. Arrow-native fast paths run columnar
+          end-to-end where both ends support it.
+        </p>
+        <div class="legend" data-reveal style="--reveal-delay:.14s">
+          <span><i class="dot src"></i> source</span>
+          <span><i class="dot sink"></i> sink</span>
+          <span><i class="badge">CDC</i> change data capture</span>
+          <span><i class="badge">Arrow</i> columnar fast path</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap cat-wrap">
+      {groups.map((g, gi) => (
+        <div class="cat" data-reveal style={`--reveal-delay:${(gi % 3) * 0.05}s`}>
+          <h2>{g.name}</h2>
+          <div class="rows">
+            {g.items.map((it) => (
+              <div class="conn">
+                <span class="conn-name">{it.n}</span>
+                <span class="conn-meta">
+                  {it.badges?.includes('cdc') && <span class="badge">CDC</span>}
+                  {it.badges?.includes('arrow') && <span class="badge">Arrow</span>}
+                  {it.src && <span class="tag src">source</span>}
+                  {it.sink && <span class="tag sink">sink</span>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+
+    <section class="wrap docs-note" data-reveal>
+      <p>
+        Full capability matrix — streaming, resumable, compression, delivery guarantees,
+        and maturity tier per connector — lives in the <a href={DOCS}>connector reference</a>.
+        Missing one? Connectors are just Cargo crates —
+        <a href="https://faucet-hq.github.io/faucet-stream/extending/authoring-connectors.html">author your own</a>.
+      </p>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1.5rem; }
+  .head h1 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    margin-top: 1rem;
+  }
+  .lede {
+    margin-top: 1.1rem;
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 44rem;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    margin-top: 1.6rem;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    align-items: center;
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .dot.src { background: var(--teal); }
+  .dot.sink { background: color-mix(in srgb, var(--ink) 45%, transparent); }
+
+  .cat-wrap {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.4rem 2rem;
+    padding-bottom: 1rem;
+  }
+  .cat h2 {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal-deep);
+    margin-bottom: 0.9rem;
+    padding-bottom: 0;
+    border: 0;
+  }
+  .rows {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .conn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .conn:last-child { border-bottom: none; }
+  .conn:hover { background: var(--surface-2); }
+  .conn-name { font-weight: 550; font-size: 0.96rem; }
+  .conn-meta { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .tag {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-faint);
+  }
+  /* Two-tone, both active: SOURCE = brand teal, SINK = slate (not a faded grey). */
+  .tag.src {
+    color: var(--teal-deep);
+    border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+    background: color-mix(in srgb, var(--teal) 8%, transparent);
+  }
+  .tag.sink {
+    color: var(--ink-soft);
+    border-color: color-mix(in srgb, var(--ink) 26%, var(--line));
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
+  .badge {
+    font-family: var(--font-body);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.12rem 0.4rem;
+    border-radius: 5px;
+    background: var(--teal-wash);
+    color: var(--teal-deep);
+    font-style: normal;
+  }
+  i.badge { font-style: normal; }
+
+  .docs-note {
+    padding: 2rem 0 0;
+  }
+  .docs-note p {
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1.4rem;
+  }
+  .docs-note a {
+    color: var(--teal-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent);
+  }
+
+  @media (max-width: 720px) {
+    .cat-wrap { grid-template-columns: 1fr; }
+  }
+</style>
