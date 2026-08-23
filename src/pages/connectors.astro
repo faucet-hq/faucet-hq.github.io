@@ -219,7 +219,17 @@ const groups = [
     border: 1px solid var(--line);
     color: var(--ink-faint);
   }
-  .tag.src { color: var(--teal-deep); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
+  /* Two-tone, both active: SOURCE = brand teal, SINK = slate (not a faded grey). */
+  .tag.src {
+    color: var(--teal-deep);
+    border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
+    background: color-mix(in srgb, var(--teal) 8%, transparent);
+  }
+  .tag.sink {
+    color: var(--ink-soft);
+    border-color: color-mix(in srgb, var(--ink) 26%, var(--line));
+    background: color-mix(in srgb, var(--ink) 5%, transparent);
+  }
   .badge {
     font-family: var(--font-mono);
     font-size: 0.62rem;
