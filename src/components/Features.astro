@@ -105,13 +105,14 @@ const icons = {
     color: var(--ink-soft);
     font-size: 0.96rem;
   }
-  /* very soft inline-code: a faint neutral tint, no color shift, no border */
+  /* soft-but-visible inline-code: a light teal tint (on-brand), no border */
   .card p code {
     font-family: var(--font-mono);
     font-size: 0.85em;
-    background: color-mix(in srgb, var(--ink) 5%, transparent);
-    padding: 0.05em 0.32em;
-    border-radius: 4px;
+    background: color-mix(in srgb, var(--teal) 12%, transparent);
+    color: var(--teal-deep);
+    padding: 0.08em 0.36em;
+    border-radius: 5px;
   }
 
   @media (max-width: 900px) {

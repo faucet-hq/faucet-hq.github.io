@@ -123,7 +123,7 @@ const groups = [
       <div class="wrap">
         <div class="section-head" data-reveal>
           <span class="eyebrow">The metric catalog</span>
-          <h2>Counters and histograms across the whole path.</h2>
+          <h2>Counters, gauges, and histograms across the whole path.</h2>
           <p>Over 120 metrics across the runtime — a representative set per subsystem below;
           the full list, histogram buckets, and label values are in the reference.</p>
         </div>
@@ -143,6 +143,10 @@ const groups = [
             </div>
           ))}
         </div>
+        <p class="cat-more" data-reveal>
+          Plus metrics for backfill, scheduling, serve/cluster, notifications, and cleanup —
+          <a href={DOCS}>see all 120+ in the reference →</a>
+        </p>
       </div>
     </section>
 
@@ -199,6 +203,8 @@ rate(faucet_sink_records_total[5m])
   }
 
   .cat-grid { margin-top: clamp(2rem, 4vw, 3rem); display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .cat-more { margin-top: 1.5rem; font-size: 0.95rem; color: var(--ink-soft); }
+  .cat-more a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
   .cat { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.4rem 1.5rem; }
   .cat h3 {
     font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase;
