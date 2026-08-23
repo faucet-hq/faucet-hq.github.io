@@ -14,28 +14,28 @@ const BREW = 'brew install faucet-hq/faucet-stream/faucet-cli';
     <h2>Your first pipeline runs in five minutes.</h2>
     <p>Install the CLI, scaffold a config, and move real data — nothing external to stand up.</p>
 
-    <div class="cta-installs">
-      <div class="cta-inst">
-        <span class="cta-inst-label">Linux &amp; macOS</span>
-        <div class="install install--dark">
-          <span class="prompt" aria-hidden="true">$</span>
-          <code>{INSTALL}</code>
-          <button class="copy" data-copy={INSTALL} aria-label="Copy the curl install command" title="Copy">
-            <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-            <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
+    <div class="cta-install">
+      <input type="radio" name="cta-inst" id="cta-curl" checked />
+      <input type="radio" name="cta-inst" id="cta-brew" />
+      <div class="cta-tabs" role="tablist" aria-label="Install method">
+        <label for="cta-curl" role="tab">Linux &amp; macOS</label>
+        <label for="cta-brew" role="tab">Homebrew</label>
       </div>
-      <div class="cta-inst">
-        <span class="cta-inst-label">Homebrew</span>
-        <div class="install install--dark">
-          <span class="prompt" aria-hidden="true">$</span>
-          <code>{BREW}</code>
-          <button class="copy" data-copy={BREW} aria-label="Copy the Homebrew install command" title="Copy">
-            <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-            <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
+      <div class="install install--dark pane pane-curl">
+        <span class="prompt" aria-hidden="true">$</span>
+        <code>{INSTALL}</code>
+        <button class="copy" data-copy={INSTALL} aria-label="Copy the curl install command" title="Copy">
+          <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="install install--dark pane pane-brew">
+        <span class="prompt" aria-hidden="true">$</span>
+        <code>{BREW}</code>
+        <button class="copy" data-copy={BREW} aria-label="Copy the Homebrew install command" title="Copy">
+          <svg class="i-copy" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+          <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
       </div>
     </div>
 
@@ -121,35 +121,48 @@ const BREW = 'brew install faucet-hq/faucet-stream/faucet-cli';
   .install--dark .copy.copied .i-copy { display: none; }
   .install--dark .copy.copied .i-check { display: block; }
 
-  .cta-installs {
-    display: grid;
-    gap: 0.7rem;
-    max-width: 42rem;
+  .cta-install {
+    max-width: 40rem;
     margin: 2rem auto 0;
   }
-  .cta-inst {
-    display: grid;
-    grid-template-columns: 8.5rem 1fr;
-    align-items: center;
-    gap: 0.9rem;
-    text-align: left;
+  .cta-install > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
-  .cta-inst-label {
+  .cta-tabs {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-bottom: 0.6rem;
+  }
+  .cta-tabs label {
     font-family: var(--font-mono);
     font-size: 0.78rem;
     color: var(--night-soft);
-    text-align: right;
+    padding: 0.3rem 0.85rem;
+    border-radius: 8px;
+    border: 1px solid var(--night-line);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
   }
-  .cta-inst .install {
-    display: flex;
+  .cta-tabs label:hover { color: var(--night-ink); }
+  .cta-tabs label:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  #cta-curl:checked ~ .cta-tabs label[for='cta-curl'],
+  #cta-brew:checked ~ .cta-tabs label[for='cta-brew'] {
+    color: #04140f;
+    background: var(--teal);
+    border-color: transparent;
+    font-weight: 600;
+  }
+  .cta-install .pane {
+    display: none;
     margin: 0;
     width: 100%;
     max-width: none;
   }
-  @media (max-width: 560px) {
-    .cta-inst { grid-template-columns: 1fr; gap: 0.35rem; }
-    .cta-inst-label { text-align: left; }
-  }
+  #cta-curl:checked ~ .pane-curl,
+  #cta-brew:checked ~ .pane-brew { display: flex; }
 
   .cta-actions {
     display: flex;

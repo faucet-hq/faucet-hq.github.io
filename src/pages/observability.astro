@@ -54,6 +54,44 @@ const groups = [
       ['faucet_build_info', 'gauge', 'Version label (group_left)'],
     ],
   },
+  {
+    name: 'Dead-letter queue',
+    rows: [
+      ['faucet_sink_dlq_records_total', 'counter', 'Rows routed to the DLQ'],
+      ['faucet_sink_dlq_pages_total', 'counter', 'DLQ pages written'],
+      ['faucet_sink_dlq_write_duration_seconds', 'histogram', 'Time per DLQ write'],
+      ['faucet_sink_dlq_budget_exceeded_total', 'counter', 'DLQ budget exceeded'],
+    ],
+  },
+  {
+    name: 'Governance',
+    rows: [
+      ['faucet_quality_checks_total', 'counter', 'Quality checks run'],
+      ['faucet_contract_violations_total', 'counter', 'Contract breaches'],
+      ['faucet_schema_drift_total', 'counter', 'Drift events, by kind'],
+      ['faucet_masking_fields_total', 'counter', 'Fields masked'],
+      ['faucet_lineage_events_total', 'counter', 'OpenLineage events emitted'],
+      ['faucet_pipeline_sla_violations_total', 'counter', 'SLA violations, by kind'],
+    ],
+  },
+  {
+    name: 'Resilience',
+    rows: [
+      ['faucet_resilience_retries_total', 'counter', 'Retries, by connector'],
+      ['faucet_resilience_circuit_state', 'gauge', 'Circuit-breaker state'],
+      ['faucet_resilience_giveup_total', 'counter', 'Give-ups after retries'],
+      ['faucet_resilience_poison_rows_total', 'counter', 'Poison rows quarantined'],
+    ],
+  },
+  {
+    name: 'Topology & scale',
+    rows: [
+      ['faucet_tee_records_total', 'counter', 'Records fanned out (tee)'],
+      ['faucet_merge_records_total', 'counter', 'Records merged (fan-in)'],
+      ['faucet_join_matches_total', 'counter', 'Join matches'],
+      ['faucet_pipeline_adaptive_batch_size', 'gauge', 'Adaptive batch size'],
+    ],
+  },
 ];
 ---
 
@@ -86,7 +124,8 @@ const groups = [
         <div class="section-head" data-reveal>
           <span class="eyebrow">The metric catalog</span>
           <h2>Counters and histograms across the whole path.</h2>
-          <p>A representative set — see the reference for the full list, buckets, and label values.</p>
+          <p>Over 120 metrics across the runtime — a representative set per subsystem below;
+          the full list, histogram buckets, and label values are in the reference.</p>
         </div>
         <div class="cat-grid">
           {groups.map((g, i) => (
