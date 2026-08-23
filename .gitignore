@@ -17,3 +17,4 @@ node_modules/
 
 # logs
 npm-debug.log*
+public/openapi.yaml

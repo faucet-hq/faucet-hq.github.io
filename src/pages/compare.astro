@@ -1,0 +1,239 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const README = 'https://github.com/faucet-hq/faucet-stream#how-it-compares';
+const BENCH = 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md';
+
+// Grounded in the library README's "How it compares" table (2026-05 snapshot).
+// Kept to the three tools most people weigh faucet-stream against; the full
+// six-way table (incl. Benthos/Redpanda Connect and Vector) lives in the README.
+const tools = ['faucet-stream', 'Meltano', 'Airbyte', 'Fivetran'];
+const rows = [
+  { f: 'Runtime', v: ['Rust, native binary', 'Python', 'Java/Python on Docker', 'Hosted SaaS'] },
+  { f: 'Single static binary', v: ['yes', 'no', 'no', 'n/a'] },
+  { f: 'Config-driven (YAML/JSON)', v: ['yes', 'yes', 'via UI/API', 'via UI'] },
+  { f: 'Embeddable as a library', v: ['yes (Rust)', 'no', 'no', 'no'] },
+  { f: 'Connectors', v: ['66, growing', '600+ taps', '350+', '500+'] },
+  { f: 'Runs existing Singer taps', v: ['yes (bridge)', 'yes (native)', 'no', 'no'] },
+  { f: 'Change data capture', v: ['yes', 'partial', 'yes', 'yes'] },
+  { f: 'Incremental + resumable state', v: ['yes', 'yes', 'yes', 'yes'] },
+  { f: 'Effectively-once delivery', v: ['yes', 'no', 'partial', 'yes'] },
+  { f: 'Governance in the movement path', v: ['yes (native)', 'no', 'paywalled', 'paywalled'] },
+  { f: 'Built-in metrics + tracing', v: ['yes', 'partial', 'platform', 'hosted'] },
+  { f: 'Self-hosted, no daemon', v: ['yes', 'yes', 'no', 'no'] },
+  { f: 'License', v: ['MIT / Apache-2.0', 'MIT', 'ELv2 + MIT', 'Proprietary'] },
+];
+
+// classify a cell for icon rendering
+function kind(s) {
+  const t = s.toLowerCase();
+  if (t === 'yes' || t.startsWith('yes')) return 'yes';
+  if (t === 'no') return 'no';
+  if (t === 'partial' || t === 'paywalled' || t === 'n/a') return 'meh';
+  return 'text';
+}
+---
+
+<Base
+  title="faucet-stream vs Meltano, Airbyte & Fivetran"
+  description="How faucet-stream compares to Meltano, Airbyte, and Fivetran — a single fast native binary and an embeddable Rust library, with governance in the movement path."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>How it compares</span>
+        <h1 data-reveal style="--reveal-delay:.05s">A native binary <span class="accent">and</span> a library — not a platform.</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          There are many good data-movement tools. faucet-stream's niche: a single fast
+          Rust binary <em>and</em> an embeddable library — config-driven, no Python
+          runtime, no platform to operate, with governance built into the movement path.
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap table-wrap" data-reveal>
+      <div class="scroll">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th class="rowhead"></th>
+              {tools.map((t, i) => (
+                <th class={i === 0 ? 'self' : ''}>{t}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <th scope="row">{r.f}</th>
+                {r.v.map((cell, i) => (
+                  <td class={`${i === 0 ? 'self' : ''} c-${kind(cell)}`}>
+                    {kind(cell) === 'yes' && <span class="tick" aria-hidden="true">✓</span>}
+                    {kind(cell) === 'no' && <span class="cross" aria-hidden="true">✗</span>}
+                    <span class="lbl">{cell}</span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="foot">
+        Reflects the general shape of each tool as of 2026 — check each project for current
+        details. Full six-way table (incl. Benthos / Redpanda Connect and Vector) in the
+        <a href={README}>README</a>. Performance claims: <a href={BENCH}>benchmarks</a>.
+      </p>
+    </section>
+
+    <section class="section band">
+      <div class="wrap band-inner" data-reveal>
+        <div>
+          <span class="eyebrow eyebrow--onDark">The short version</span>
+          <h2>Reach for faucet-stream when you want speed you can deploy anywhere.</h2>
+        </div>
+        <ul class="pts">
+          <li><b>vs Meltano</b> — same config-driven ergonomics, ~2 orders of magnitude faster, no Python runtime. Bring your taps via the Singer bridge.</li>
+          <li><b>vs Airbyte</b> — no platform to stand up; a single binary or a library, with governance native instead of paywalled.</li>
+          <li><b>vs Fivetran</b> — self-hosted and open-source; your data never leaves your infra, and there's a typed library API.</li>
+        </ul>
+      </div>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1.5rem; }
+  .head h1 {
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    margin-top: 1rem;
+  }
+  .head h1 .accent { color: var(--teal-deep); font-style: italic; }
+  .lede {
+    margin-top: 1.2rem;
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 44rem;
+  }
+  .lede em { color: var(--ink); font-style: italic; }
+
+  .table-wrap { padding-bottom: 2rem; }
+  .scroll {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+  .cmp {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 40rem;
+    font-size: 0.95rem;
+  }
+  .cmp th,
+  .cmp td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  .cmp thead th {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--line);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+  }
+  .cmp thead th.self,
+  .cmp td.self {
+    background: var(--teal-wash);
+  }
+  .cmp thead th.self {
+    color: var(--teal-deep);
+    font-weight: 700;
+  }
+  .cmp tbody th[scope='row'] {
+    font-weight: 550;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .cmp td .lbl { color: var(--ink-soft); }
+  .cmp td.self .lbl { color: var(--ink); font-weight: 550; }
+  .cmp td.c-yes .lbl { color: var(--ink); }
+  .tick {
+    color: var(--teal-deep);
+    font-weight: 700;
+    margin-right: 0.4rem;
+  }
+  .cross {
+    color: var(--ink-faint);
+    margin-right: 0.4rem;
+  }
+  .cmp tbody tr:last-child th,
+  .cmp tbody tr:last-child td {
+    border-bottom: none;
+  }
+  .foot {
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    color: var(--ink-faint);
+  }
+  .foot a {
+    color: var(--teal-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent);
+  }
+
+  .band {
+    background:
+      radial-gradient(70% 90% at 85% 0%, var(--night-2), transparent 60%),
+      var(--night);
+    color: var(--night-ink);
+  }
+  .band-inner {
+    display: grid;
+    grid-template-columns: 0.85fr 1.15fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+  }
+  .eyebrow--onDark { color: var(--teal); }
+  .band h2 {
+    color: #fff;
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+    margin-top: 0.8rem;
+  }
+  .pts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.9rem;
+  }
+  .pts li {
+    color: var(--night-soft);
+    padding-left: 1.4rem;
+    position: relative;
+    line-height: 1.6;
+  }
+  .pts li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--teal);
+    font-weight: 700;
+  }
+  .pts b { color: #fff; }
+
+  @media (max-width: 760px) {
+    .band-inner { grid-template-columns: 1fr; }
+  }
+</style>
