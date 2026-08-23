@@ -1,0 +1,269 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const REPO_BENCH = 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md';
+const HARNESS = 'https://github.com/faucet-hq/faucet-stream/tree/main/benchmarks';
+
+const stats = [
+  { n: '712k', l: 'rows / second', s: 'Scenario A, 1M rows' },
+  { n: '11.8', l: 'MiB peak RAM', s: 'vs Meltano 724 MiB' },
+  { n: '~96×', l: 'faster (best case)', s: 'CSV → JSONL' },
+  { n: '1:1', l: 'row parity', s: '1,000,000 = 1,000,000' },
+];
+
+// Real numbers from BENCHMARKS.md (Apple M3 Pro, 1M rows, hyperfine 5 runs).
+const scenarios = [
+  {
+    key: 'A — CSV → JSONL',
+    bottleneck: 'parse / serialize (best case)',
+    faucet: '712,000',
+    meltano: '7,400',
+    gap: '~96×',
+    mem: '11.8 vs 724 MiB',
+  },
+  {
+    key: 'B — Postgres → JSONL',
+    bottleneck: 'typed row decode',
+    faucet: '≈185,000',
+    meltano: '≈7,400',
+    gap: '~25×',
+    mem: '~53× less',
+  },
+  {
+    key: 'C — Postgres → Postgres',
+    bottleneck: 'destination write (sink-bound)',
+    faucet: '123,200 (copy) / 99,000 (insert)',
+    meltano: '7,706',
+    gap: '~16× / ~13×',
+    mem: '35.9 vs 485.7 MiB',
+  },
+];
+
+// throughput bar (Scenario A) — proportional; memory bar tracks value (lower better)
+const tp = [
+  { t: 'faucet-stream', v: '712,000 rows/s', pct: 100, self: true },
+  { t: 'Meltano (Singer)', v: '7,400 rows/s', pct: 4 },
+];
+const mem = [
+  { t: 'faucet-stream', v: '11.8 MiB', pct: 3, self: true },
+  { t: 'Meltano (Singer)', v: '724 MiB', pct: 100 },
+];
+---
+
+<Base
+  title="Benchmarks — faucet-stream"
+  description="Honest, reproducible benchmarks: faucet-stream vs Meltano on identical workloads. 712k rows/s in 11.8 MiB (~96× faster, best case) — and how to run it yourself."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Benchmarks</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Fast — and <span class="accent">reproducible</span>.</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Identical workloads, one machine, faucet-stream vs Meltano (the common Singer
+          runtime). The harness never fabricates a number — a tool that won't run is
+          recorded as such. Run it yourself in one command.
+        </p>
+        <div class="stat-row" data-reveal style="--reveal-delay:.14s">
+          {stats.map((s) => (
+            <div class="stat">
+              <span class="stat-n">{s.n}</span>
+              <span class="stat-l">{s.l}</span>
+              <span class="stat-s">{s.s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="section band">
+      <div class="wrap">
+        <div class="band-head" data-reveal>
+          <span class="eyebrow eyebrow--onDark">Scenario A · CSV → JSONL · 1M rows</span>
+          <h2>The best case, in two pictures.</h2>
+        </div>
+        <div class="charts" data-reveal style="--reveal-delay:.1s">
+          <div class="chart">
+            <div class="chart-title">Throughput <span>higher is better</span></div>
+            {tp.map((r) => (
+              <div class={`row ${r.self ? 'row--self' : ''}`}>
+                <span class="row-tool">{r.t}</span>
+                <div class="track"><span class="fill" style={`--w:${r.pct}%`}></span></div>
+                <span class="row-val">{r.v}</span>
+              </div>
+            ))}
+          </div>
+          <div class="chart">
+            <div class="chart-title">Peak memory <span>lower is better</span></div>
+            {mem.map((r) => (
+              <div class={`row ${r.self ? 'row--self' : ''}`}>
+                <span class="row-tool">{r.t}</span>
+                <div class="track"><span class="fill" style={`--w:${r.pct}%`}></span></div>
+                <span class="row-val">{r.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">All three scenarios</span>
+          <h2>The gap shrinks as the work moves from parse-bound to sink-bound.</h2>
+          <p>Quote the ~96× CSV figure as the upper bound, not the typical case. When the
+          database write dominates, both tools hit the same wall and the gap narrows to ~16×.</p>
+        </div>
+        <div class="scroll" data-reveal>
+          <table class="bench">
+            <thead>
+              <tr><th>Scenario</th><th>Bottleneck</th><th>faucet (rows/s)</th><th>Meltano</th><th>Gap</th><th>Peak RAM</th></tr>
+            </thead>
+            <tbody>
+              {scenarios.map((s) => (
+                <tr>
+                  <th scope="row">{s.key}</th>
+                  <td>{s.bottleneck}</td>
+                  <td class="mono strong">{s.faucet}</td>
+                  <td class="mono">{s.meltano}</td>
+                  <td class="gap">{s.gap}</td>
+                  <td class="mono">{s.mem}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section run">
+      <div class="wrap run-grid">
+        <div class="run-copy" data-reveal>
+          <span class="eyebrow">Run it yourself</span>
+          <h2>One independent confirmation beats a new connector.</h2>
+          <p>
+            The harness lives in <a href={HARNESS}><code>benchmarks/</code></a>. It generates a
+            seeded dataset (byte-identical for both tools), times with <code>hyperfine</code>
+            (1 warmup + 5 runs, median ± stddev), samples peak RSS, and enforces row-count
+            parity. Results land in <code>benchmarks/results/</code>.
+          </p>
+          <ul class="ticks">
+            <li><b>Scenario A</b> needs no infra — just the CLI.</li>
+            <li><b>B &amp; C</b> add Docker Postgres.</li>
+            <li>Reported run: Apple M3 Pro, 12 cores, 18 GiB, macOS.</li>
+          </ul>
+          <a class="btn btn--ghost" href={REPO_BENCH}>Full methodology &amp; caveats →</a>
+        </div>
+        <div class="run-code" data-reveal style="--reveal-delay:.08s">
+          <pre><code><span class="c"># build the release binary the harness uses</span>
+cargo build -p faucet-cli --release \
+  --no-default-features \
+  --features <span class="s">"source-csv,sink-jsonl,source-postgres,sink-postgres"</span>
+
+<span class="c"># Scenario A — 1,000,000 rows (no infra)</span>
+make bench
+
+<span class="c"># Scenarios B & C — add Docker Postgres</span>
+make bench-postgres
+
+<span class="c"># quick 100k smoke run</span>
+make bench-smoke
+
+<span class="c"># → benchmarks/results/ — results.md, versions.txt, raw JSON</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap caveats" data-reveal>
+      <p>
+        <b>Read before quoting.</b> This measures single-machine batch throughput of specific
+        moves — not distributed throughput, connector breadth, or correctness. Sink- and
+        API-bound moves narrow the gap further. Found a case where faucet doesn't win?
+        <a href={REPO_BENCH}>Open an issue or PR</a> with your <code>benchmarks/results/</code>.
+      </p>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1.5rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .head h1 .accent { color: var(--teal-deep); }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 44rem; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .stat { display: flex; flex-direction: column; gap: 0.1rem; padding: 1.2rem 1.3rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .stat-n { font-family: var(--font-display); font-weight: 680; font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -0.03em; }
+  .stat-l { font-weight: 550; color: var(--teal-deep); font-size: 0.95rem; }
+  .stat-s { font-family: var(--font-mono); font-size: 0.74rem; color: var(--ink-faint); margin-top: 0.15rem; }
+
+  .band {
+    background: radial-gradient(70% 90% at 85% 0%, var(--night-2), transparent 60%), var(--night);
+    color: var(--night-ink);
+  }
+  .band-head h2 { color: #fff; font-size: clamp(1.6rem, 3.2vw, 2.3rem); margin-top: 0.8rem; }
+  .eyebrow--onDark { color: var(--teal); }
+  .charts { margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+  .chart-title { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; display: flex; justify-content: space-between; margin-bottom: 0.9rem; }
+  .chart-title span { color: var(--night-soft); text-transform: none; letter-spacing: 0; }
+  .row { display: grid; grid-template-columns: 9rem 1fr auto; align-items: center; gap: 0.8rem; padding-block: 0.5rem; }
+  .row-tool { font-size: 0.86rem; color: var(--night-soft); }
+  .row--self .row-tool { color: #fff; font-weight: 600; }
+  .track { position: relative; height: 0.85rem; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+  .fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #1f6b60, #3a8c7e); transition: width 1.1s cubic-bezier(0.2,0.7,0.2,1); }
+  .row--self .fill { background: linear-gradient(90deg, var(--teal-deep), var(--teal)); box-shadow: 0 0 18px rgba(20,184,166,0.5); }
+  [data-reveal].is-in .fill { width: var(--w); }
+  .row-val { font-family: var(--font-mono); font-size: 0.85rem; color: #fff; white-space: nowrap; }
+
+  .scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); margin-top: 1.5rem; }
+  .bench { border-collapse: collapse; width: 100%; min-width: 44rem; font-size: 0.92rem; }
+  .bench th, .bench td { padding: 0.7rem 1rem; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  .bench thead th { font-size: 0.82rem; color: var(--ink-soft); border-bottom: 2px solid var(--line); font-family: var(--font-display); }
+  .bench tbody th[scope='row'] { font-weight: 600; white-space: nowrap; }
+  .bench td { color: var(--ink-soft); }
+  .bench .mono { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink); }
+  .bench .mono.strong { color: var(--teal-deep); font-weight: 600; }
+  .bench .gap { font-weight: 700; color: var(--teal-deep); }
+  .bench tbody tr:last-child th, .bench tbody tr:last-child td { border-bottom: none; }
+
+  .run-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
+  .run-copy p { margin-top: 1rem; color: var(--ink-soft); }
+  .run-copy code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 0.05em 0.35em; border-radius: 5px; color: var(--teal-deep); }
+  .run-copy a code { color: var(--teal-deep); }
+  .ticks { list-style: none; padding: 0; margin: 1.3rem 0 0; display: grid; gap: 0.5rem; }
+  .ticks li { position: relative; padding-left: 1.6rem; color: var(--ink-soft); font-size: 0.96rem; }
+  .ticks li::before { content: '→'; position: absolute; left: 0; color: var(--teal-deep); font-weight: 700; }
+  .ticks b { color: var(--ink); }
+  .run-copy .btn { margin-top: 1.5rem; }
+  .run-code { background: #0b1220; border: 1px solid #1c2740; border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; }
+  .run-code pre { margin: 0; padding: 1.3rem 1.4rem; overflow-x: auto; }
+  .run-code code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; color: #cdd9ee; white-space: pre; }
+  .run-code .c { color: #5f7599; font-style: italic; }
+  .run-code .s { color: #e9d9a8; }
+
+  .caveats { padding-top: 2rem; }
+  .caveats p { border-top: 1px solid var(--line); padding-top: 1.4rem; color: var(--ink-soft); font-size: 0.95rem; }
+  .caveats a, .caveats code { color: var(--teal-deep); }
+
+  @media (max-width: 860px) {
+    .charts { grid-template-columns: 1fr; gap: 1.8rem; }
+    .run-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .stat-row { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>

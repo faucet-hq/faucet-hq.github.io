@@ -1,5 +1,5 @@
 ---
-const BENCH = 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md';
+const BENCH = `${import.meta.env.BASE_URL}benchmarks`;
 // Bar length tracks the raw value, so the "better" tool is visibly bigger for
 // throughput (higher = better) and visibly *smaller* for memory (lower = better).
 // A tiny floor keeps the losing/winning sliver visible.
@@ -24,7 +24,7 @@ const mem = [
         like Postgres → Postgres narrow the gap; the methodology and honest caveats
         are all in the open.
       </p>
-      <a class="btn btn--onDark" href={BENCH}>See the methodology →</a>
+      <a class="btn btn--onDark" href={BENCH}>See the full benchmarks →</a>
     </div>
 
     <div class="bench-charts" data-reveal style="--reveal-delay:.1s">
