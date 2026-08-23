@@ -8,6 +8,7 @@ const installs = [
   { id: 'brew', label: 'Homebrew', cmd: 'brew install faucet-hq/faucet-stream/faucet-cli' },
   { id: 'cargo', label: 'Cargo', cmd: 'cargo install faucet-cli' },
   { id: 'docker', label: 'Docker', cmd: 'docker run --rm -v "$PWD:/w" ghcr.io/faucet-hq/faucet-stream:full run /w/pipeline.yaml' },
+  { id: 'k8s', label: 'Kubernetes', cmd: 'helm install faucet oci://ghcr.io/faucet-hq/charts/faucet-stream' },
 ];
 ---
 
@@ -135,7 +136,8 @@ const installs = [
   .install-labels label:focus-visible { outline: 2px solid var(--teal-deep); outline-offset: 2px; }
   #inst-brew:checked ~ .install-labels label[for='inst-brew'],
   #inst-cargo:checked ~ .install-labels label[for='inst-cargo'],
-  #inst-docker:checked ~ .install-labels label[for='inst-docker'] {
+  #inst-docker:checked ~ .install-labels label[for='inst-docker'],
+  #inst-k8s:checked ~ .install-labels label[for='inst-k8s'] {
     color: #fff;
     background: var(--teal-deep);
     border-color: var(--teal-deep);
@@ -155,7 +157,8 @@ const installs = [
   }
   #inst-brew:checked ~ .pane-brew,
   #inst-cargo:checked ~ .pane-cargo,
-  #inst-docker:checked ~ .pane-docker { display: flex; }
+  #inst-docker:checked ~ .pane-docker,
+  #inst-k8s:checked ~ .pane-k8s { display: flex; }
   .install .prompt { color: var(--teal); font-family: var(--font-mono); font-weight: 600; }
   .install code {
     color: #eef6f4;
