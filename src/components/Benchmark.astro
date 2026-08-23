@@ -176,8 +176,19 @@ const mem = [
   @media (max-width: 860px) {
     .bench-grid { grid-template-columns: 1fr; }
   }
-  @media (max-width: 460px) {
-    .row { grid-template-columns: 1fr; gap: 0.3rem; }
-    .row-val { justify-self: start; }
+  /* Mobile: tool + value on the top line, a full-width bar below — so both
+     rows' bars are identical regardless of the number's text width. */
+  @media (max-width: 600px) {
+    .row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "tool val"
+        "bar  bar";
+      gap: 0.3rem 0.6rem;
+      align-items: baseline;
+    }
+    .row-tool { grid-area: tool; }
+    .row-val { grid-area: val; justify-self: end; }
+    .track { grid-area: bar; margin-top: 0.15rem; }
   }
 </style>

@@ -117,6 +117,14 @@ const GOV = `${import.meta.env.BASE_URL}governance`;
   }
   @media (max-width: 560px) {
     .gov-grid { grid-template-columns: 1fr; }
-    .gate-node, .gate-core { font-size: 0.75rem; padding: 0.45rem 0.8rem; }
+    /* stack the gate vertically — nodes centered, connector dots vertical */
+    .gate { flex-direction: column; gap: 0.55rem; }
+    .gate-line { flex-direction: column; gap: 0.4rem; }
+    .gate-line i { animation-name: gate-move-v; }
+    .gate-node, .gate-core { font-size: 0.75rem; padding: 0.45rem 0.8rem; text-align: center; }
+  }
+  @keyframes gate-move-v {
+    0%, 100% { opacity: 0.25; transform: translateY(-2px); }
+    50% { opacity: 1; transform: translateY(2px); }
   }
 </style>
