@@ -179,4 +179,15 @@ const guards = [
     .gov-wrap { grid-template-columns: 1fr; }
     .gate-core { font-size: 0.72rem; }
   }
+  /* Mobile: stack the gate vertically — nodes centered, connector dots vertical. */
+  @media (max-width: 560px) {
+    .gate { flex-direction: column; gap: 0.55rem; }
+    .gate-line { flex-direction: column; gap: 0.4rem; }
+    .gate-line i { animation-name: gate-move-v; }
+    .gate-node, .gate-core { text-align: center; }
+  }
+  @keyframes gate-move-v {
+    0%, 100% { opacity: 0.25; transform: translateY(-2px); }
+    50% { opacity: 1; transform: translateY(2px); }
+  }
 </style>

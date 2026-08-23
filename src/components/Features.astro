@@ -116,6 +116,10 @@ const icons = {
     padding: 0.08em 0.36em;
     border-radius: 5px;
     border: 1px solid color-mix(in srgb, var(--teal) 32%, transparent);
+    /* When a long chip wraps across lines, give each fragment its own full
+       border + padding + radius instead of a torn-looking box. */
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   @media (max-width: 900px) {
