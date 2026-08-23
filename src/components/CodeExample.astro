@@ -3,7 +3,6 @@ const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
 // Served on-domain by the deploy workflow (fetched from the library repo at build,
 // so it never drifts). Base-path aware so it also resolves under /dev/.
 const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
-const POSTMAN = `https://app.getpostman.com/run-collection/import?entity=api&url=${encodeURIComponent('https://faucet-hq.github.io/openapi.yaml')}`;
 ---
 
 <section class="section" id="config">
@@ -27,8 +26,8 @@ const POSTMAN = `https://app.getpostman.com/run-collection/import?entity=api&url
       <a class="btn btn--ghost" href={CLI}>Full config grammar →</a>
       <p class="api-note">
         Running it as a service? The control plane ships a full
-        <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — <a href={POSTMAN}>run&nbsp;in&nbsp;Postman</a>,
-        or import it into Insomnia or Bruno.
+        <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — import it into Postman, Insomnia,
+        or Bruno (Import → Link → paste the spec URL).
       </p>
     </div>
 
