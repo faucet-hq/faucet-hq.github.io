@@ -7,7 +7,7 @@ const features = [
   },
   {
     title: 'A runtime, not just connectors',
-    body: 'Incremental + resumable replication, change-data-capture, effectively-once delivery, dead-letter queues, automatic retries, adaptive batch sizing, secrets interpolation, and cron scheduling — with zero per-connector code.',
+    body: 'Incremental + resumable replication, change-data-capture, effectively-once delivery, dead-letter queues, automatic retries, adaptive batch sizing, secrets interpolation, cron scheduling, and built-in Prometheus metrics + tracing spans — with zero per-connector code.',
     icon: 'gear',
   },
   {
@@ -16,8 +16,8 @@ const features = [
     icon: 'shield',
   },
   {
-    title: 'Config-driven or embeddable',
-    body: 'Run faucet run pipeline.yaml, or call Pipeline::new(&source, &sink).run().await? from Rust. Same orchestration engine either way — a CLI you drop on any box, or a library you compile in.',
+    title: 'CLI, library, or HTTP API',
+    body: 'Run faucet run pipeline.yaml, call Pipeline::new(&source, &sink).run().await? from Rust, or drive it over HTTP with faucet serve. Same engine three ways — a CLI you drop on any box, a library you compile in, or a control-plane API.',
     icon: 'code',
   },
   {
@@ -27,7 +27,7 @@ const features = [
   },
   {
     title: 'Compile only what you need',
-    body: 'Every connector is a Cargo feature, so your binary contains exactly the sources and sinks you use — nothing else. Ship a lean REST-to-JSONL build, or switch on all 66 connectors with --features full.',
+    body: 'Every connector — and every transform — is a Cargo feature, so your binary contains exactly the sources, sinks, and transforms you use, nothing else. Ship a lean REST-to-JSONL build, or switch on all 66 connectors with --features full.',
     icon: 'box',
   },
 ];
