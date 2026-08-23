@@ -1,0 +1,237 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/operations/observability.html';
+
+const groups = [
+  {
+    name: 'Source',
+    rows: [
+      ['faucet_source_records_total', 'counter', 'Records read'],
+      ['faucet_source_errors_total', 'counter', 'Read errors, by kind'],
+      ['faucet_source_page_duration_seconds', 'histogram', 'Time per page'],
+      ['faucet_source_in_flight', 'gauge', 'Pages being read'],
+    ],
+  },
+  {
+    name: 'Sink',
+    rows: [
+      ['faucet_sink_records_total', 'counter', 'Records written'],
+      ['faucet_sink_writes_total', 'counter', 'Write calls'],
+      ['faucet_sink_errors_total', 'counter', 'Write errors'],
+      ['faucet_sink_write_duration_seconds', 'histogram', 'Time per write'],
+      ['faucet_sink_flush_duration_seconds', 'histogram', 'Time per flush'],
+    ],
+  },
+  {
+    name: 'Transform',
+    rows: [
+      ['faucet_transform_records_in_total', 'counter', 'Records in'],
+      ['faucet_transform_records_out_total', 'counter', 'Records out'],
+      ['faucet_transform_duration_seconds', 'histogram', 'Time per page'],
+      ['faucet_transform_errors_total', 'counter', 'Errors, by kind'],
+    ],
+  },
+  {
+    name: 'State',
+    rows: [
+      ['faucet_state_get_total', 'counter', 'Bookmark reads (hit/miss)'],
+      ['faucet_state_put_total', 'counter', 'Bookmark writes'],
+      ['faucet_state_errors_total', 'counter', 'State errors, by op'],
+      ['faucet_state_*_duration_seconds', 'histogram', 'Time per op'],
+    ],
+  },
+  {
+    name: 'Pipeline',
+    rows: [
+      ['faucet_pipeline_runs_total', 'counter', 'Runs, by status'],
+      ['faucet_pipeline_run_duration_seconds', 'histogram', 'Run wall-clock'],
+      ['faucet_pipeline_in_flight', 'gauge', 'Runs in progress'],
+      ['faucet_pipeline_seconds_since_last_bookmark', 'gauge', 'Freshness'],
+      ['faucet_build_info', 'gauge', 'Version label (group_left)'],
+    ],
+  },
+  {
+    name: 'Dead-letter queue',
+    rows: [
+      ['faucet_sink_dlq_records_total', 'counter', 'Rows routed to the DLQ'],
+      ['faucet_sink_dlq_pages_total', 'counter', 'DLQ pages written'],
+      ['faucet_sink_dlq_write_duration_seconds', 'histogram', 'Time per DLQ write'],
+      ['faucet_sink_dlq_budget_exceeded_total', 'counter', 'DLQ budget exceeded'],
+    ],
+  },
+  {
+    name: 'Governance',
+    rows: [
+      ['faucet_quality_checks_total', 'counter', 'Quality checks run'],
+      ['faucet_contract_violations_total', 'counter', 'Contract breaches'],
+      ['faucet_schema_drift_total', 'counter', 'Drift events, by kind'],
+      ['faucet_masking_fields_total', 'counter', 'Fields masked'],
+      ['faucet_lineage_events_total', 'counter', 'OpenLineage events emitted'],
+      ['faucet_pipeline_sla_violations_total', 'counter', 'SLA violations, by kind'],
+    ],
+  },
+  {
+    name: 'Resilience',
+    rows: [
+      ['faucet_resilience_retries_total', 'counter', 'Retries, by connector'],
+      ['faucet_resilience_circuit_state', 'gauge', 'Circuit-breaker state'],
+      ['faucet_resilience_giveup_total', 'counter', 'Give-ups after retries'],
+      ['faucet_resilience_poison_rows_total', 'counter', 'Poison rows quarantined'],
+    ],
+  },
+  {
+    name: 'Topology & scale',
+    rows: [
+      ['faucet_tee_records_total', 'counter', 'Records fanned out (tee)'],
+      ['faucet_merge_records_total', 'counter', 'Records merged (fan-in)'],
+      ['faucet_join_matches_total', 'counter', 'Join matches'],
+      ['faucet_pipeline_adaptive_batch_size', 'gauge', 'Adaptive batch size'],
+    ],
+  },
+];
+---
+
+<Base
+  title="Observability — faucet-stream"
+  description="Automatic Prometheus metrics + OpenTelemetry tracing for every source, sink, transform, and state op — labelled by pipeline, row, and connector, with zero per-connector code."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Observability</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Every op is <span class="accent">instrumented</span> — for free.</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Every source, sink, transform, and state operation emits Prometheus
+          metrics and OpenTelemetry tracing spans automatically — no per-connector
+          code, no wrappers. Scrape it, ship spans over OTLP, and point Grafana at it.
+        </p>
+        <div class="pills" data-reveal style="--reveal-delay:.14s">
+          <span>Prometheus metrics</span>
+          <span>OTLP tracing spans</span>
+          <span>labels: pipeline · row · connector</span>
+          <span>zero per-connector code</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">The metric catalog</span>
+          <h2>Counters, gauges, and histograms across the whole path.</h2>
+          <p>Over 120 metrics across the runtime — a representative set per subsystem below;
+          the full list, histogram buckets, and label values are in the reference.</p>
+        </div>
+        <div class="cat-grid">
+          {groups.map((g, i) => (
+            <div class="cat" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+              <h3>{g.name}</h3>
+              <div class="rows">
+                {g.rows.map((r) => (
+                  <div class="mrow">
+                    <code>{r[0]}</code>
+                    <span class="mtype">{r[1]}</span>
+                    <span class="mdesc">{r[2]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p class="cat-more" data-reveal>
+          Plus metrics for backfill, scheduling, serve/cluster, notifications, and cleanup —
+          <a href={DOCS}>see all 120+ in the reference →</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="section wire">
+      <div class="wrap wire-grid">
+        <div class="wire-copy" data-reveal>
+          <span class="eyebrow">Wire it up</span>
+          <h2>Scrape it in two minutes.</h2>
+          <p>
+            <code>faucet serve</code> exposes a Prometheus <code>/metrics</code> endpoint;
+            point your scraper at it. Tracing spans export over OTLP to any collector.
+            <code>faucet_build_info</code> carries the running version — <code>group_left</code>
+            it onto any metric to annotate dashboards.
+          </p>
+          <ul class="ticks">
+            <li>Common labels: <code>pipeline</code>, <code>row</code>, <code>connector</code>.</li>
+            <li><code>run_id</code> is a span attribute only — never a high-cardinality label.</li>
+            <li>Drop-guard timers sample even on cancellation; panics surface as a typed error kind.</li>
+          </ul>
+          <a class="btn btn--ghost" href={DOCS}>Observability reference →</a>
+        </div>
+        <div class="wire-code" data-reveal style="--reveal-delay:.08s">
+          <pre><code><span class="c"># expose /metrics</span>
+faucet serve --metrics-addr <span class="s">0.0.0.0:9090</span>
+
+<span class="c"># prometheus.yml</span>
+scrape_configs:
+  - job_name: <span class="s">faucet</span>
+    static_configs:
+      - targets: [<span class="s">"localhost:9090"</span>]
+
+<span class="c"># annotate any panel with the running version</span>
+rate(faucet_sink_records_total[5m])
+  * on() group_left(version) faucet_build_info</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1.5rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .head h1 .accent { color: var(--teal-deep); }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 46rem; }
+  .pills { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.6rem; }
+  .pills span {
+    font-family: var(--font-mono); font-size: 0.78rem; color: var(--teal-deep);
+    background: var(--teal-wash); border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent);
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+  }
+
+  .cat-grid { margin-top: clamp(2rem, 4vw, 3rem); display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+  .cat-more { margin-top: 1.5rem; font-size: 0.95rem; color: var(--ink-soft); }
+  .cat-more a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+  .cat { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.4rem 1.5rem; }
+  .cat h3 {
+    font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--teal-deep); margin-bottom: 0.9rem;
+  }
+  .rows { display: flex; flex-direction: column; gap: 0.55rem; }
+  .mrow { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 0.3rem 0.8rem; padding-bottom: 0.55rem; border-bottom: 1px solid var(--line-soft); }
+  .mrow:last-child { border-bottom: none; padding-bottom: 0; }
+  .mrow code { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink); word-break: break-all; }
+  .mtype { font-family: var(--font-mono); font-size: 0.68rem; color: var(--teal-deep); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mdesc { grid-column: 1 / -1; font-size: 0.82rem; color: var(--ink-faint); }
+
+  .wire-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
+  .wire-copy p { margin-top: 1rem; color: var(--ink-soft); }
+  .wire-copy code, .ticks code { font-family: var(--font-mono); font-size: 0.86em; background: var(--surface-2); padding: 0.05em 0.35em; border-radius: 5px; color: var(--teal-deep); }
+  .ticks { list-style: none; padding: 0; margin: 1.3rem 0 0; display: grid; gap: 0.5rem; }
+  .ticks li { position: relative; padding-left: 1.6rem; color: var(--ink-soft); font-size: 0.95rem; }
+  .ticks li::before { content: '→'; position: absolute; left: 0; color: var(--teal-deep); font-weight: 700; }
+  .wire-copy .btn { margin-top: 1.5rem; }
+  .wire-code { background: #0b1220; border: 1px solid #1c2740; border-radius: var(--radius); box-shadow: var(--shadow-md); overflow: hidden; }
+  .wire-code pre { margin: 0; padding: 1.3rem 1.4rem; overflow-x: auto; }
+  .wire-code code { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.7; color: #cdd9ee; white-space: pre; }
+  .wire-code .c { color: #5f7599; font-style: italic; }
+  .wire-code .s { color: #e9d9a8; }
+
+  @media (max-width: 860px) {
+    .cat-grid { grid-template-columns: 1fr; }
+    .wire-grid { grid-template-columns: 1fr; }
+  }
+</style>

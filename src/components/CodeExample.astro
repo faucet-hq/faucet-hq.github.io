@@ -1,6 +1,8 @@
 ---
 const CLI = 'https://faucet-hq.github.io/faucet-stream/reference/config.html';
-const OPENAPI = 'https://raw.githubusercontent.com/faucet-hq/faucet-stream/main/docs/openapi.yaml';
+// Served on-domain by the deploy workflow (fetched from the library repo at build,
+// so it never drifts). Base-path aware so it also resolves under /dev/.
+const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
 ---
 
 <section class="section" id="config">
@@ -24,7 +26,8 @@ const OPENAPI = 'https://raw.githubusercontent.com/faucet-hq/faucet-stream/main/
       <a class="btn btn--ghost" href={CLI}>Full config grammar →</a>
       <p class="api-note">
         Running it as a service? The control plane ships a full
-        <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — import it into Postman, Insomnia, or Bruno.
+        <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — import it into Postman, Insomnia,
+        or Bruno (Import → Link → paste the spec URL).
       </p>
     </div>
 
@@ -96,6 +99,14 @@ curl -N <span class="v">.../v1/runs/run_01H.../logs</span>   <span class="c"># S
 </section>
 
 <style>
+  /* This section sits directly under the dark benchmark band, whose bottom
+     padding is dark — so the white space above the eyebrow is only this section's
+     top padding, reading as a smaller gap than sections that follow a light
+     section (which get both paddings as continuous white). Add extra top padding
+     to restore the vertical rhythm. */
+  .section {
+    padding-top: clamp(6rem, 12vw, 10rem);
+  }
   .code-grid {
     display: grid;
     grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);

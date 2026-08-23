@@ -6,8 +6,10 @@ const DEPLOY_DOCS = 'https://faucet-hq.github.io/faucet-stream/operations/deploy
 
 const installs = [
   { id: 'brew', label: 'Homebrew', cmd: 'brew install faucet-hq/faucet-stream/faucet-cli' },
+  { id: 'curl', label: 'Script', cmd: 'curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh' },
   { id: 'cargo', label: 'Cargo', cmd: 'cargo install faucet-cli' },
   { id: 'docker', label: 'Docker', cmd: 'docker run --rm -v "$PWD:/w" ghcr.io/faucet-hq/faucet-stream:full run /w/pipeline.yaml' },
+  { id: 'k8s', label: 'Kubernetes', cmd: 'helm install faucet oci://ghcr.io/faucet-hq/charts/faucet-stream' },
 ];
 ---
 
@@ -25,7 +27,7 @@ const installs = [
         A config-driven pipeline engine with <b>66 source &amp; sink connectors</b>,
         change-data-capture, effectively-once delivery, and governance built into the
         movement path — wired by a single <code>faucet</code> binary, or embedded in your
-        own service. No Python runtime, no platform to stand up.
+        own service. No Python runtime, nothing external to stand up.
       </p>
 
       <div class="install-tabs" data-reveal style="--reveal-delay:.15s">
@@ -49,7 +51,9 @@ const installs = [
         ))}
       </div>
       <p class="install-alt" data-reveal style="--reveal-delay:.18s">
-        or embed the library — <code>cargo add faucet-stream</code> ·
+        or embed the library — <code>cargo add faucet-stream</code>
+      </p>
+      <p class="install-alt install-alt-2" data-reveal style="--reveal-delay:.2s">
         <a href={DEPLOY_DOCS}>deploy with Docker or Helm&nbsp;→</a>
       </p>
 
@@ -107,10 +111,12 @@ const installs = [
   }
   .lede b { color: var(--ink); font-weight: 600; }
   .lede code {
-    font-size: 0.92em;
-    background: var(--surface-2);
-    padding: 0.05em 0.35em;
-    border-radius: 5px;
+    font-size: 0.9em;
+    background: var(--teal-wash);
+    color: var(--teal-deep);
+    padding: 0.12em 0.4em;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent);
   }
 
   /* install method tabs (CSS-only) */
@@ -134,8 +140,10 @@ const installs = [
   .install-labels label:hover { color: var(--ink); border-color: var(--teal); }
   .install-labels label:focus-visible { outline: 2px solid var(--teal-deep); outline-offset: 2px; }
   #inst-brew:checked ~ .install-labels label[for='inst-brew'],
+  #inst-curl:checked ~ .install-labels label[for='inst-curl'],
   #inst-cargo:checked ~ .install-labels label[for='inst-cargo'],
-  #inst-docker:checked ~ .install-labels label[for='inst-docker'] {
+  #inst-docker:checked ~ .install-labels label[for='inst-docker'],
+  #inst-k8s:checked ~ .install-labels label[for='inst-k8s'] {
     color: #fff;
     background: var(--teal-deep);
     border-color: var(--teal-deep);
@@ -146,7 +154,7 @@ const installs = [
     align-items: center;
     gap: 0.6rem;
     padding: 0.7rem 0.7rem 0.7rem 1rem;
-    background: var(--ink);
+    background: var(--term-bg);
     border-radius: 11px;
     box-shadow: var(--shadow-md);
     width: 100%;
@@ -154,8 +162,10 @@ const installs = [
     overflow: hidden;
   }
   #inst-brew:checked ~ .pane-brew,
+  #inst-curl:checked ~ .pane-curl,
   #inst-cargo:checked ~ .pane-cargo,
-  #inst-docker:checked ~ .pane-docker { display: flex; }
+  #inst-docker:checked ~ .pane-docker,
+  #inst-k8s:checked ~ .pane-k8s { display: flex; }
   .install .prompt { color: var(--teal); font-family: var(--font-mono); font-weight: 600; }
   .install code {
     color: #eef6f4;
@@ -190,6 +200,9 @@ const installs = [
     margin-top: 0.85rem;
     font-size: 0.85rem;
     color: var(--ink-soft);
+  }
+  .install-alt-2 {
+    margin-top: 0.3rem;
   }
   .install-alt code {
     font-family: var(--font-mono);
