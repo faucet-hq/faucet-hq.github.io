@@ -105,8 +105,10 @@ const icons = {
     color: var(--ink-soft);
     font-size: 0.96rem;
   }
-  /* visible inline-code chip: a clear teal tint + hairline border (on-brand) */
-  .card p code {
+  /* visible inline-code chip: a clear teal tint + hairline border (on-brand).
+     :global(code) is required — the <code> comes from `set:html`, which Astro's
+     style scoper never tags, so a scoped `.card p code` selector never matches. */
+  .card p :global(code) {
     font-family: var(--font-mono);
     font-size: 0.85em;
     background: color-mix(in srgb, var(--teal) 20%, transparent);
