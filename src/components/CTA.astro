@@ -1,7 +1,10 @@
 ---
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const GITHUB = 'https://github.com/faucet-hq/faucet-stream';
-const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
+// curl is the universal quick-install (Linux + macOS, no prerequisites); brew is
+// the macOS/Linuxbrew convenience alternative. cargo lives in the hero tabs + docs.
+const INSTALL = 'curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh';
+const BREW = 'brew install faucet-hq/faucet-stream/faucet-cli';
 ---
 
 <section class="section cta-section">
@@ -19,6 +22,7 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
         <svg class="i-check" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m5 13 4 4L19 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
+    <p class="cta-alt">Linux &amp; macOS. On Homebrew? <code>{BREW}</code></p>
 
     <div class="cta-actions">
       <a class="btn btn--onDark" href={DOCS}>Read the guide →</a>
@@ -101,6 +105,20 @@ const INSTALL = 'brew install faucet-hq/faucet-stream/faucet-cli';
   .install--dark .copy.copied { color: var(--teal); }
   .install--dark .copy.copied .i-copy { display: none; }
   .install--dark .copy.copied .i-check { display: block; }
+
+  .cta-alt {
+    margin-top: 0.9rem;
+    font-size: 0.82rem;
+    color: var(--night-soft);
+  }
+  .cta-alt code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    color: var(--night-ink);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.1em 0.4em;
+    border-radius: 5px;
+  }
 
   .cta-actions {
     display: flex;
