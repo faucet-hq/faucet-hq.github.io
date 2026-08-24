@@ -1,0 +1,102 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const papers = [
+  {
+    title: 'Governance in the Movement Path',
+    blurb:
+      'Masking, quality, contracts, schema-drift policy, column lineage, and SLAs enforced inside the pipe — per page, before any write — with a mask-first ordering guarantee proven in CI.',
+    href: `${base}papers/governance-in-the-movement-path`,
+    status: 'Draft',
+    tag: 'Governance',
+  },
+  {
+    title: 'A Zero-Cost Columnar Fast Path',
+    blurb:
+      'How faucet-stream runs Arrow end-to-end when both ends support it — negotiated as a pure escape hatch, with default builds byte-identical to the row path.',
+    href: `${base}papers/columnar-fast-path`,
+    status: 'Draft',
+    tag: 'Performance',
+  },
+  {
+    title: 'Crash-Safe Change Data Capture',
+    blurb:
+      'Advancing the replication checkpoint only from a durable bookmark — never from decoded WAL or a keepalive — so no committed change is lost on crash. Postgres, MySQL, MongoDB, SQL Server.',
+    href: `${base}papers/crash-safe-cdc`,
+    status: 'Draft',
+    tag: 'Correctness',
+  },
+  {
+    title: 'Benchmarks & Methodology',
+    blurb:
+      'The reproducible 1M-row reference move: 712k rows/s, ~96× Meltano, single binary — the method, the caveats, and why streaming Rust wins.',
+    status: 'Planned',
+    tag: 'Performance',
+  },
+];
+---
+
+<Base
+  title="Papers — faucet-stream"
+  description="Technical white papers on faucet-stream: in-flight governance, the zero-cost columnar fast path, crash-safe CDC, and benchmark methodology."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Papers</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Technical white papers</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Deep dives on the parts of faucet-stream that are a genuine engineering
+          contribution — each grounded in the real implementation, with every claim
+          verified against the code before it ships.
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap papers-grid">
+      {papers.map((p, i) => (
+        <article class={`pcard ${p.href ? '' : 'pcard--soon'}`} data-reveal style={`--reveal-delay:${(i % 2) * 0.06}s`}>
+          <div class="pcard-top">
+            <span class="ptag">{p.tag}</span>
+            <span class={`pstatus ${p.status === 'Draft' ? 'is-draft' : ''}`}>{p.status}</span>
+          </div>
+          <h2>{p.title}</h2>
+          <p>{p.blurb}</p>
+          {p.href
+            ? <a class="pread" href={p.href}>Read the paper →</a>
+            : <span class="psoon">Coming soon</span>}
+        </article>
+      ))}
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 44rem; }
+
+  .papers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.4rem; }
+  .pcard { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.6rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
+  .pcard:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .pcard--soon { opacity: 0.72; }
+  .pcard-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; }
+  .ptag { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-deep); }
+  .pstatus { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.12rem 0.55rem; }
+  .pstatus.is-draft { color: var(--teal-deep); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); background: color-mix(in srgb, var(--teal) 8%, transparent); }
+  .pcard h2 { font-size: 1.25rem; }
+  .pcard p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
+  .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); align-self: flex-start; }
+  .psoon { margin-top: 1rem; color: var(--ink-faint); font-size: 0.88rem; font-family: var(--font-mono); }
+
+  @media (max-width: 720px) { .papers-grid { grid-template-columns: 1fr; } }
+</style>

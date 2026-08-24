@@ -1,0 +1,326 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+
+// Per-source resume unit + whether it acks a position back upstream.
+const sources = [
+  ['Postgres', 'LSN (logical replication slot, pgoutput)', 'Yes — confirmed_flush_lsn', 'Tier 1'],
+  ['MySQL', 'binlog file+pos, or GTID set', 'No — pull-based', 'Tier 1'],
+  ['MongoDB', 'change-stream resume token', 'No — pull-based', 'Tier 1'],
+  ['SQL Server', 'per-capture-instance LSN map', 'No — poll-based', 'Tier 1'],
+];
+---
+
+<Base
+  title="Crash-Safe Change Data Capture — faucet-stream"
+  description="A technical white paper: how faucet-stream advances a CDC replication checkpoint only from a durable bookmark — after the sink flushes, never from decoded WAL or a keepalive — so no committed change is lost on crash. Postgres, MySQL, MongoDB, SQL Server, with an honest account of at-least-once vs effectively-once."
+>
+  <Header />
+  <main id="main">
+    <article class="paper">
+      <header class="paper-head">
+        <a class="crumb" href="/papers">← Papers</a>
+        <span class="kicker">Technical white paper</span>
+        <h1>Crash-Safe Change Data Capture</h1>
+        <p class="dek">
+          A change-data-capture pipeline is only as trustworthy as the moment it decides
+          "this change is safely delivered — I can move the checkpoint forward." Move it too
+          early and a crash silently drops a committed change. faucet-stream advances the
+          replication checkpoint only from a durable bookmark, only after the sink has flushed —
+          never from decoded WAL or a keepalive. This paper describes that rule, proves it for
+          Postgres, and is honest about what the guarantee is (no loss) and is not (no duplicates,
+          by default).
+        </p>
+        <div class="meta">
+          <span>faucet-stream</span><span>·</span><span>~13 min read</span><span>·</span>
+          <span>Draft — grounded in code &amp; crash-resume tests</span>
+        </div>
+      </header>
+
+      <section class="abstract">
+        <h2>Abstract</h2>
+        <p>
+          Change data capture turns a database's write-ahead log into a stream of row changes.
+          The hard part is not reading the log — it is knowing when it is safe to tell the
+          database "you may forget everything up to here." That acknowledgement is a promise:
+          the changes below this position are durably delivered. If the pipeline makes that
+          promise before the destination has actually stored the data — because it decoded the
+          change, or because the database sent a keepalive — a crash in the gap loses a committed
+          change, silently and permanently. faucet-stream makes the promise in exactly one place:
+          after the sink flushes a page, it persists a durable bookmark, and only that bookmark is
+          ever fed back to the source. This paper walks through the ordering rule, its
+          strongest expression in the Postgres connector, its shape in MySQL, MongoDB, and SQL
+          Server, and the precise delivery guarantee that results — at-least-once by default,
+          effectively-once when the sink cooperates. It deliberately does not claim exactly-once.
+        </p>
+      </section>
+
+      <section>
+        <h2>1. The problem: acknowledging too early</h2>
+        <p>
+          Every CDC source has a resume position: a Postgres LSN, a MySQL binlog offset or GTID,
+          a MongoDB resume token, a SQL Server log sequence number. On restart, the pipeline asks
+          the source to continue from that position. So the position is a durability claim — "I have
+          everything before this." The failure mode that matters is advancing it too early:
+        </p>
+        <ul>
+          <li><b>Advancing on decode.</b> The pipeline reads and parses a change, marks the position,
+            then crashes before the destination stores it. On restart the source resumes <em>after</em>
+            the change. It is gone — never written, never re-read.</li>
+          <li><b>Advancing on a keepalive.</b> Postgres periodically asks "still there?" and reports its
+            latest WAL position. Echoing that position back tells Postgres it may recycle WAL for
+            changes the consumer has not persisted. A crash then loses them.</li>
+        </ul>
+        <p>
+          Both are easy mistakes — they make the stream look healthy and the lag graph look great —
+          and both corrupt the destination silently. Avoiding them is the whole game.
+        </p>
+      </section>
+
+      <section>
+        <h2>2. The rule: flush, then persist, then acknowledge</h2>
+        <p>
+          faucet-stream fixes the ordering once, centrally, for every pipeline — not per connector.
+          A page of changes carries a <code>bookmark</code>: the resume position that becomes safe
+          <em>after</em> this page is durably written. The engine always does the same three steps in
+          the same order:
+        </p>
+        <ol class="ordered">
+          <li><b>Write</b> the page to the sink.</li>
+          <li><b>Flush</b> the sink — block until it confirms the batch is durable.</li>
+          <li><b>Persist</b> the bookmark to a durable state store — and only now is that position
+            eligible to be acknowledged upstream.</li>
+        </ol>
+        <div class="callout">
+          <p>
+            The invariant, stated in the code and fixed by an architecture decision record:
+            <b>the state store is always at or behind the sink — never ahead.</b> The only crash
+            window is between "sink committed" and "bookmark persisted." A crash there re-delivers
+            the page on restart. It never loses it.
+          </p>
+        </div>
+        <figure class="diagram" aria-label="Write, flush, persist ordering">
+          <div class="flow">
+            <span class="node src">CDC source</span>
+            <span class="arr">→</span>
+            <span class="node">page + bookmark</span>
+            <span class="arr">→</span>
+            <span class="node sink">sink.write</span>
+            <span class="arr">→</span>
+            <span class="stage mask">sink.flush</span>
+            <span class="arr">→</span>
+            <span class="node dlq">state.put(bookmark)</span>
+          </div>
+          <div class="flow flow-branch">
+            <span class="branch">crash before flush → nothing acknowledged → full re-read</span>
+            <span class="branch2">crash after flush, before put → re-deliver the page (no loss)</span>
+          </div>
+          <figcaption>Figure 1 — the bookmark is persisted only after the sink flush; the acknowledgement upstream is derived only from the persisted bookmark. Identical on the row and columnar paths.</figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h2>3. Postgres: the rule made explicit</h2>
+        <p>
+          Postgres is the one source that acknowledges a position <em>back</em> to the database (it must,
+          so the server can recycle WAL and advance the replication slot). That makes it the strictest
+          test of the rule — and the connector enforces it in two deliberate refusals:
+        </p>
+        <dl class="guards">
+          <dt>A keepalive never advances the checkpoint</dt>
+          <dd>When Postgres sends a keepalive with its latest WAL position, the connector absorbs it and
+            pointedly does <em>not</em> report that position as applied — doing so would authorize WAL
+            recycling for changes never persisted.</dd>
+          <dt>Decoding never advances the checkpoint</dt>
+          <dd>Parsing a <code>COMMIT</code> record does not move the confirmed position. The comment in the
+            source is blunt: the only durable signal is the bookmark the pipeline persists after the sink
+            flush, which arrives back via the resume path.</dd>
+        </dl>
+        <p>
+          So the LSN fed back to Postgres — the <code>confirmed_flush_lsn</code> that advances the
+          replication slot before streaming resumes — originates <em>only</em> from a durable bookmark.
+          With no persisted bookmark, the slot is not advanced at all. The connector emits one page per
+          committed transaction, carrying that transaction's end-LSN, and lets the central rule in §2 decide
+          when it becomes real.
+        </p>
+      </section>
+
+      <section>
+        <h2>4. MySQL, MongoDB, SQL Server</h2>
+        <p>
+          The other three sources never acknowledge a position upstream — MySQL and MongoDB stream by
+          pulling, SQL Server by polling — so the "never from a keepalive" hazard cannot even arise. Their
+          resume position lives solely in the durable state store and advances only through the same
+          post-flush persist:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Source</th><th>Resume unit</th><th>Acks upstream?</th><th>Maturity</th></tr></thead>
+            <tbody>
+              {sources.map((s) => (<tr><td class="yes">{s[0]}</td><td>{s[1]}</td><td>{s[2]}</td><td>{s[3]}</td></tr>))}
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li><b>MySQL</b> — one page per commit (an empty commit still yields, to advance the bookmark). Even
+            under GTID mode the persisted bookmark records file+position, so resume is unambiguous.</li>
+          <li><b>MongoDB</b> — the resume token advances per flushed batch; nothing is persisted until a page
+            yields, so a dropped in-flight buffer is simply re-fetched from the last token.</li>
+          <li><b>SQL Server</b> — a map of capture-instance → last-committed LSN; on resume each poll starts at
+            the LSN <em>after</em> the bookmark, so a committed change is never re-read within a run.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5. The durable bookmark store</h2>
+        <p>
+          "Persist the bookmark" is only as strong as the store behind it. faucet-stream's state store is a
+          small key/value contract whose <code>put</code> must be durable before it returns:
+        </p>
+        <dl class="guards">
+          <dt>File state store</dt>
+          <dd>Writes to a temp file, <code>fsync</code>s it, atomically renames it into place, then
+            <code>fsync</code>s the parent directory. Genuinely crash-durable.</dd>
+          <dt>Postgres state store</dt>
+          <dd>A single <code>INSERT … ON CONFLICT DO UPDATE</code> — durable per Postgres commit.</dd>
+          <dt>Redis state store</dt>
+          <dd>A plain <code>SET</code>. <b>Caveat:</b> durability is only as strong as the Redis server's
+            own persistence configuration — there is no synchronous fsync wait. Prefer the file or Postgres
+            store where bookmark durability is critical.</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>6. The honest guarantee: at-least-once, upgradable</h2>
+        <p>
+          Here is where many CDC systems overclaim. faucet-stream does not. The crash window in §2 —
+          sink committed, bookmark not yet persisted — <em>re-delivers</em> the page on restart. That means
+          the default guarantee is:
+        </p>
+        <div class="callout">
+          <p>
+            <b>At-least-once: no committed change is ever lost, but a change may be delivered more than once
+            across a crash.</b> The codebase does not offer a distributed "exactly-once" — it names the ceiling
+            <em>effectively-once</em> and says so in the type system.
+          </p>
+        </div>
+        <p>
+          Duplicates are removed by pairing a CDC source with a sink that can absorb a replay. All four CDC
+          sources declare deterministic replay, so opting into effectively-once selects one of two mechanisms:
+        </p>
+        <ul>
+          <li><b>Atomic watermark</b> — an idempotent sink plus a durable state store. The sink's committed
+            token embeds the resume bookmark; on restart the pipeline reads that token and re-anchors the
+            source, skipping pages already committed.</li>
+          <li><b>Keyed upsert</b> — the sink deduplicates by primary key, so a replayed row overwrites rather
+            than duplicates.</li>
+        </ul>
+        <p>
+          If neither is available, the engine refuses to pretend: requesting exactly-once without an idempotent
+          or keyed sink is a typed error that names the limiting side, rather than a silent downgrade.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. Proven, not just asserted</h2>
+        <p>
+          The no-loss claim is checked in CI, not merely documented. The Postgres connector has a test that
+          simulates a crash <em>before</em> the flush-and-persist step and asserts the row is
+          <b>re-delivered, not lost</b>; companion tests assert that resuming from a bookmark skips
+          already-consumed changes. Every CDC source has a bookmark round-trip conformance test and a
+          "capture, then resume without replay" integration test, and the pipeline itself is tested to persist
+          the bookmark only after the sink succeeds — and to <em>not</em> persist it when the sink fails.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Limitations &amp; honest scope</h2>
+        <ul>
+          <li><b>No double-delivery is <em>not</em> the default.</b> Default delivery is at-least-once; a crash
+            can re-deliver a page. Duplicate-free requires opting into effectively-once with an idempotent or
+            keyed sink and a durable state store.</li>
+          <li><b>The "never from a keepalive/decode" rule is enforced, non-trivially, only for Postgres</b> —
+            the only source that acks upstream. For MySQL, MongoDB, and SQL Server the claim holds trivially,
+            because they never acknowledge a position at all.</li>
+          <li><b>SQL Server has one upstream-retention gap.</b> If the database's own CDC cleanup job purges
+            change rows before they are read (the resume point falls below the retained minimum), a data gap is
+            possible. This is an upstream retention limit, not a checkpoint-ordering flaw — the connector warns
+            and resumes from the earliest retained change.</li>
+          <li><b>Redis state is not synchronously durable.</b> Use the file or Postgres state store when the
+            bookmark must survive a hard crash of the state layer itself.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>9. Conclusion</h2>
+        <p>
+          Crash safety in CDC comes down to one discipline, applied without exception: never acknowledge a
+          position you have not durably delivered. faucet-stream keeps that discipline in a single place — flush
+          the sink, persist the bookmark, and only then let that bookmark be acknowledged upstream — so the state
+          store is always at or behind the destination, and the worst a crash can do is make the pipeline repeat
+          itself, never skip. Postgres proves the rule against the hardest case, an upstream that must be told
+          when to forget; the other sources inherit it for free. The result is a guarantee stated precisely
+          rather than generously: no committed change is lost, duplicates are removed when the sink can help, and
+          the word "exactly-once" is left unsaid because it cannot honestly be earned here.
+        </p>
+      </section>
+
+      <p class="cta-inline">
+        See the CDC connectors in the <a href={DOCS}>documentation</a>, or read the companion paper on
+        <a href="/papers/governance-in-the-movement-path">governance in the movement path</a>.
+      </p>
+    </article>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .paper { max-width: 48rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 1rem; }
+  .paper-head { border-bottom: 1px solid var(--line); padding-bottom: 1.6rem; margin-bottom: 2rem; }
+  .crumb { color: var(--teal-deep); font-size: 0.9rem; }
+  .kicker { display: block; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); }
+  .paper h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; line-height: 1.1; }
+  .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
+  .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+
+  .paper section { margin-top: 2.4rem; }
+  .paper h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
+  .paper p { line-height: 1.75; color: var(--ink-soft); margin-top: 0.9rem; }
+  .paper .abstract p { font-size: 1.05rem; }
+  .paper ul, .paper ol { margin-top: 1rem; padding-left: 1.3rem; line-height: 1.75; color: var(--ink-soft); }
+  .paper li { margin-top: 0.5rem; }
+  .paper b { color: var(--ink); }
+  .paper code { font-family: var(--font-mono); font-size: 0.85em; background: color-mix(in srgb, var(--teal) 10%, transparent); color: var(--teal-deep); padding: 0.06em 0.34em; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent); }
+
+  .guards dt { font-weight: 650; color: var(--ink); margin-top: 1.1rem; }
+  .guards dd { margin: 0.25rem 0 0; line-height: 1.7; color: var(--ink-soft); }
+
+  .ordered { counter-reset: step; }
+  .callout { margin-top: 1.3rem; border-left: 3px solid var(--teal); background: color-mix(in srgb, var(--teal) 7%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 1rem 1.2rem; }
+  .callout p { margin: 0; color: var(--ink); }
+
+  .diagram { margin: 1.6rem 0 0; }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .flow-branch { margin-top: 0.7rem; font-size: 0.85rem; color: var(--ink-faint); display: flex; flex-direction: column; gap: 0.3rem; }
+  .node, .stage { font-family: var(--font-mono); font-size: 0.82rem; padding: 0.4rem 0.7rem; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); }
+  .node.src, .node.sink { border-color: color-mix(in srgb, var(--teal) 35%, var(--line)); color: var(--teal-deep); }
+  .node.dlq { border-color: color-mix(in srgb, var(--ink) 26%, var(--line)); }
+  .arr { color: var(--ink-faint); }
+  .stage.mask { background: var(--teal); color: #04140f; border-color: transparent; font-weight: 600; }
+  figcaption { margin-top: 0.8rem; font-size: 0.85rem; color: var(--ink-faint); }
+
+  .table-wrap { overflow-x: auto; margin-top: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+  td.yes { color: var(--teal-deep); font-weight: 550; }
+
+  .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+</style>
