@@ -62,6 +62,11 @@ jobs:
 
       - name: Build main (base /)
         working-directory: main
+        env:
+          # Cloudflare Web Analytics beacon token — production only (keeps /dev/
+          # preview traffic out of the counts). Empty when the secret is unset =
+          # no beacon injected. Add repo secret CF_WEB_ANALYTICS_TOKEN to activate.
+          CF_WEB_ANALYTICS_TOKEN: ${{ secrets.CF_WEB_ANALYTICS_TOKEN }}
         run: |
           npm ci
           npm run build
