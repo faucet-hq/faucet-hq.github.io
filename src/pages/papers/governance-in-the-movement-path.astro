@@ -1,0 +1,359 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+
+// One real pipeline exercising all six guardrails, in order.
+const configExample = `pipeline:
+  source: { type: postgres, config: { query: "select * from orders" } }
+
+  # Governance runs in the pipe, per page, before the sink — in this order.
+  masking:
+    rules:
+      - { field: email, action: hash }     # HMAC-SHA256, deterministic, joinable
+      - { field: ssn,   action: redact }   # -> "***"
+  quality:
+    checks:
+      - { field: email,  rule: not_null, on_failure: quarantine }
+      - { field: amount, rule: { gte: 0 }, on_failure: abort }
+  contract:
+    version: 1
+    fields:
+      - { name: id,     type: integer, required: true }
+      - { name: status, type: string, enum: [active, churned] }
+    on_breach: quarantine
+  drift:
+    on_drift: quarantine        # warn | evolve | ignore | quarantine | fail
+  lineage:
+    namespace: prod.warehouse
+    include_column_lineage: true
+  sla:
+    max_staleness_secs: 86400
+    min_rows_per_run: 1
+
+  sink: { type: bigquery, config: { dataset: raw, table: orders, write_mode: merge } }
+  dlq:  { type: jsonl, config: { path: ./dlq/orders.jsonl } }`;
+
+const compare = [
+  ['PII masked before it lands', 'Yes — before sink, DLQ, and lineage', 'No — masked (if at all) after load', 'No'],
+  ['Bad rows kept out of the target', 'Yes — quarantined to a DLQ pre-write', 'Partly — flagged after load', 'No'],
+  ['Contract enforced', 'On the wire, before the sink', 'Post-load assertions', 'No'],
+  ['Schema drift handled', 'Policy per run (5 actions)', 'Detected downstream', 'No'],
+  ['Column lineage', 'Derived from the transform chain', 'Separate catalog tool', 'Limited / add-on'],
+  ['Extra services to run', 'None — one config block', 'dbt + GE + catalog + monitor', 'Vendor add-ons'],
+];
+---
+
+<Base
+  title="Governance in the Movement Path — faucet-stream"
+  description="A technical white paper: how faucet-stream enforces masking, quality, contracts, schema-drift policy, column lineage, and SLAs inside the data pipeline — per page, before any write — with a proven mask-first ordering guarantee and zero per-connector code."
+>
+  <Header />
+  <main id="main">
+    <article class="paper">
+      <header class="paper-head">
+        <a class="crumb" href="/papers">← Papers</a>
+        <span class="kicker">Technical white paper</span>
+        <h1>Governance in the Movement Path</h1>
+        <p class="dek">
+          Quality, contracts, masking, schema-drift policy, column lineage, and SLAs —
+          enforced inside the pipe, per page, before any write. One config block per
+          guardrail, zero per-connector code, and a mask-first ordering guarantee that is
+          fixed in one place and proven by a test.
+        </p>
+        <div class="meta">
+          <span>faucet-stream</span><span>·</span><span>~12 min read</span><span>·</span>
+          <span>Draft — pending benchmark run</span>
+        </div>
+      </header>
+
+      <section class="abstract">
+        <h2>Abstract</h2>
+        <p>
+          The prevailing ELT pattern moves data first and governs it later: connectors land
+          raw rows in a warehouse, and a separate stack of tools then tests, masks, and
+          catalogs them. By then the sensitive field has already landed, the bad row is
+          already queryable, and lineage has to be reverse-engineered. faucet-stream takes the
+          opposite stance: governance is a first-class stage <em>in the movement path</em>,
+          applied to every page of records before it reaches the sink. This paper describes
+          the model, the ordering guarantee at its core — a masked field never reaches a sink,
+          a dead-letter queue, or a lineage event in the clear — and the honest limits of the
+          current implementation.
+        </p>
+      </section>
+
+      <section>
+        <h2>1. The problem: governance after the fact</h2>
+        <p>
+          A modern ELT stack is assembled from parts: a movement tool (Fivetran, Airbyte,
+          Meltano) loads raw data; an orchestrator schedules it; and a governance layer —
+          dbt tests, Great Expectations, a catalog, a data-observability monitor — runs
+          <em>downstream</em>, after the load. Each part is good at its job, but the seam
+          between them is where risk lives:
+        </p>
+        <ul>
+          <li><b>PII lands first.</b> Masking that happens after load means the raw value
+            existed in the target — and often in staging, logs, and backups — before it was
+            ever obscured.</li>
+          <li><b>Bad rows are already queryable.</b> Post-load assertions flag violations after
+            they have been written, so a downstream consumer may read them in the window
+            before the check runs.</li>
+          <li><b>Drift is discovered late.</b> A changed source shape surfaces as a broken model
+            run, not as a decision made at ingest time.</li>
+          <li><b>Lineage is reconstructed.</b> A separate catalog infers relationships after the
+            fact rather than recording them as the data moves.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2. The thesis: govern in the pipe</h2>
+        <p>
+          faucet-stream folds governance into the same streaming loop that moves the data.
+          Every pipeline processes the source in bounded pages of records; each guardrail is a
+          stage applied to a page before it is handed to the sink. The result is that the
+          decision — mask this, reject that, quarantine the other — is made <em>before</em> the
+          write, not after, and it is made in exactly one place regardless of which of the
+          dozens of sinks the pipeline targets.
+        </p>
+
+        <figure class="diagram" aria-label="Pipeline with governance stages inserted before the sink">
+          <div class="flow">
+            <span class="node src">source</span>
+            <span class="arr">→</span>
+            <span class="node">transforms</span>
+            <span class="arr">→</span>
+            <span class="gov">
+              <span class="gov-label">governance (per page)</span>
+              <span class="gov-stages">
+                <span class="stage mask">mask</span>
+                <span class="mini">→</span>
+                <span class="stage">quality</span>
+                <span class="mini">→</span>
+                <span class="stage">contract</span>
+                <span class="mini">→</span>
+                <span class="stage">drift</span>
+              </span>
+            </span>
+            <span class="arr">→</span>
+            <span class="node sink">sink</span>
+          </div>
+          <div class="flow flow-branch">
+            <span class="branch">rejected / quarantined rows →</span>
+            <span class="node dlq">DLQ</span>
+            <span class="branch2">lineage tap → schema + column facets (no values)</span>
+          </div>
+          <figcaption>Figure 1 — governance stages run per page, before the sink. Masking is first, so every downstream surface sees masked data.</figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h2>3. The six guardrails</h2>
+        <p>Each is a config block; the engine applies them uniformly for every sink.</p>
+        <dl class="guards">
+          <dt>PII masking</dt>
+          <dd>Redact or hash sensitive fields. Runs first (see §4). Hashing is a keyed HMAC-SHA256,
+            deterministic so hashed fields stay joinable across tables.</dd>
+          <dt>Data-quality checks</dt>
+          <dd>Row- and batch-level assertions. A failure either aborts the run or is quarantined
+            to a dead-letter queue.</dd>
+          <dt>Data contracts</dt>
+          <dd>A versioned promise about the output shape — required fields, types, enums —
+            enforced on the wire before the sink; breaches abort or quarantine.</dd>
+          <dt>Schema-drift policy</dt>
+          <dd>Detect when the source shape changes and decide what happens:
+            <code>warn · evolve · ignore · quarantine · fail</code>.</dd>
+          <dt>Column-level lineage</dt>
+          <dd>OpenLineage events with dataset schemas and column-level edges derived from the
+            transform chain — not hand-annotated.</dd>
+          <dt>Freshness &amp; volume SLAs</dt>
+          <dd>Declare max staleness, a minimum row count, or a learned volume baseline;
+            violations increment a Prometheus counter you can alert on.</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>4. The ordering guarantee (the core contribution)</h2>
+        <p>
+          The claim that makes in-flight governance trustworthy is an ordering property:
+          <b>masking runs before quality, contract, and drift, and before the row reaches the
+          sink, the dead-letter queue, or a lineage event.</b> This is not a convention that
+          each connector must remember — it is fixed once, in the single streaming loop that
+          every pipeline runs, in this order:
+        </p>
+        <ol class="ordered">
+          <li><b>Mask</b> — rewrites the page's records in place.</li>
+          <li><b>Quality</b> — builds any quarantine envelopes from the (now masked) records.</li>
+          <li><b>Contract</b> — enforces shape on the masked records.</li>
+          <li><b>Drift</b> — applies the drift policy.</li>
+          <li><b>Sink / DLQ</b> — writes surviving rows; routes rejected rows to the DLQ.</li>
+        </ol>
+        <div class="callout">
+          <p>
+            Because masking rewrites the page before the quality and contract stages build their
+            dead-letter envelopes from those same records, <b>a quarantined row carries the masked
+            payload, not the raw one.</b> This is verified by a unit test that asserts the DLQ
+            envelope's <code>email</code> is <code>"***"</code>, not the original address —
+            the guarantee is enforced by the code and checked in CI, not merely documented.
+          </p>
+        </div>
+        <p>
+          Lineage is safe by a second mechanism: OpenLineage events emitted by faucet-stream never
+          carry record <em>values</em> — only schema facets (field name and type) and column-lineage
+          edges (field-name to field-name). No field value, masked or not, is ever placed in a
+          lineage event.
+        </p>
+      </section>
+
+      <section>
+        <h2>5. Zero per-connector code</h2>
+        <p>
+          Every guardrail is invoked once, at the framework level, inside the shared run loop —
+          no source or sink implements masking, quality, contracts, or drift. A connector cannot
+          forget a guardrail, and it cannot bypass one: when masking is configured, faucet-stream
+          disables its columnar (Arrow) fast path for that pipeline, so the data is always routed
+          through the governed row loop rather than an ungoverned columnar shortcut. Governance is
+          a property of the engine, not of any connector.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Configuration</h2>
+        <p>All six guardrails on one pipeline — the order in the file is illustrative; the engine fixes the runtime order described in §4:</p>
+        <pre class="code"><code>{configExample}</code></pre>
+      </section>
+
+      <section>
+        <h2>7. In-flight vs. downstream governance</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Capability</th><th>faucet-stream (in-flight)</th><th>ELT + governance stack (post-load)</th><th>Movement-only tools</th></tr>
+            </thead>
+            <tbody>
+              {compare.map((r) => (
+                <tr><td>{r[0]}</td><td class="yes">{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>8. Performance</h2>
+        <p>
+          Governance is applied per page, so its memory cost is bounded by the batch size, not the
+          dataset. The CPU overhead is the cost of the configured checks — a hash per masked field,
+          a predicate per quality rule, a shape check per contract. A per-guardrail overhead table
+          against the 1M-row reference move is pending a measurement run:
+        </p>
+        <div class="tbd">Benchmark table — throughput with each guardrail off vs. on — <b>[measurement TBD]</b>.</div>
+        <p>
+          One honest tradeoff: because a governance stage operates on materialized rows, enabling
+          masking (or any value-shaped stage) turns off the Arrow columnar fast path for that
+          pipeline. Governed pipelines run the row loop by design — that is the same property that
+          makes masking impossible to bypass.
+        </p>
+      </section>
+
+      <section>
+        <h2>9. Limitations &amp; honest scope</h2>
+        <p>What the current implementation does <em>not</em> claim:</p>
+        <ul>
+          <li><b>The masking guarantee covers sinks, DLQ envelopes, and lineage events.</b> The
+            source-side lineage sampler keeps a small raw, pre-masking sample in memory (used by the
+            movement catalog); that surface is not masked. The end-of-pipe surfaces are.</li>
+          <li><b>Hashing is pseudonymization, not a secret</b> unless a key is supplied. With no key,
+            it falls back to plain SHA-256 — deterministic and joinable, but recomputable. Cross-run
+            joinability requires the same key in both runs.</li>
+          <li><b>Column lineage is a v1 subset.</b> It is derived for field-preserving and
+            explicit-mapping transforms. A structural transform (flatten, key-case rewrite, SQL) makes
+            the pipeline emit schema lineage but <em>no</em> column-lineage facet — it never fabricates
+            an edge it cannot prove.</li>
+          <li><b>SLA metrics are emitted by the CLI/server.</b> A library embedder driving the engine
+            directly, bypassing the CLI, does not get the SLA Prometheus counter.</li>
+          <li><b>Quarantine requires a DLQ.</b> Any <code>quarantine</code> action needs a dead-letter
+            sink configured, or the run is rejected at startup.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>10. Conclusion</h2>
+        <p>
+          Governance and movement are usually two systems with a gap between them. faucet-stream
+          collapses that gap: the same loop that moves a page of data masks it, checks it, enforces
+          its contract, and records its lineage before the write — with an ordering guarantee that is
+          fixed in one place and proven in CI. It is not a complete replacement for a mature catalog
+          or a warehouse-native test suite, and this paper is deliberate about where the edges are.
+          But for the class of guarantees that matter most at ingest — that a secret never lands, that
+          a bad row never reaches the target — doing it in the pipe is the difference between a policy
+          and a hope.
+        </p>
+      </section>
+
+      <p class="cta-inline">
+        Explore the guardrails in the <a href="/governance">governance overview</a> or the
+        <a href={DOCS}>full documentation</a>.
+      </p>
+    </article>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .paper { max-width: 48rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 1rem; }
+  .paper-head { border-bottom: 1px solid var(--line); padding-bottom: 1.6rem; margin-bottom: 2rem; }
+  .crumb { color: var(--teal-deep); font-size: 0.9rem; }
+  .kicker { display: block; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); }
+  .paper h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; line-height: 1.1; }
+  .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
+  .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+
+  .paper section { margin-top: 2.4rem; }
+  .paper h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
+  .paper p { line-height: 1.75; color: var(--ink-soft); margin-top: 0.9rem; }
+  .paper .abstract p { font-size: 1.05rem; }
+  .paper ul, .paper ol { margin-top: 1rem; padding-left: 1.3rem; line-height: 1.75; color: var(--ink-soft); }
+  .paper li { margin-top: 0.5rem; }
+  .paper b { color: var(--ink); }
+  .paper code { font-family: var(--font-mono); font-size: 0.85em; background: color-mix(in srgb, var(--teal) 10%, transparent); color: var(--teal-deep); padding: 0.06em 0.34em; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent); }
+
+  .guards dt { font-weight: 650; color: var(--ink); margin-top: 1.1rem; }
+  .guards dd { margin: 0.25rem 0 0; line-height: 1.7; color: var(--ink-soft); }
+
+  .ordered { counter-reset: step; }
+  .callout { margin-top: 1.3rem; border-left: 3px solid var(--teal); background: color-mix(in srgb, var(--teal) 7%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 1rem 1.2rem; }
+  .callout p { margin: 0; color: var(--ink); }
+
+  .diagram { margin: 1.6rem 0 0; }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .flow-branch { margin-top: 0.7rem; font-size: 0.85rem; color: var(--ink-faint); }
+  .node, .stage { font-family: var(--font-mono); font-size: 0.82rem; padding: 0.4rem 0.7rem; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); }
+  .node.src, .node.sink { border-color: color-mix(in srgb, var(--teal) 35%, var(--line)); color: var(--teal-deep); }
+  .node.dlq { border-color: color-mix(in srgb, var(--ink) 26%, var(--line)); }
+  .arr { color: var(--ink-faint); }
+  .gov { display: inline-flex; flex-direction: column; gap: 0.4rem; border: 1px dashed color-mix(in srgb, var(--teal) 45%, var(--line)); border-radius: 10px; padding: 0.6rem 0.7rem; background: color-mix(in srgb, var(--teal) 5%, transparent); }
+  .gov-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal-deep); }
+  .gov-stages { display: inline-flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+  .stage.mask { background: var(--teal); color: #04140f; border-color: transparent; font-weight: 600; }
+  .mini { color: var(--ink-faint); font-size: 0.75rem; }
+  figcaption { margin-top: 0.8rem; font-size: 0.85rem; color: var(--ink-faint); }
+
+  .code { margin: 1rem 0 0; background: #0b1220; border: 1px solid #1c2740; border-radius: var(--radius); padding: 1.1rem 1.2rem; overflow-x: auto; }
+  .code code { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.7; color: #cdd9ee; white-space: pre; background: none; border: 0; padding: 0; }
+
+  .table-wrap { overflow-x: auto; margin-top: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+  td.yes { color: var(--teal-deep); font-weight: 550; }
+
+  .tbd { margin-top: 1rem; padding: 0.9rem 1.1rem; border: 1px dashed color-mix(in srgb, var(--ink) 25%, var(--line)); border-radius: var(--radius-sm); color: var(--ink-faint); font-size: 0.9rem; }
+
+  .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+</style>
