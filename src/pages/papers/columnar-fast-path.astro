@@ -1,0 +1,338 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+
+// The negotiation gates: the fast path is taken only when every one of these
+// holds. Any Value-observing stage falls the whole pipeline back to the row loop.
+const gates = [
+  ['Source speaks Arrow', 'the source overrides supports_columnar() → true'],
+  ['Sink speaks Arrow', 'the sink overrides supports_columnar() → true'],
+  ['No masking / quality / contract', 'a value-shaped guardrail must see rows'],
+  ['No schema-drift / adaptive / cleanup stage', 'these inspect record values'],
+  ['No dead-letter queue', 'the DLQ envelopes individual rows'],
+  ['At-least-once delivery', 'the exactly-once gate keys on row identity'],
+  ['Sink is not in overwrite mode', 'overwrite reconciles at the row level'],
+];
+
+// RFC-0002 micro-benchmarks (Apple silicon, criterion, a 6-column analytical
+// page). The "tax" column is one Arrow→Value→Arrow round-trip — paid at EVERY
+// connector boundary on the row path, and eliminated on the fast path.
+const tax = [
+  ['1,000', '698 µs', '101 µs', '~6.9×'],
+  ['10,000', '7.01 ms', '0.93 ms', '~7.5×'],
+  ['50,000', '41.7 ms', '4.78 ms', '~8.7×'],
+];
+---
+
+<Base
+  title="A Zero-Cost Columnar Fast Path — faucet-stream"
+  description="A technical white paper: how faucet-stream runs Apache Arrow end-to-end when both ends of a pipeline speak it — a true zero-cost abstraction that is inert by default (byte-identical builds) and eliminates the Value-conversion tax on the fast path — with the honest limits of what 'zero-cost' means."
+>
+  <Header />
+  <main id="main">
+    <article class="paper">
+      <header class="paper-head">
+        <a class="crumb" href="/papers">← Papers</a>
+        <span class="kicker">Technical white paper</span>
+        <h1>A Zero-Cost Columnar Fast Path</h1>
+        <p class="dek">
+          faucet-stream's record is a JSON value, and that is the right default. But when
+          both ends of a pipeline already speak Apache Arrow, converting to rows and back
+          at every boundary is pure tax. This paper describes the opt-in Arrow fast path:
+          a true zero-cost abstraction — inert by default, byte-identical builds — that,
+          when negotiated, hands columnar batches straight from source to sink, and is
+          honest about the one cost it does not remove.
+        </p>
+        <div class="meta">
+          <span>faucet-stream</span><span>·</span><span>~11 min read</span><span>·</span>
+          <span>Draft — micro-benchmarked, end-to-end run pending</span>
+        </div>
+      </header>
+
+      <section class="abstract">
+        <h2>Abstract</h2>
+        <p>
+          A general-purpose data mover needs one record model that every connector
+          understands. faucet-stream chooses <code>serde_json::Value</code> — schema-flexible,
+          easy for third-party connectors, and the substrate every governance stage operates
+          on. The cost of that choice shows up only in one place: a pipeline whose source and
+          sink are <em>both</em> columnar (Parquet → Parquet, an object store → Delta, a
+          warehouse Arrow stream → BigQuery) pays to decode Arrow into rows and re-encode rows
+          into Arrow at each hop — work that produces nothing. This paper describes how
+          faucet-stream removes that tax with an opt-in Arrow path that is negotiated per run,
+          bypasses the row loop entirely when it is safe to, and — crucially — costs
+          <em>nothing</em> when it is off. It is also deliberate about the meaning of
+          "zero-cost": the abstraction is free when disabled, and the fast path eliminates the
+          value-conversion tax, but it does not make columnar encode itself disappear.
+        </p>
+      </section>
+
+      <section>
+        <h2>1. The problem: the value tax</h2>
+        <p>
+          faucet-stream moves data in bounded pages. On the default path a page is a
+          <code>StreamPage</code> — a <code>Vec&lt;Value&gt;</code> plus a resume bookmark — and
+          every connector reads and writes rows. That uniformity is what lets one masking rule,
+          one quality check, or one contract apply identically across dozens of sinks (see the
+          companion paper, <a href="/papers/governance-in-the-movement-path">Governance in the
+          Movement Path</a>).
+        </p>
+        <p>
+          But some connectors are columnar to their core. A Parquet file is Arrow record
+          batches on disk. BigQuery's Storage Read API streams Arrow. Delta and the object-store
+          formats are columnar. When such a source feeds such a sink, the default path decodes
+          each Arrow batch into a vector of JSON values and then immediately re-encodes those
+          values back into an Arrow batch for the sink. The data ends where it began — columnar —
+          having made a full round trip through a row representation for no semantic reason.
+        </p>
+        <div class="callout">
+          <p>
+            We measured that round trip directly. On a six-column analytical page, a single
+            <b>Arrow→Value→Arrow</b> conversion costs <b>~7–9× the entire Parquet decode+encode</b>
+            it wraps — and it is paid at <em>every</em> boundary in the pipeline. The tax is
+            larger than the useful work.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>2. The thesis: an opt-in path that is free when off</h2>
+        <p>
+          The fix is not to replace the value model — that would break every connector and every
+          guardrail. It is to add a second, parallel page type and let a pipeline take it only
+          when both ends can. The Arrow support is a Cargo feature that is <b>inert by
+          default</b>: with it off, the compiled binary is byte-identical to the value-only
+          pipeline. Nothing about the default path changes; there is no runtime branch to pay
+          for, no dependency pulled in. This is the first and most literal sense of "zero-cost" —
+          a zero-cost abstraction in the C++ sense: you do not pay for what you do not use.
+        </p>
+        <figure class="diagram" aria-label="Row path versus columnar fast path">
+          <div class="flow">
+            <span class="node src">Arrow source</span>
+            <span class="arr">→</span>
+            <span class="stage">decode → Value</span>
+            <span class="arr">→</span>
+            <span class="node">row loop</span>
+            <span class="arr">→</span>
+            <span class="stage">encode → Arrow</span>
+            <span class="arr">→</span>
+            <span class="node sink">Arrow sink</span>
+          </div>
+          <div class="flow flow-branch">
+            <span class="branch">default path — correct everywhere, taxed at each boundary</span>
+          </div>
+          <div class="flow" style="margin-top:1rem">
+            <span class="node src">Arrow source</span>
+            <span class="arr">→</span>
+            <span class="stage mask">RecordBatch</span>
+            <span class="arr">→</span>
+            <span class="node sink">Arrow sink</span>
+          </div>
+          <div class="flow flow-branch">
+            <span class="branch">fast path — negotiated when both ends speak Arrow and no stage needs rows</span>
+          </div>
+          <figcaption>Figure 1 — the fast path carries an Arrow <code>RecordBatch</code> from source to sink with no value round trip. The same page bookmark drives crash-safe checkpointing on both paths.</figcaption>
+        </figure>
+      </section>
+
+      <section>
+        <h2>3. Two page types, one contract</h2>
+        <p>
+          The row path carries a <code>StreamPage</code> (records as values). The fast path carries
+          a <code>ColumnarPage</code> — an Arrow <code>RecordBatch</code> plus the <em>same</em>
+          resume bookmark. The bookmark is the important part: it means the columnar path inherits
+          the identical checkpoint semantics as the row path (write → flush → persist bookmark),
+          so switching paths never weakens the crash-safety story.
+        </p>
+        <p>A connector opts in through two trait methods, both compiled out when the feature is off:</p>
+        <dl class="guards">
+          <dt><code>supports_columnar() → bool</code></dt>
+          <dd>A capability flag, defaulting to <code>false</code>. A connector returns
+            <code>true</code> only when it can produce or consume Arrow natively — and it may
+            decide at runtime (e.g. an object-store connector says yes only when the file format
+            is Parquet).</dd>
+          <dt><code>stream_batches()</code> / <code>write_batch_columnar()</code></dt>
+          <dd>The native Arrow implementations. The default <code>write_batch_columnar</code> is a
+            safety net: it converts the batch to values and calls the row writer, so a
+            half-migrated connector is still correct — just not fast.</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>4. Negotiation: a pure escape hatch</h2>
+        <p>
+          The fast path is never assumed; it is negotiated once, when the pipeline starts. It is
+          taken only if every one of the following holds — otherwise the pipeline runs the
+          ordinary row loop, unchanged:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Gate</th><th>Why it is required</th></tr></thead>
+            <tbody>
+              {gates.map((g) => (<tr><td class="yes">{g[0]}</td><td>{g[1]}</td></tr>))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The pattern is deliberate: the fast path is an optimization that must be
+          <em>invisible</em>. If anything in the pipeline needs to see a row — a masking rule, a
+          quality check, a dead-letter envelope, the exactly-once identity gate — the columnar
+          shortcut is simply not taken, and correctness is preserved by construction rather than
+          by a connector remembering to check. A negotiation test drives a columnar-only source
+          and sink whose value methods deliberately error: the run succeeds only if the fast path
+          is genuinely taken, and falls back cleanly when the sink cannot speak Arrow.
+        </p>
+      </section>
+
+      <section>
+        <h2>5. What is saved — and what still costs</h2>
+        <p>
+          On a true native chain the fast path eliminates the value round trip at every boundary.
+          The measured tax it removes, per page:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rows / page</th><th>Arrow→Value→Arrow (tax removed)</th><th>Parquet decode+encode (real work)</th><th>Tax ÷ work</th></tr></thead>
+            <tbody>
+              {tax.map((r) => (<tr><td>{r[0]}</td><td class="yes">{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td></tr>))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The honest counterpoint: <b>"zero-cost" is about the abstraction, not the I/O.</b> The
+          fast path removes the value tax; it does not remove the cost of columnar work itself. A
+          Parquet or Snowflake sink still encodes each Arrow batch to Parquet and uploads it — that
+          is irreducible. The conversion shim, when it <em>is</em> used, is not zero-copy either: it
+          moves through an Arrow-JSON encoder/decoder. What the fast path guarantees is that on a
+          negotiated native chain, none of that shim runs at all.
+        </p>
+      </section>
+
+      <section>
+        <h2>6. Which connectors speak Arrow</h2>
+        <p>The fast path lights up when a native source meets a native sink:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Arrow-native sources</th><th>Arrow-native sinks</th></tr></thead>
+            <tbody>
+              <tr><td>Parquet</td><td>Parquet</td></tr>
+              <tr><td>S3 / object store (Parquet)</td><td>S3 / object store (Parquet)</td></tr>
+              <tr><td>GCS (Parquet)</td><td>GCS (Parquet)</td></tr>
+              <tr><td>Delta Lake</td><td>Delta Lake</td></tr>
+              <tr><td>Databricks (Arrow stream)</td><td>BigQuery (Storage Write)</td></tr>
+              <tr><td>BigQuery (Storage Read)</td><td>Snowflake (bulk load)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The SQL transform is the one stage that participates columnar-side: a
+          <code>parquet → sql → parquet</code> pipeline runs entirely in Arrow, because the SQL
+          engine (DuckDB) exchanges record batches directly. Every other transform observes values,
+          and so returns the pipeline to the row path.
+        </p>
+      </section>
+
+      <section>
+        <h2>7. Why governance turns it off — on purpose</h2>
+        <p>
+          The negotiation gates in §4 are not arbitrary. A value-shaped guardrail — masking,
+          quality, contracts, drift — must operate on materialized rows, so enabling any of them
+          disables the columnar shortcut for that pipeline. This is the same property, seen from the
+          other side, that makes masking impossible to bypass: a governed pipeline runs the row
+          loop by design. Speed and governance are not in tension here; the engine simply picks the
+          row path whenever a guardrail needs to see the data, and the fast path whenever nothing
+          does.
+        </p>
+      </section>
+
+      <section>
+        <h2>8. Limitations &amp; honest scope</h2>
+        <ul>
+          <li><b>"Zero-cost" means the abstraction, not the encode.</b> The default path is
+            byte-identical with the feature off, and the fast path removes the value tax — but
+            Arrow→Parquet encoding and upload remain, and are the real cost on a columnar sink.</li>
+          <li><b>The conversion shim is not zero-copy.</b> When a page does cross the row boundary,
+            it goes through an Arrow-JSON encoder/decoder — allocating, not aliasing. The win is in
+            <em>not</em> crossing, not in crossing cheaply.</li>
+          <li><b>The published numbers are micro-benchmarks.</b> They measure the conversion tax and
+            the Parquet round trip in isolation. An end-to-end throughput figure for a live columnar
+            pipeline — <b>[measurement TBD]</b> — is not yet published.</li>
+          <li><b>Only the SQL transform is columnar.</b> Any other transform, or any governance
+            stage, returns the pipeline to the row path — correct, but taxed.</li>
+          <li><b>Not every columnar connector is on the path.</b> Some connectors that link Arrow
+            (e.g. the Iceberg sink) do not yet override the capability flag, and message/DB/CDC
+            connectors are row-native by nature.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>9. Conclusion</h2>
+        <p>
+          A single record model keeps a connector ecosystem sane and governance uniform; a columnar
+          fast path keeps the analytical, warehouse-to-lake pipelines fast. faucet-stream refuses to
+          choose between them. The value model stays the default and the substrate for every
+          guardrail; the Arrow path is an opt-in that costs nothing when off and, when both ends
+          speak Arrow and no stage needs a row, carries batches straight through — no tax, no
+          bypass of the checkpoint contract, and no way to accidentally skip governance. "Zero-cost"
+          is a precise claim here, not a slogan: free when disabled, tax-free on the fast path, and
+          honest about the encode it cannot make vanish.
+        </p>
+      </section>
+
+      <p class="cta-inline">
+        See the throughput numbers in the <a href="/benchmarks">benchmarks</a>, or read the
+        <a href={DOCS}>full documentation</a>.
+      </p>
+    </article>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .paper { max-width: 48rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 1rem; }
+  .paper-head { border-bottom: 1px solid var(--line); padding-bottom: 1.6rem; margin-bottom: 2rem; }
+  .crumb { color: var(--teal-deep); font-size: 0.9rem; }
+  .kicker { display: block; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); }
+  .paper h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; line-height: 1.1; }
+  .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
+  .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+
+  .paper section { margin-top: 2.4rem; }
+  .paper h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
+  .paper p { line-height: 1.75; color: var(--ink-soft); margin-top: 0.9rem; }
+  .paper .abstract p { font-size: 1.05rem; }
+  .paper ul, .paper ol { margin-top: 1rem; padding-left: 1.3rem; line-height: 1.75; color: var(--ink-soft); }
+  .paper li { margin-top: 0.5rem; }
+  .paper b { color: var(--ink); }
+  .paper code { font-family: var(--font-mono); font-size: 0.85em; background: color-mix(in srgb, var(--teal) 10%, transparent); color: var(--teal-deep); padding: 0.06em 0.34em; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent); }
+
+  .guards dt { font-weight: 650; color: var(--ink); margin-top: 1.1rem; }
+  .guards dd { margin: 0.25rem 0 0; line-height: 1.7; color: var(--ink-soft); }
+
+  .callout { margin-top: 1.3rem; border-left: 3px solid var(--teal); background: color-mix(in srgb, var(--teal) 7%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 1rem 1.2rem; }
+  .callout p { margin: 0; color: var(--ink); }
+
+  .diagram { margin: 1.6rem 0 0; }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+  .flow-branch { margin-top: 0.7rem; font-size: 0.85rem; color: var(--ink-faint); }
+  .node, .stage { font-family: var(--font-mono); font-size: 0.82rem; padding: 0.4rem 0.7rem; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-soft); }
+  .node.src, .node.sink { border-color: color-mix(in srgb, var(--teal) 35%, var(--line)); color: var(--teal-deep); }
+  .arr { color: var(--ink-faint); }
+  .stage.mask { background: var(--teal); color: #04140f; border-color: transparent; font-weight: 600; }
+  figcaption { margin-top: 0.8rem; font-size: 0.85rem; color: var(--ink-faint); }
+
+  .table-wrap { overflow-x: auto; margin-top: 1rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+  td.yes { color: var(--teal-deep); font-weight: 550; }
+
+  .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+</style>
