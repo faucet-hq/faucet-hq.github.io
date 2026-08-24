@@ -1,0 +1,185 @@
+---
+// "Ask AI" — opens the current page in a chosen AI assistant with a prefilled
+// prompt that points at this page's URL and the site's llms.txt. The href is
+// built client-side (see the inline script) so it always reflects the page the
+// visitor is actually on. Providers whose query param is unreliable (Gemini)
+// fall back to opening the assistant without a prefill.
+const providers = [
+  { id: 'claude',     label: 'Claude',     url: 'https://claude.ai/new',            param: 'q',    prefill: true  },
+  { id: 'chatgpt',    label: 'ChatGPT',    url: 'https://chatgpt.com/',             param: 'q',    prefill: true  },
+  { id: 'perplexity', label: 'Perplexity', url: 'https://www.perplexity.ai/search', param: 'q',    prefill: true  },
+  { id: 'grok',       label: 'Grok',       url: 'https://grok.com/',                param: 'q',    prefill: true  },
+  { id: 'gemini',     label: 'Gemini',     url: 'https://gemini.google.com/app',    param: null,   prefill: false },
+];
+---
+
+<div class="askai" data-askai>
+  <button
+    class="askai-btn"
+    type="button"
+    id="askai-btn"
+    aria-haspopup="menu"
+    aria-expanded="false"
+    aria-controls="askai-menu"
+    title="Ask this page with an AI assistant"
+  >
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3Z" />
+      <path d="M18.5 14.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8Z" />
+    </svg>
+    <span class="askai-label">Ask AI</span>
+    <svg class="askai-caret" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+  </button>
+
+  <div class="askai-menu" id="askai-menu" role="menu" aria-labelledby="askai-btn" hidden>
+    <p class="askai-head">Open this page in…</p>
+    {providers.map((p) => (
+      <a
+        class="askai-item"
+        role="menuitem"
+        href={p.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-provider={p.id}
+        data-base={p.url}
+        data-param={p.param ?? ''}
+        data-prefill={p.prefill ? '1' : '0'}
+      >
+        <span class="askai-dot" data-p={p.id} aria-hidden="true"></span>
+        {p.label}
+      </a>
+    ))}
+    <p class="askai-foot">Sends a link to this page + <code>llms.txt</code>. No data leaves your browser until you open one.</p>
+  </div>
+</div>
+
+<style>
+  .askai { position: relative; }
+  .askai-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.2rem;
+    padding: 0 0.7rem;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    font-weight: 550;
+    cursor: pointer;
+    transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  }
+  .askai-btn:hover { color: var(--ink); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
+  .askai-btn[aria-expanded='true'] { color: var(--ink); border-color: color-mix(in srgb, var(--teal) 45%, var(--line)); background: var(--surface-2); }
+  .askai-caret { transition: transform 0.16s ease; color: var(--ink-faint); }
+  .askai-btn[aria-expanded='true'] .askai-caret { transform: rotate(180deg); }
+
+  .askai-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    min-width: 15rem;
+    padding: 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--paper) 98%, transparent);
+    backdrop-filter: saturate(1.4) blur(12px);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    box-shadow: var(--shadow-md);
+    z-index: 60;
+  }
+  .askai-menu[hidden] { display: none; }
+  .askai-head {
+    margin: 0.15rem 0.45rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .askai-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.5rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--ink);
+    transition: background 0.14s ease;
+  }
+  .askai-item:hover, .askai-item:focus-visible { background: var(--surface-2); outline: none; }
+  .askai-dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; flex: none; background: var(--ink-faint); }
+  .askai-dot[data-p='claude']     { background: #d97757; }
+  .askai-dot[data-p='chatgpt']    { background: #10a37f; }
+  .askai-dot[data-p='perplexity'] { background: #20b8cd; }
+  .askai-dot[data-p='grok']       { background: #111827; border: 1px solid var(--line); }
+  .askai-dot[data-p='gemini']     { background: #4285f4; }
+  :root[data-theme='dark'] .askai-dot[data-p='grok'] { background: #e5e7eb; }
+  .askai-foot {
+    margin: 0.4rem 0.45rem 0.15rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--line-soft);
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+  .askai-foot code { font-family: var(--font-mono); font-size: 0.92em; }
+
+  /* On narrow screens the header hides the label to save room. */
+  @media (max-width: 560px) {
+    .askai-label { display: none; }
+    .askai-btn { padding: 0 0.55rem; }
+  }
+</style>
+
+<script>
+  (() => {
+    const root = document.querySelector('[data-askai]');
+    if (!root) return;
+    const btn = root.querySelector('#askai-btn');
+    const menu = root.querySelector('#askai-menu');
+    if (!btn || !menu) return;
+
+    // Build the prefilled prompt from the page the visitor is actually on.
+    const pageUrl = window.location.href.split('#')[0];
+    const llmsUrl = window.location.origin + '/llms.txt';
+    const prompt =
+      `I'm reading ${pageUrl} — a page about faucet-stream, a fast, config-driven ` +
+      `data-movement platform for Rust. Please read that page (and the site guide at ` +
+      `${llmsUrl}) and help me understand it and answer my questions.`;
+
+    root.querySelectorAll('.askai-item').forEach((a) => {
+      const base = a.getAttribute('data-base');
+      const param = a.getAttribute('data-param');
+      const prefill = a.getAttribute('data-prefill') === '1';
+      if (prefill && param) {
+        const u = new URL(base);
+        u.searchParams.set(param, prompt);
+        a.setAttribute('href', u.toString());
+      } else {
+        a.setAttribute('href', base);
+      }
+    });
+
+    const open = () => {
+      menu.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    };
+    const toggle = () => (menu.hidden ? open() : close());
+
+    btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    // Close after choosing, on outside click, or Escape.
+    menu.querySelectorAll('.askai-item').forEach((a) => a.addEventListener('click', close));
+    document.addEventListener('click', (e) => {
+      if (!root.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) { close(); btn.focus(); }
+    });
+  })();
+</script>
