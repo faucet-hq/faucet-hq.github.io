@@ -1,0 +1,13 @@
+{
+  "name": "faucet-stream",
+  "short_name": "faucet",
+  "description": "A fast, config-driven data-movement platform for Rust.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fbfdfc",
+  "theme_color": "#14b8a6",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
