@@ -115,6 +115,15 @@ const jsonLd = {
         items.forEach((el) => io.observe(el));
       })();
 
+      // Open every external link (absolute http/https) in a new tab — site-wide
+      // catch-all so docs, GitHub, crates.io, etc. never navigate away in place.
+      (() => {
+        document.querySelectorAll('a[href^="http://"], a[href^="https://"]').forEach((a) => {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        });
+      })();
+
       // Theme toggle — flips between light/dark and persists the choice.
       (() => {
         const btn = document.getElementById('theme-toggle');

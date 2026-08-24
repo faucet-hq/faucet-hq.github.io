@@ -59,7 +59,7 @@ const cols = [
         <h4>{c.title}</h4>
         <ul>
           {c.links.map((l) => (
-            <li><a href={l.href}>{l.label}</a></li>
+            <li><a href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel={l.href.startsWith('http') ? 'noopener noreferrer' : undefined}>{l.label}</a></li>
           ))}
         </ul>
       </nav>
