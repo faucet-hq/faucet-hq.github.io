@@ -1,0 +1,28 @@
+# faucet-stream
+
+> A fast, config-driven data-movement platform for Rust. Pluggable source and sink connectors plus a declarative CLI (and an HTTP API) let you move data from a YAML file — with streaming, change-data-capture, effectively-once delivery, dead-letter queues, in-flight governance, and built-in observability — shipped as a single binary.
+
+faucet-stream moves data between databases, warehouses, streaming systems, object stores, and APIs from one config file. Governance — PII masking, data-quality checks, versioned contracts, schema-drift policy, column-level lineage, and freshness/volume SLAs — runs inside the pipeline, per page, before any sink sees a row. Prometheus metrics and OpenTelemetry tracing are emitted automatically with zero per-connector code. On a reproducible 1M-row CSV→JSONL move it does ~712,000 rows/s (~96x faster than Meltano) with a fraction of the memory, as a single binary with no daemon.
+
+## Site
+- [Home](https://faucet-hq.github.io/): what faucet-stream is — one engine for the whole data-movement path.
+- [Why faucet-stream](https://faucet-hq.github.io/#why): a runtime, not just connectors — throughput, governance, and reliability built in.
+- [Connectors](https://faucet-hq.github.io/connectors): the full source/sink catalog (databases, CDC, warehouses, streaming, files, APIs) with change-data-capture and Arrow columnar badges.
+- [Benchmarks](https://faucet-hq.github.io/benchmarks): reproducible throughput and peak-memory numbers vs. Meltano, with methodology.
+- [Governance](https://faucet-hq.github.io/governance): masking, quality, contracts, drift policy, column lineage, and SLAs enforced in the pipe.
+- [Observability](https://faucet-hq.github.io/observability): Prometheus metrics and OpenTelemetry tracing for every source, sink, transform, and state op.
+- [Compare](https://faucet-hq.github.io/compare): faucet-stream vs. Meltano / Airbyte / Fivetran.
+- [Papers](https://faucet-hq.github.io/papers): technical white papers on the harder engineering (governance in the movement path, columnar fast path, crash-safe CDC).
+
+## Documentation
+- [Documentation (guide)](https://faucet-hq.github.io/faucet-stream/): the full mdBook — concepts, tutorials, cookbook, and reference.
+- [Getting started / installation](https://faucet-hq.github.io/faucet-stream/getting-started/installation.html): install the CLI and run a first pipeline.
+- [Config grammar](https://faucet-hq.github.io/faucet-stream/reference/config.html): the YAML/JSON pipeline configuration reference.
+- [Connector reference](https://faucet-hq.github.io/faucet-stream/reference/connectors.html): per-connector capability matrix and maturity tiers.
+- [CLI reference](https://faucet-hq.github.io/faucet-stream/reference/cli.html): the `faucet` command-line interface.
+- [API reference (docs.rs)](https://docs.rs/faucet-stream): the Rust library API.
+
+## Source and packages
+- [GitHub repository](https://github.com/faucet-hq/faucet-stream): source, issues, and the roadmap.
+- [crates.io](https://crates.io/crates/faucet-stream): the published crates.
+- [Changelog](https://github.com/faucet-hq/faucet-stream/blob/main/CHANGELOG.md): release history.
