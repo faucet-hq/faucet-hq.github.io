@@ -143,7 +143,9 @@ const providers = [
 
     // Build the prefilled prompt from the page the visitor is actually on.
     const pageUrl = window.location.href.split('#')[0];
-    const llmsUrl = window.location.origin + '/llms.txt';
+    // Base-aware (import.meta.env.BASE_URL is inlined at build): resolves to
+    // /llms.txt on prod and /dev/llms.txt on the dev subpath deployment.
+    const llmsUrl = window.location.origin + import.meta.env.BASE_URL + 'llms.txt';
     const prompt =
       `I'm reading ${pageUrl} — a page about faucet-stream, a fast, config-driven ` +
       `data-movement platform for Rust. Please read that page (and the site guide at ` +
