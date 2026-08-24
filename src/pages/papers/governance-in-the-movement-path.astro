@@ -213,9 +213,9 @@ const compare = [
           Every guardrail is invoked once, at the framework level, inside the shared run loop —
           no source or sink implements masking, quality, contracts, or drift. A connector cannot
           forget a guardrail, and it cannot bypass one: when masking is configured, faucet-stream
-          disables its columnar (Arrow) fast path for that pipeline, so the data is always routed
-          through the governed row loop rather than an ungoverned columnar shortcut. Governance is
-          a property of the engine, not of any connector.
+          disables its <a href="/papers/columnar-fast-path">columnar (Arrow) fast path</a> for that
+          pipeline, so the data is always routed through the governed row loop rather than an
+          ungoverned columnar shortcut. Governance is a property of the engine, not of any connector.
         </p>
       </section>
 

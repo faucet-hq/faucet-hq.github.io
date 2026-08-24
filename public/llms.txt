@@ -12,7 +12,12 @@ faucet-stream moves data between databases, warehouses, streaming systems, objec
 - [Governance](https://faucet-hq.github.io/governance): masking, quality, contracts, drift policy, column lineage, and SLAs enforced in the pipe.
 - [Observability](https://faucet-hq.github.io/observability): Prometheus metrics and OpenTelemetry tracing for every source, sink, transform, and state op.
 - [Compare](https://faucet-hq.github.io/compare): faucet-stream vs. Meltano / Airbyte / Fivetran.
-- [Papers](https://faucet-hq.github.io/papers): technical white papers on the harder engineering (governance in the movement path, columnar fast path, crash-safe CDC).
+- [Papers](https://faucet-hq.github.io/papers): index of technical white papers (listed individually in the Papers section below).
+
+## Papers
+- [Governance in the Movement Path](https://faucet-hq.github.io/papers/governance-in-the-movement-path): masking, quality, contracts, schema-drift policy, column lineage, and SLAs enforced in the pipe — per page, before any write — with a mask-first ordering guarantee proven in CI.
+- [A Zero-Cost Columnar Fast Path](https://faucet-hq.github.io/papers/columnar-fast-path): running Apache Arrow end-to-end when both ends support it — a zero-cost abstraction (inert by default) that drops the Value-conversion tax on the fast path, and the honest limits of "zero-cost".
+- [Crash-Safe Change Data Capture](https://faucet-hq.github.io/papers/crash-safe-cdc): advancing the replication checkpoint only from a durable bookmark, after the sink flushes — never from decoded WAL or a keepalive — so no committed change is lost. Postgres, MySQL, MongoDB, SQL Server; at-least-once by default, effectively-once when the sink cooperates.
 
 ## Documentation
 - [Documentation (guide)](https://faucet-hq.github.io/faucet-stream/): the full mdBook — concepts, tutorials, cookbook, and reference.

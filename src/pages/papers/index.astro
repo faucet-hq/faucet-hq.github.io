@@ -19,14 +19,16 @@ const papers = [
     title: 'A Zero-Cost Columnar Fast Path',
     blurb:
       'How faucet-stream runs Arrow end-to-end when both ends support it — negotiated as a pure escape hatch, with default builds byte-identical to the row path.',
-    status: 'Planned',
+    href: `${base}papers/columnar-fast-path`,
+    status: 'Draft',
     tag: 'Performance',
   },
   {
     title: 'Crash-Safe Change Data Capture',
     blurb:
       'Advancing the replication checkpoint only from a durable bookmark — never from decoded WAL or a keepalive — so no committed change is lost on crash. Postgres, MySQL, MongoDB, SQL Server.',
-    status: 'Planned',
+    href: `${base}papers/crash-safe-cdc`,
+    status: 'Draft',
     tag: 'Correctness',
   },
   {
