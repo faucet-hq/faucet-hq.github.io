@@ -1,0 +1,65 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Append, upsert, or delete: write modes and what they cost"
+  dek="Loading data isn't one operation. Appending is cheap and streams flat out; upserting makes the destination reconcile every row. faucet-stream gives you both — and is clear about the tradeoff."
+  description="faucet-stream's sink write modes — append (insert or COPY), upsert, delete — and the performance tradeoffs of each."
+  date="August 25, 2026"
+  tag="Connectors"
+  read="~5 min read"
+  tags={['Write modes', 'Performance']}
+>
+  <section>
+    <h2>Three modes, one config field</h2>
+    <p>
+      A sink's <code>write_mode</code> says how rows land in the destination:
+    </p>
+    <ul>
+      <li><b>append</b> (default) — add rows. No reconciliation, no key lookup — the fastest path.</li>
+      <li><b>upsert</b> — insert-or-update by key, so re-running a load is idempotent.</li>
+      <li><b>delete</b> — apply deletes (via a marker), for full CDC mirroring.</li>
+    </ul>
+    <p>
+      Upsert and delete need a key: they require auto-mapped columns and a declared key set, so the
+      destination knows what "the same row" means.
+    </p>
+  </section>
+  <section>
+    <h2>Append has a fast lane</h2>
+    <p>
+      Within append, the Postgres sink offers two write methods: multi-row <code>insert</code>
+      (default) and <code>copy</code>. <code>COPY … FROM STDIN</code> is a streaming bulk load and
+      is <b>meaningfully faster</b> than multi-row INSERT for bulk append — in our Postgres →
+      Postgres benchmark the COPY path led the field.
+    </p>
+    <div class="callout">
+      <p>
+        But <code>COPY</code> has no <code>ON CONFLICT</code>, so it's <b>append-only</b>. Combining
+        <code>write_method: copy</code> with <code>write_mode: upsert</code> is <b>rejected at
+        config time</b> — faucet won't let you ask for a fast path that can't honor the semantics
+        you also asked for.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>The cost is where the work is</h2>
+    <p>
+      Append streams: faucet hands the destination bytes and it writes them. Upsert/merge is
+      different — the <em>destination</em> now has to match keys, update existing rows, and
+      maintain indexes for every batch. On a warehouse a MERGE can be several times slower than an
+      append, and that cost lives in the warehouse, not in faucet. Worth knowing when you read a
+      benchmark: an append number is the ceiling; a real upsert pipeline sits below it, bounded by
+      the target's reconciliation cost.
+    </p>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      Use append (with COPY where available) when you're loading fresh data — it's the fast lane.
+      Reach for upsert/delete when you need idempotent re-runs or a true mirror, and budget for the
+      destination doing more work. faucet gives you the choice and refuses the incoherent
+      combinations.
+    </p>
+  </section>
+</BlogPost>

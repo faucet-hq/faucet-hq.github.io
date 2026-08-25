@@ -1,0 +1,276 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const posts = [
+  {
+    title: 'Effectively-once, honestly: what your sink actually guarantees',
+    blurb:
+      'Exactly-once is mostly a marketing word. faucet is precise: at-least-once by default, and effectively-once when the sink is idempotent — so re-runs and crash-resumes converge instead of duplicating.',
+    href: `${base}blog/effectively-once`,
+    date: 'August 25, 2026',
+    tags: ['Reliability', 'Delivery guarantees', 'CDC'],
+  },
+  {
+    title: "Crash-safe by bookmark: when it's safe to move a CDC checkpoint",
+    blurb:
+      "A CDC checkpoint is a promise that data is delivered. Move it too early and a crash silently drops committed rows. faucet advances it from one place only — a durable bookmark, after the sink flushes.",
+    href: `${base}blog/crash-safe-by-bookmark`,
+    date: 'August 25, 2026',
+    tags: ['Reliability', 'CDC', 'Delivery guarantees'],
+  },
+  {
+    title: 'One config, N tables: how the matrix fans out in parallel',
+    blurb:
+      'Give a source a list of tables and faucet runs them as concurrent pipeline instances — bounded by a default derived from your CPU count — with parent/child streams fanning out beneath each.',
+    href: `${base}blog/one-config-n-tables`,
+    date: 'August 25, 2026',
+    tags: ['Concurrency', 'Performance', 'CDC'],
+  },
+  {
+    title: 'Flat memory at a million rows',
+    blurb:
+      'faucet streams page-by-page instead of buffering the result set, so a million-row extract holds roughly the same resident memory as a thousand-row one. Backpressure, not buffering.',
+    href: `${base}blog/flat-memory`,
+    date: 'August 25, 2026',
+    tags: ['Performance', 'Streaming'],
+  },
+  {
+    title: 'Adaptive batching: the pipeline tunes its own batch size',
+    blurb:
+      'A fixed batch size is a guess. faucet runs an AIMD controller that grows batches while throughput improves and backs off on pressure — converging on the size the destination actually wants.',
+    href: `${base}blog/adaptive-batching`,
+    date: 'August 25, 2026',
+    tags: ['Performance', 'Batching', 'Streaming'],
+  },
+  {
+    title: "The Value tax: when Arrow saves you (and when it doesn't)",
+    blurb:
+      "Converting Arrow to JSON and back at every connector boundary is pure tax — up to 7–9× the useful work. When both ends speak Arrow, faucet negotiates a zero-cost columnar fast path.",
+    href: `${base}blog/the-value-tax`,
+    date: 'August 25, 2026',
+    tags: ['Performance', 'Columnar'],
+  },
+  {
+    title: 'Append, upsert, or delete: write modes and what they cost',
+    blurb:
+      'Appending streams flat out; upserting makes the destination reconcile every row. faucet gives you both, adds a COPY fast lane for append, and refuses incoherent combinations at config time.',
+    href: `${base}blog/write-modes`,
+    date: 'August 25, 2026',
+    tags: ['Write modes', 'Performance'],
+  },
+  {
+    title: "Bad rows shouldn't stop the stream",
+    blurb:
+      'One malformed record should quarantine itself, not kill the load. faucet routes rejects to a dead-letter queue with the reason attached — carrying the masked payload, never the raw secret.',
+    href: `${base}blog/bad-rows-dlq`,
+    date: 'August 25, 2026',
+    tags: ['Reliability', 'DLQ', 'Governance'],
+  },
+  {
+    title: 'Govern in the pipe, not after the load',
+    blurb:
+      'Landing raw data and governing it later means the secret has already landed and the bad row is already queryable. faucet folds masking, quality, contracts, drift and lineage into the movement itself.',
+    href: `${base}blog/govern-in-the-pipe`,
+    date: 'August 25, 2026',
+    tags: ['Governance', 'Security'],
+  },
+  {
+    title: 'Injection-safe by construction: parameterized parent/child fan-out',
+    blurb:
+      'When a parent stream drives child queries, faucet fills `${parent.field}` tokens as positional bind parameters — never string-interpolated. Safe by construction, not by discipline.',
+    href: `${base}blog/injection-safe-fan-out`,
+    date: 'August 25, 2026',
+    tags: ['Security', 'Concurrency', 'CDC'],
+  },
+  {
+    title: 'Secrets that never touch your config',
+    blurb:
+      'Reference a secret with `${vault:…}` / `${aws-sm:…}` / `${gcp-sm:…}` / `${azure-kv:…}` and faucet resolves it from the manager at run time, using the platform credential chain. Your config holds a pointer, never the value.',
+    href: `${base}blog/secrets-at-runtime`,
+    date: 'August 25, 2026',
+    tags: ['Security', 'Secrets', 'Operations'],
+  },
+  {
+    title: 'Observability with zero per-connector code',
+    blurb:
+      'You shouldn’t have to instrument a pipeline to see it. faucet emits Prometheus metrics and OpenTelemetry traces at the engine level, so every connector — and every future one — is visible for free.',
+    href: `${base}blog/observability-zero-config`,
+    date: 'August 25, 2026',
+    tags: ['Observability', 'Operations', 'Performance'],
+  },
+  {
+    title: 'Compile only what you need',
+    blurb:
+      'faucet-stream is ~90 crates, but your binary isn’t. Connectors are opt-in Cargo features, so a REST→JSONL build carries no database drivers and no cloud SDKs — just the code your pipeline runs.',
+    href: `${base}blog/compile-what-you-need`,
+    date: 'August 25, 2026',
+    tags: ['Architecture', 'Operations', 'Performance'],
+  },
+];
+
+// All tags, ordered by how many posts carry each (most common first), then alphabetically.
+const counts = new Map<string, number>();
+for (const p of posts) for (const t of p.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+const allTags = [...counts.keys()].sort(
+  (a, b) => (counts.get(b)! - counts.get(a)!) || a.localeCompare(b),
+);
+---
+
+<Base
+  title="Blog — faucet-stream"
+  description="Notes from the faucet-stream team: shorter, feature-focused posts on how the engine keeps data movement fast, safe, and honest."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Blog</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Notes from the team</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Shorter than the <a href={`${base}papers`}>papers</a> — feature spotlights and the
+          reasoning behind them. Every claim is grounded in the real implementation.
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap filterbar" aria-label="Filter posts by tag">
+      <div class="filter-tags">
+        {allTags.map((t) => (
+          <button type="button" class="filter-pill" data-tag={t} aria-pressed="false">{t}</button>
+        ))}
+      </div>
+      <div class="filter-meta">
+        <span id="filter-count"></span>
+        <button type="button" id="filter-clear" hidden>Clear filters</button>
+      </div>
+    </section>
+
+    <section class="wrap posts" id="posts">
+      {posts.map((p) => (
+        <a class="post" href={p.href} data-tags={p.tags.join('|')}>
+          <div class="post-top">
+            <span class="pdate">{p.date}</span>
+          </div>
+          <h2>{p.title}</h2>
+          <p>{p.blurb}</p>
+          <div class="card-tags">
+            {p.tags.map((t) => <span class="tag-pill">{t}</span>)}
+          </div>
+          <span class="pread">Read the post →</span>
+        </a>
+      ))}
+    </section>
+    <p class="wrap empty" id="empty" hidden>
+      No posts match those tags. <button type="button" id="empty-clear">Clear filters</button>
+    </p>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<script is:inline>
+  (function () {
+    const posts = Array.from(document.querySelectorAll('#posts .post'));
+    const pills = Array.from(document.querySelectorAll('.filter-pill'));
+    const countEl = document.getElementById('filter-count');
+    const clearBtn = document.getElementById('filter-clear');
+    const emptyClear = document.getElementById('empty-clear');
+    const emptyEl = document.getElementById('empty');
+    const active = new Set();
+
+    function render() {
+      let shown = 0;
+      for (const p of posts) {
+        const tags = (p.dataset.tags || '').split('|').filter(Boolean);
+        const match = active.size === 0 || tags.some((t) => active.has(t));
+        p.hidden = !match;
+        if (match) shown++;
+      }
+      countEl.textContent =
+        active.size === 0
+          ? 'Showing all ' + posts.length + ' posts'
+          : 'Showing ' + shown + ' of ' + posts.length + ' posts';
+      clearBtn.hidden = active.size === 0;
+      emptyEl.hidden = shown !== 0;
+    }
+
+    function setTag(tag, on) {
+      const state = on === undefined ? !active.has(tag) : on;
+      if (state) active.add(tag);
+      else active.delete(tag);
+      for (const b of pills) {
+        if (b.dataset.tag === tag) {
+          b.setAttribute('aria-pressed', String(state));
+          b.classList.toggle('on', state);
+        }
+      }
+    }
+
+    function clearAll() {
+      active.clear();
+      for (const b of pills) {
+        b.setAttribute('aria-pressed', 'false');
+        b.classList.remove('on');
+      }
+      render();
+    }
+
+    pills.forEach((b) =>
+      b.addEventListener('click', () => {
+        setTag(b.dataset.tag);
+        render();
+      }),
+    );
+    clearBtn.addEventListener('click', clearAll);
+    emptyClear.addEventListener('click', clearAll);
+
+    // Pre-activate from ?tags=A,B (e.g. clicking a tag on a post page).
+    const known = new Set(pills.map((b) => b.dataset.tag));
+    const initial = new URLSearchParams(location.search).get('tags');
+    if (initial)
+      initial
+        .split(',')
+        .map((s) => s.trim())
+        .filter((t) => known.has(t))
+        .forEach((t) => setTag(t, true));
+    render();
+  })();
+</script>
+
+<style>
+  .head { padding-bottom: 1rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 44rem; }
+  .lede a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+
+  .filterbar { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.6rem; }
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .filter-pill { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 550; letter-spacing: 0.01em; line-height: 1; color: var(--ink-faint); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 0.42rem 0.74rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
+  .filter-pill:hover { color: var(--teal-deep); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
+  .filter-pill.on { color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 12%, transparent); border-color: color-mix(in srgb, var(--teal) 45%, transparent); }
+  .filter-meta { display: flex; align-items: center; gap: 0.9rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint); }
+  #filter-clear, #empty-clear { font-family: var(--font-mono); font-size: 0.78rem; color: var(--teal-deep); background: none; border: 0; padding: 0; cursor: pointer; border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+
+  .posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.1rem; }
+  .post { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.6rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
+  .post[hidden] { display: none; }
+  .post:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .post-top { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 0.5rem; }
+  .pdate { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
+  .post h2 { font-size: 1.25rem; line-height: 1.25; }
+  .post p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
+  .post p :global(code) { font-family: var(--font-mono); font-size: 0.88em; }
+  .card-tags { margin-top: 1rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.6; color: var(--teal-deep); }
+  .tag-pill { display: inline; color: var(--teal-deep); }
+  .tag-pill + .tag-pill::before { content: "•"; margin: 0 0.5rem; color: var(--ink-faint); letter-spacing: 0; }
+  .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; align-self: flex-start; }
+  .empty { margin-top: 1.4rem; color: var(--ink-soft); }
+
+  @media (max-width: 720px) { .posts { grid-template-columns: 1fr; } }
+</style>
