@@ -1,0 +1,67 @@
+---
+import Base from './Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const base = import.meta.env.BASE_URL;
+export interface Props {
+  title: string;
+  dek: string;
+  description: string;
+  date: string;
+  tag: string;
+  read: string;
+}
+const { title, dek, description, date, tag, read } = Astro.props;
+---
+
+<Base title={`${title} — faucet-stream blog`} description={description}>
+  <Header />
+  <main id="main">
+    <article class="paper">
+      <header class="paper-head">
+        <a class="crumb" href={`${base}blog`}>← Blog</a>
+        <span class="kicker">Blog · {tag}</span>
+        <h1>{title}</h1>
+        <p class="dek">{dek}</p>
+        <div class="meta"><span>faucet-stream</span><span>·</span><span>{date}</span><span>·</span><span>{read}</span></div>
+      </header>
+      <slot />
+      <p class="cta-inline">
+        More on the <a href={`${base}blog`}>blog</a>, or read the
+        <a href="https://faucet-hq.github.io/faucet-stream/">documentation</a>.
+      </p>
+    </article>
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style is:global>
+  .paper { max-width: 46rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 1rem; }
+  .paper-head { border-bottom: 1px solid var(--line); padding-bottom: 1.6rem; margin-bottom: 2rem; }
+  .paper .crumb { color: var(--teal-deep); font-size: 0.9rem; }
+  .paper .kicker { display: block; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); }
+  .paper h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin-top: 0.6rem; line-height: 1.1; }
+  .paper .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
+  .paper .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+  .paper section { margin-top: 2.2rem; }
+  .paper h2 { font-size: 1.4rem; margin-bottom: 0.8rem; }
+  .paper p { line-height: 1.75; color: var(--ink-soft); margin-top: 0.9rem; }
+  .paper ul, .paper ol { margin-top: 1rem; padding-left: 1.3rem; line-height: 1.75; color: var(--ink-soft); }
+  .paper li { margin-top: 0.5rem; }
+  .paper b { color: var(--ink); }
+  .paper code { font-family: var(--font-mono); font-size: 0.85em; background: color-mix(in srgb, var(--teal) 10%, transparent); color: var(--teal-deep); padding: 0.06em 0.34em; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent); }
+  .paper .callout { margin-top: 1.3rem; border-left: 3px solid var(--teal); background: color-mix(in srgb, var(--teal) 7%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 1rem 1.2rem; }
+  .paper .callout p { margin: 0; color: var(--ink); }
+  .paper .code { margin: 1rem 0 0; background: #0b1220; border: 1px solid #1c2740; border-radius: var(--radius); padding: 1.1rem 1.2rem; overflow-x: auto; }
+  .paper .code code { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.7; color: #cdd9ee; white-space: pre; background: none; border: 0; padding: 0; }
+  .paper .table-wrap { overflow-x: auto; margin-top: 1rem; }
+  .paper table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  .paper th, .paper td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .paper th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+  .paper td.yes { color: var(--teal-deep); font-weight: 550; }
+  .paper .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+</style>

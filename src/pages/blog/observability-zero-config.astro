@@ -1,0 +1,56 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Observability with zero per-connector code"
+  dek="You shouldn't have to instrument a pipeline to see it. faucet-stream emits Prometheus metrics and OpenTelemetry traces for every source, sink, transform, and state op — and no connector writes a line of that code."
+  description="How faucet-stream provides Prometheus metrics and OpenTelemetry tracing automatically, at the engine level, with no per-connector instrumentation."
+  date="August 25, 2026"
+  tag="Operations"
+  read="~5 min read"
+>
+  <section>
+    <h2>Instrumentation shouldn't be a connector's job</h2>
+    <p>
+      If every connector had to remember to emit metrics, you'd get uneven coverage: the popular
+      ones instrumented, the long tail dark, and metric names that don't line up. The right place
+      for observability is the engine — the one loop every pipeline runs through.
+    </p>
+  </section>
+  <section>
+    <h2>Emitted at the engine, for free</h2>
+    <p>
+      faucet-stream measures the pipeline itself: record counts and throughput, per-page and
+      per-batch timings, sink latency, retries and errors, DLQ writes, adaptive-batch adjustments,
+      and topology-node stats (join matches/misses, merge counts). They're standard
+      <code>faucet_*</code> Prometheus series — for example
+      <code>faucet_pipeline_adaptive_batch_adjustments_total</code> — so a new connector inherits
+      full observability the day it's written, with <b>no per-connector instrumentation</b>.
+    </p>
+    <div class="callout">
+      <p>
+        Because it's engine-level, coverage is uniform: the same metrics for a REST source and a
+        Postgres CDC source, the same names across every sink. Nothing goes dark just because a
+        connector author didn't add telemetry.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Metrics and traces, opt-in by feature</h2>
+    <p>
+      Prometheus metrics come with the <code>observability</code> feature; OpenTelemetry tracing
+      (spans across source → transform → sink → state, with pipeline and matrix-row labels) comes
+      with <code>otel</code>, exporting over OTLP to your collector. Build without them and you pay
+      nothing; build with them and your pipelines are visible in the tools you already run — no
+      code changes to the connectors.
+    </p>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      Observability is a property of the runtime, not a chore per integration. Flip on a feature
+      flag and every pipeline — and every future connector — shows up in Prometheus and your
+      tracing backend automatically.
+    </p>
+  </section>
+</BlogPost>

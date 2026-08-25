@@ -1,0 +1,65 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="One config, N tables: matrix pipelines with bounded concurrency"
+  dek="A source runs one query — one stream. To move a hundred tables you don't write a hundred configs: you write one and fan it out into a matrix, running in parallel under a deliberate ceiling."
+  description="How faucet-stream turns one config into many parallel pipeline runs with a matrix, and why the default concurrency is capped."
+  date="August 25, 2026"
+  tag="Runtime"
+  read="~6 min read"
+>
+  <section>
+    <h2>One source is one stream</h2>
+    <p>
+      A faucet pipeline is one source and one sink. A Postgres source takes a single
+      <code>query</code> and streams it as bounded pages — sequential, predictable, bounded
+      memory. That's the unit. So "move these forty tables" isn't a single source with forty
+      queries; it's forty units.
+    </p>
+  </section>
+  <section>
+    <h2>The matrix: fan one template into many runs</h2>
+    <p>
+      You express those forty units as a <b>matrix</b> — one row per table, each deep-merging its
+      own patch (its query/table) over the shared connection config. Source <em>discovery</em> can
+      even generate the matrix for you: one row per discovered table. One template, N executions,
+      no copy-paste.
+    </p>
+    <p>
+      The same mechanism powers <b>parent/child fan-out</b>: a parent stream's records
+      parameterize a child query per record (with safe bind parameters — see
+      <a href={`${import.meta.env.BASE_URL}blog/injection-safe-fan-out`}>this post</a>).
+    </p>
+  </section>
+  <section>
+    <h2>They run in parallel — under a ceiling</h2>
+    <p>
+      Matrix rows don't run one after another. The executor runs them concurrently under a
+      semaphore whose width is <code>execution.max_concurrent</code>. The default is
+      <code>min(available CPUs, 8)</code> — and the cap of 8 is deliberate:
+    </p>
+    <div class="callout">
+      <p>
+        Each row is a <b>full pipeline</b> with its own connection pools and clients, and matrix
+        rows usually target the <em>same</em> database. An unbounded fan-out across a 64-core box
+        wouldn't go faster — it would blow through that database's connection and rate limits.
+        The ceiling protects the system you're reading from.
+      </p>
+    </div>
+    <p>
+      Workloads that genuinely benefit from more parallelism set <code>execution.max_concurrent</code>
+      explicitly to opt out of the cap. And the number of hardware threads is read with
+      <code>available_parallelism()</code>, which honors container CPU limits — so inside a pod
+      pinned to 2 CPUs you get 2, not the host's 64.
+    </p>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      One config becomes many parallel runs, each isolated and checkpointed on its own, with a
+      concurrency default chosen to be fast <em>and</em> a good citizen of the database behind it.
+      Scale the knob when you know the backend can take it.
+    </p>
+  </section>
+</BlogPost>
