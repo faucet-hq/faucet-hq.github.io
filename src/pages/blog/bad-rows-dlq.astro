@@ -1,0 +1,62 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Bad rows shouldn't reach the warehouse"
+  dek="When a row fails a quality check, you have two honest choices: stop the world, or set it aside. faucet-stream does both — as a per-check decision — and never silently drops data."
+  description="How faucet-stream's quality checks quarantine bad rows to a dead-letter queue (or abort), keeping invalid data out of the sink without losing it."
+  date="August 25, 2026"
+  tag="Governance"
+  read="~5 min read"
+  tags={['Reliability', 'DLQ', 'Governance']}
+>
+  <section>
+    <h2>Two bad options, and the one nobody should pick</h2>
+    <p>
+      A row violates a rule — a null where you require a value, a negative amount, a broken enum.
+      There are three things a pipeline can do: <b>abort</b> the run, <b>quarantine</b> the row, or
+      <b>silently drop</b> it. The third is the one that ruins your data quietly, and it's the one
+      faucet-stream never does.
+    </p>
+  </section>
+  <section>
+    <h2>Quality checks decide, per rule, before the write</h2>
+    <p>
+      Quality is a stage in the movement path — it runs on each page <em>before</em> the sink sees
+      it. Every check declares what happens on failure:
+    </p>
+    <pre class="code"><code>quality:
+  checks:
+    - {'{'} field: amount, rule: {'{'} gte: 0 {'}'}, on_failure: abort {'}'}
+    - {'{'} field: email,  rule: not_null,        on_failure: quarantine {'}'}</code></pre>
+    <ul>
+      <li><b>abort</b> — stop the run. Use it for violations that mean the whole batch is suspect.</li>
+      <li><b>quarantine</b> — route the offending row to a <b>dead-letter queue</b>, and let the
+        good rows through. The bad row is captured, not discarded.</li>
+    </ul>
+  </section>
+  <section>
+    <h2>Quarantine needs somewhere to go</h2>
+    <div class="callout">
+      <p>
+        A <code>quarantine</code> action requires a <b>DLQ sink</b> to be configured — otherwise
+        the run is <b>rejected at startup</b>, not quietly turned into a drop. "Set the row aside"
+        only means something if there's a side to set it on.
+      </p>
+    </div>
+    <p>
+      And because governance runs in a fixed order with <b>masking first</b>, a quarantined row
+      carries the <em>masked</em> payload, not the raw one — a bad row never leaks a secret into
+      the DLQ. (More on that ordering in the
+      <a href="https://faucet-hq.github.io/papers/governance-in-the-movement-path">governance paper</a>.)
+    </p>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      Invalid data stays out of the target, valid data keeps flowing, and nothing vanishes without
+      a trace. Abort when the batch is untrustworthy; quarantine when it's a few bad rows — and
+      never pick the silent third option, because faucet won't offer it.
+    </p>
+  </section>
+</BlogPost>

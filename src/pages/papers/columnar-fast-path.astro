@@ -5,6 +5,7 @@ import Footer from '../../components/Footer.astro';
 import CTA from '../../components/CTA.astro';
 
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+const base = import.meta.env.BASE_URL;
 
 // The negotiation gates: the fast path is taken only when every one of these
 // holds. Any Value-observing stage falls the whole pipeline back to the row loop.
@@ -36,7 +37,7 @@ const tax = [
   <main id="main">
     <article class="paper">
       <header class="paper-head">
-        <a class="crumb" href="/papers">← Papers</a>
+        <a class="crumb" href={`${base}papers`}>← Papers</a>
         <span class="kicker">Technical white paper</span>
         <h1>A Zero-Cost Columnar Fast Path</h1>
         <p class="dek">
@@ -49,7 +50,7 @@ const tax = [
         </p>
         <div class="meta">
           <span>faucet-stream</span><span>·</span><span>~11 min read</span><span>·</span>
-          <span>Draft — micro-benchmarked, end-to-end run pending</span>
+          <span>Micro-benchmarked; end-to-end run pending</span>
         </div>
       </header>
 

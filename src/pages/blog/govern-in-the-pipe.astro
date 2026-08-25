@@ -1,0 +1,52 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Govern in the pipe, not after the load"
+  dek="The usual ELT stack lands raw data first and governs it later — by which time the secret has landed and the bad row is queryable. faucet-stream folds governance into the movement itself, before any write."
+  description="An accessible take on faucet-stream's in-flight governance: masking, quality, contracts, drift, lineage and SLAs applied per page before the sink — with a mask-first ordering guarantee."
+  date="August 25, 2026"
+  tag="Governance"
+  read="~5 min read"
+  tags={['Governance', 'Security']}
+>
+  <section>
+    <h2>The seam where risk lives</h2>
+    <p>
+      A modern ELT stack is assembled from parts: a mover loads raw rows, then a separate layer —
+      dbt tests, Great Expectations, a catalog, a monitor — governs them <em>downstream</em>. Each
+      part is fine; the seam between them is where risk lives. PII lands before it's masked. Bad
+      rows are queryable before the check runs. Drift shows up as a broken model, not a decision at
+      ingest. Lineage is reconstructed after the fact.
+    </p>
+  </section>
+  <section>
+    <h2>Fold it into the movement</h2>
+    <p>
+      faucet-stream runs governance as a stage <b>in the movement path</b>, on every page, before
+      the sink: <b>masking, quality checks, data contracts, schema-drift policy, column-level
+      lineage, and freshness/volume SLAs</b> — each a config block, applied uniformly for every one
+      of the dozens of sinks, with zero per-connector code. The decision — mask this, reject that,
+      quarantine the other — happens <em>before</em> the write, not after.
+    </p>
+  </section>
+  <section>
+    <h2>The guarantee that makes it trustworthy</h2>
+    <div class="callout">
+      <p>
+        Masking runs <b>first</b> — before quality, contract, drift, and before a row reaches the
+        sink, the dead-letter queue, or a lineage event. So a quarantined bad row carries the
+        <em>masked</em> payload, and a secret never lands anywhere in the clear. It's fixed in one
+        place and checked by a test in CI — a guarantee, not a convention each connector has to
+        remember.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Read the details</h2>
+    <p>
+      The full model — the ordering proof, the six guardrails, and the honest limits — is in the
+      paper: <a href="https://faucet-hq.github.io/papers/governance-in-the-movement-path">Governance in the Movement Path</a>.
+    </p>
+  </section>
+</BlogPost>

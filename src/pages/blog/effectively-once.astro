@@ -1,0 +1,65 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Effectively-once, not exactly-once"
+  dek="Most tools promise 'exactly-once.' faucet-stream's type system won't let you write it — because across a crash it isn't achievable, and pretending otherwise is how data quietly goes wrong."
+  description="Why faucet-stream deliberately offers at-least-once and effectively-once delivery — and refuses to claim exactly-once."
+  date="August 25, 2026"
+  tag="Correctness"
+  read="~6 min read"
+  tags={['Reliability', 'Delivery guarantees', 'CDC']}
+>
+  <section>
+    <h2>The honest default: at-least-once</h2>
+    <p>
+      faucet-stream moves data in bounded pages, and after each page it does three things in
+      order: <b>write to the sink → flush → persist the resume bookmark</b>. The bookmark is only
+      saved once the sink has confirmed the write. That ordering guarantees <b>no committed change
+      is ever lost</b> — but it leaves one window: if the process dies <em>after</em> the sink
+      commits and <em>before</em> the bookmark is persisted, the next run re-reads that page. So
+      the default guarantee is <b>at-least-once</b>: no loss, but a page can be delivered twice.
+    </p>
+  </section>
+  <section>
+    <h2>Why not "exactly-once"?</h2>
+    <p>
+      Because between two independent systems — a source, a sink, and a crash that can happen at
+      any instant — there is no way to make "the row is written" and "the position is recorded"
+      a single atomic fact. Every "exactly-once" claim is really at-least-once plus a
+      deduplication trick somewhere. faucet-stream names that honestly: its delivery type is
+      <code>AtLeastOnce</code> or <code>EffectivelyOnce(mechanism)</code> — there is no
+      <code>ExactlyOnce</code> variant to select, on purpose.
+    </p>
+  </section>
+  <section>
+    <h2>Effectively-once, when the sink can help</h2>
+    <p>
+      Duplicates are removed by pairing the source with a sink that can absorb a replay. Ask for
+      it and faucet selects one of two mechanisms:
+    </p>
+    <ul>
+      <li><b>Atomic watermark</b> — an idempotent sink plus a deterministic-replay source and a
+        durable state store. The sink's committed token embeds the resume bookmark; on restart the
+        pipeline reads that token and re-anchors the source, skipping pages already committed.</li>
+      <li><b>Keyed upsert</b> — the sink deduplicates by primary key, so a replayed row overwrites
+        instead of duplicating.</li>
+    </ul>
+    <div class="callout">
+      <p>
+        If neither is available, faucet <b>refuses to pretend</b>: requesting exactly-once without
+        an idempotent or keyed sink is a typed error naming the limiting side — not a silent
+        downgrade to "hope."
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Why this is the right kind of honest</h2>
+    <p>
+      The worst failures in a data platform are the silent ones. A tool that says "exactly-once"
+      and quietly drops or double-writes a row on a bad day is worse than one that tells you the
+      exact guarantee and lets you close the gap with a keyed sink. faucet-stream picks the second
+      kind: never lose a committed change, and be precise about duplicates.
+    </p>
+  </section>
+</BlogPost>

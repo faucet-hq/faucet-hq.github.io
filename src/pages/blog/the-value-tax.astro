@@ -1,0 +1,62 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="The Value tax: when Arrow saves you (and when it doesn't)"
+  dek="A quick, honest tour of faucet-stream's columnar fast path — why converting Arrow to JSON and back is a tax worth avoiding, and why 'zero-cost' means something precise here."
+  description="An accessible take on faucet-stream's zero-cost columnar fast path: the Value-conversion tax, when Arrow end-to-end avoids it, and the honest limits."
+  date="August 25, 2026"
+  tag="Performance"
+  read="~5 min read"
+  tags={['Performance', 'Columnar']}
+>
+  <section>
+    <h2>Why a JSON record model, and what it costs</h2>
+    <p>
+      faucet-stream's record is a JSON value. That's the right default — schema-flexible, easy for
+      any connector, and the substrate every governance rule operates on. But some connectors are
+      columnar to the core: a Parquet file is Apache Arrow on disk; BigQuery streams Arrow; Delta
+      and the object stores are columnar. When a columnar source feeds a columnar sink, decoding
+      each Arrow batch into JSON rows and re-encoding it back to Arrow is pure <b>tax</b> — work
+      that produces nothing.
+    </p>
+  </section>
+  <section>
+    <h2>How big is the tax?</h2>
+    <p>
+      We measured it. On a six-column analytical page, a single <b>Arrow → Value → Arrow</b>
+      round-trip costs roughly <b>7–9× the entire Parquet decode+encode</b> it wraps — and it's
+      paid at <em>every</em> connector boundary. The conversion is larger than the useful work.
+    </p>
+  </section>
+  <section>
+    <h2>The fast path, and two senses of "zero-cost"</h2>
+    <p>
+      When both ends speak Arrow and nothing in between needs to see a row, faucet negotiates a
+      <b>columnar fast path</b>: batches flow source → sink with no JSON round-trip. "Zero-cost"
+      is precise here, and it means two things:
+    </p>
+    <ul>
+      <li><b>Free when off.</b> The Arrow support is inert by default — the compiled binary is
+        byte-identical to the Value-only pipeline. You don't pay for what you don't use.</li>
+      <li><b>Tax-free on the fast path.</b> On a negotiated Arrow-to-Arrow chain, the conversion
+        shim never runs.</li>
+    </ul>
+    <div class="callout">
+      <p>
+        The honest part: "zero-cost" is about the <em>abstraction</em>, not the I/O. The fast path
+        removes the Value tax — it does <b>not</b> make Parquet encoding disappear. And the moment
+        a value-shaped stage (masking, a quality check) needs a row, the pipeline correctly drops
+        back to the row path. Speed never bypasses governance.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Read the details</h2>
+    <p>
+      This is the short version. The full mechanism — how the path is negotiated, which connectors
+      are Arrow-native, and the exact numbers — is in the paper:
+      <a href="https://faucet-hq.github.io/papers/columnar-fast-path">A Zero-Cost Columnar Fast Path</a>.
+    </p>
+  </section>
+</BlogPost>

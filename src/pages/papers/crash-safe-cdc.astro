@@ -5,6 +5,7 @@ import Footer from '../../components/Footer.astro';
 import CTA from '../../components/CTA.astro';
 
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
+const base = import.meta.env.BASE_URL;
 
 // Per-source resume unit + whether it acks a position back upstream.
 const sources = [
@@ -23,7 +24,7 @@ const sources = [
   <main id="main">
     <article class="paper">
       <header class="paper-head">
-        <a class="crumb" href="/papers">← Papers</a>
+        <a class="crumb" href={`${base}papers`}>← Papers</a>
         <span class="kicker">Technical white paper</span>
         <h1>Crash-Safe Change Data Capture</h1>
         <p class="dek">
@@ -37,7 +38,7 @@ const sources = [
         </p>
         <div class="meta">
           <span>faucet-stream</span><span>·</span><span>~13 min read</span><span>·</span>
-          <span>Draft — grounded in code &amp; crash-resume tests</span>
+          <span>Grounded in code &amp; crash-resume tests</span>
         </div>
       </header>
 

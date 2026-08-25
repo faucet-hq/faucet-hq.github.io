@@ -1,0 +1,56 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Flat memory at a million rows"
+  dek="A data mover's memory should be a function of its batch size, not its dataset size. faucet-stream streams in bounded pages, so a 1M-row move and a 1B-row move use about the same RAM."
+  description="How faucet-stream keeps peak memory flat by streaming bounded pages instead of buffering the dataset."
+  date="August 25, 2026"
+  tag="Performance"
+  read="~5 min read"
+  tags={['Performance', 'Streaming']}
+>
+  <section>
+    <h2>The failure mode: buffering the dataset</h2>
+    <p>
+      Plenty of pipelines quietly assume the data fits in memory: read it all, transform it, write
+      it. That works in the demo and falls over on the real table — OOM at 3 a.m., or a box sized
+      for the worst-case dataset instead of the workload. Memory that scales with rows is a
+      liability.
+    </p>
+  </section>
+  <section>
+    <h2>The design: bounded pages, end to end</h2>
+    <p>
+      faucet-stream never materializes the dataset. The source yields a <b>bounded page</b> of
+      records; that page flows through transforms and governance and into the sink; then it's
+      released and the next page is read. Peak memory is the cost of <em>one page in flight</em> —
+      set by <code>batch_size</code> — not the total row count. A 1M-row move and a 1B-row move
+      have essentially the same memory profile; the second just runs longer.
+    </p>
+  </section>
+  <section>
+    <h2>What that looks like on the bench</h2>
+    <p>
+      On the reproducible Postgres → JSONL move of <b>1,000,000 rows</b>, faucet held a peak RSS
+      of about <b>14 MiB</b> — while a Singer-based pipeline doing the same move used around
+      <b>743 MiB</b>, roughly <b>50× more</b>, with exact row-count parity. The gap isn't a tuning
+      trick; it's the difference between streaming pages and marshalling every row through an
+      in-memory pipe.
+    </p>
+    <div class="callout">
+      <p>
+        Flat memory is also what makes the concurrency story safe: because each pipeline is cheap
+        in RAM, you can run several in parallel (a <a href={`${import.meta.env.BASE_URL}blog/one-config-n-tables`}>matrix</a>)
+        without the memory adding up to trouble.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      Size your box for the throughput you want, not for the biggest table you might ever move.
+      With bounded-page streaming, the dataset can grow without the memory bill following it.
+    </p>
+  </section>
+</BlogPost>
