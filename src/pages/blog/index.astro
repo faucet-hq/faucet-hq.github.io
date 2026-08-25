@@ -154,13 +154,13 @@ const allTags = [...counts.keys()].sort(
       {posts.map((p) => (
         <a class="post" href={p.href} data-tags={p.tags.join('|')}>
           <div class="post-top">
-            <div class="card-tags">
-              {p.tags.map((t) => <span class="tag-pill">{t}</span>)}
-            </div>
             <span class="pdate">{p.date}</span>
           </div>
           <h2>{p.title}</h2>
           <p>{p.blurb}</p>
+          <div class="card-tags">
+            {p.tags.map((t) => <span class="tag-pill">{t}</span>)}
+          </div>
           <span class="pread">Read the post →</span>
         </a>
       ))}
@@ -261,12 +261,12 @@ const allTags = [...counts.keys()].sort(
   .post { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.6rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
   .post[hidden] { display: none; }
   .post:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-  .post-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; margin-bottom: 0.7rem; }
-  .pdate { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
+  .post-top { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 0.5rem; }
+  .pdate { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
   .post h2 { font-size: 1.25rem; line-height: 1.25; }
   .post p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
   .post p :global(code) { font-family: var(--font-mono); font-size: 0.88em; }
-  .card-tags { flex: 1; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.6; color: var(--teal-deep); }
+  .card-tags { margin-top: 1rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.6; color: var(--teal-deep); }
   .tag-pill { display: inline; color: var(--teal-deep); }
   .tag-pill + .tag-pill::before { content: "•"; margin: 0 0.5rem; color: var(--ink-faint); letter-spacing: 0; }
   .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; align-self: flex-start; }
