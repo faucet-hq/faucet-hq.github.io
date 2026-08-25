@@ -1,0 +1,64 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Compile only what you need"
+  dek="faucet-stream is ~90 crates, but your binary isn't. Connectors are opt-in Cargo features, so a REST→JSONL build carries no database drivers, no cloud SDKs — just the code your pipeline actually runs."
+  description="How faucet-stream's feature-flag architecture lets you build a small binary with only the connectors you use — and why that keeps the ecosystem healthy."
+  date="August 25, 2026"
+  tag="Architecture"
+  read="~5 min read"
+>
+  <section>
+    <h2>Big ecosystem, small binary</h2>
+    <p>
+      faucet-stream is a Cargo workspace of around <b>90 crates</b> — a core plus a source or sink
+      per system. That's the <em>menu</em>, not the meal. Every connector is an <b>optional
+      feature</b>, so you compile in only the ones your pipeline uses:
+    </p>
+    <pre class="code"><code>cargo install --path cli \
+  --no-default-features \
+  --features "source-rest,sink-jsonl,transforms"</code></pre>
+    <p>
+      That binary contains the REST source, the JSONL sink, and the transform engine — and
+      <b>nothing else</b>. No Postgres driver, no cloud SDK, no Kafka client. Smaller binary,
+      faster build, smaller attack surface, fewer transitive dependencies to audit.
+    </p>
+  </section>
+  <section>
+    <h2>Why this shape matters</h2>
+    <ul>
+      <li><b>Cost is proportional to use.</b> A cloud SDK or a database driver is only pulled in
+        when you enable the connector that needs it — a config that never touches BigQuery pays
+        nothing for the BigQuery client.</li>
+      <li><b>Isolation is enforced.</b> CI builds each connector feature on its own, so an
+        accidental cross-dependency between connectors is caught, not shipped.</li>
+      <li><b>Supply chain stays lean.</b> Fewer compiled-in crates means fewer things in your
+        dependency tree to review and keep patched.</li>
+    </ul>
+    <div class="callout">
+      <p>
+        The web console reflects this honestly: the schema explorer shows the connectors
+        <em>compiled into this server</em>, not a catalog of everything that theoretically exists —
+        because those are the ones you can actually run.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Good for third-party authors too</h2>
+    <p>
+      The same design keeps the ecosystem open: a connector depends only on
+      <code>faucet-core</code>, which re-exports the shared pieces (async-trait, serde_json,
+      schemars) so authors don't chase a pile of dependencies. Anyone can publish a
+      <code>faucet-source-*</code> / <code>faucet-sink-*</code> crate that slots into the same
+      feature model.
+    </p>
+  </section>
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      You get a broad ecosystem without a bloated binary. Turn on the connectors you use, leave the
+      rest on the shelf, and ship something small.
+    </p>
+  </section>
+</BlogPost>

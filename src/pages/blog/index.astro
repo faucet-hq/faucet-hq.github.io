@@ -8,6 +8,78 @@ const base = import.meta.env.BASE_URL;
 
 const posts = [
   {
+    title: 'Effectively-once, honestly: what your sink actually guarantees',
+    blurb:
+      'Exactly-once is mostly a marketing word. faucet is precise: at-least-once by default, and effectively-once when the sink is idempotent — so re-runs and crash-resumes converge instead of duplicating.',
+    href: `${base}blog/effectively-once`,
+    date: 'August 25, 2026',
+    tag: 'Reliability',
+  },
+  {
+    title: "Crash-safe by bookmark: when it's safe to move a CDC checkpoint",
+    blurb:
+      "A CDC checkpoint is a promise that data is delivered. Move it too early and a crash silently drops committed rows. faucet advances it from one place only — a durable bookmark, after the sink flushes.",
+    href: `${base}blog/crash-safe-by-bookmark`,
+    date: 'August 25, 2026',
+    tag: 'Reliability',
+  },
+  {
+    title: 'One config, N tables: how the matrix fans out in parallel',
+    blurb:
+      'Give a source a list of tables and faucet runs them as concurrent pipeline instances — bounded by a default derived from your CPU count — with parent/child streams fanning out beneath each.',
+    href: `${base}blog/one-config-n-tables`,
+    date: 'August 25, 2026',
+    tag: 'Concurrency',
+  },
+  {
+    title: 'Flat memory at a million rows',
+    blurb:
+      'faucet streams page-by-page instead of buffering the result set, so a million-row extract holds roughly the same resident memory as a thousand-row one. Backpressure, not buffering.',
+    href: `${base}blog/flat-memory`,
+    date: 'August 25, 2026',
+    tag: 'Performance',
+  },
+  {
+    title: 'Adaptive batching: the pipeline tunes its own batch size',
+    blurb:
+      'A fixed batch size is a guess. faucet runs an AIMD controller that grows batches while throughput improves and backs off on pressure — converging on the size the destination actually wants.',
+    href: `${base}blog/adaptive-batching`,
+    date: 'August 25, 2026',
+    tag: 'Performance',
+  },
+  {
+    title: "The Value tax: when Arrow saves you (and when it doesn't)",
+    blurb:
+      "Converting Arrow to JSON and back at every connector boundary is pure tax — up to 7–9× the useful work. When both ends speak Arrow, faucet negotiates a zero-cost columnar fast path.",
+    href: `${base}blog/the-value-tax`,
+    date: 'August 25, 2026',
+    tag: 'Performance',
+  },
+  {
+    title: 'Append, upsert, or delete: write modes and what they cost',
+    blurb:
+      'Appending streams flat out; upserting makes the destination reconcile every row. faucet gives you both, adds a COPY fast lane for append, and refuses incoherent combinations at config time.',
+    href: `${base}blog/write-modes`,
+    date: 'August 25, 2026',
+    tag: 'Connectors',
+  },
+  {
+    title: "Bad rows shouldn't stop the stream",
+    blurb:
+      'One malformed record should quarantine itself, not kill the load. faucet routes rejects to a dead-letter queue with the reason attached — carrying the masked payload, never the raw secret.',
+    href: `${base}blog/bad-rows-dlq`,
+    date: 'August 25, 2026',
+    tag: 'Reliability',
+  },
+  {
+    title: 'Govern in the pipe, not after the load',
+    blurb:
+      'Landing raw data and governing it later means the secret has already landed and the bad row is already queryable. faucet folds masking, quality, contracts, drift and lineage into the movement itself.',
+    href: `${base}blog/govern-in-the-pipe`,
+    date: 'August 25, 2026',
+    tag: 'Governance',
+  },
+  {
     title: 'Injection-safe by construction: parameterized parent/child fan-out',
     blurb:
       'When a parent stream drives child queries, faucet fills `${parent.field}` tokens as positional bind parameters — never string-interpolated. Safe by construction, not by discipline.',
@@ -22,6 +94,22 @@ const posts = [
     href: `${base}blog/secrets-at-runtime`,
     date: 'August 25, 2026',
     tag: 'Security',
+  },
+  {
+    title: 'Observability with zero per-connector code',
+    blurb:
+      'You shouldn’t have to instrument a pipeline to see it. faucet emits Prometheus metrics and OpenTelemetry traces at the engine level, so every connector — and every future one — is visible for free.',
+    href: `${base}blog/observability-zero-config`,
+    date: 'August 25, 2026',
+    tag: 'Operations',
+  },
+  {
+    title: 'Compile only what you need',
+    blurb:
+      'faucet-stream is ~90 crates, but your binary isn’t. Connectors are opt-in Cargo features, so a REST→JSONL build carries no database drivers and no cloud SDKs — just the code your pipeline runs.',
+    href: `${base}blog/compile-what-you-need`,
+    date: 'August 25, 2026',
+    tag: 'Architecture',
   },
 ];
 ---

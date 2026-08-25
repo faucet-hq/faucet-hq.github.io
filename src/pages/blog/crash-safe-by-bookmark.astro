@@ -1,0 +1,72 @@
+---
+import BlogPost from '../../layouts/BlogPost.astro';
+---
+<BlogPost
+  title="Crash-safe by bookmark: when it's safe to move a CDC checkpoint"
+  dek="A change-data-capture checkpoint is a promise: 'everything up to here is safely delivered.' Move it too early and a crash silently drops committed rows. faucet-stream moves it from one place only — a durable bookmark, after the sink flushes."
+  description="An accessible take on faucet-stream's crash-safe CDC: advance the replication checkpoint only from a durable bookmark after the sink flushes, never from decoded WAL or a keepalive."
+  date="August 25, 2026"
+  tag="Reliability"
+  read="~6 min read"
+>
+  <section>
+    <h2>The checkpoint is a promise</h2>
+    <p>
+      Every CDC connector keeps a position in the source's change log — a Postgres LSN, a MongoDB
+      resume token, a SQL Server capture LSN. Advancing that position tells the source:
+      <em>"everything up to here is safely delivered — you can reclaim it."</em> That's the whole
+      danger. Move the checkpoint <b>before</b> the data is durable at the destination, and a crash
+      in the gap loses committed changes that the source has already discarded. No error, no retry —
+      the rows are just gone. This is the worst class of bug: silent downstream data loss.
+    </p>
+  </section>
+  <section>
+    <h2>One rule: advance only from a durable bookmark</h2>
+    <p>
+      faucet-stream advances a replication checkpoint from <b>one place only</b>: a durable bookmark
+      persisted <em>after the sink flushes a page</em> — never from decoded WAL still in flight,
+      never from a keepalive, never from "we read it off the wire." The ordering per page is fixed:
+    </p>
+    <ol>
+      <li>Read a batch of changes from the source's log.</li>
+      <li>Move it through the pipeline and <b>flush it to the sink</b>.</li>
+      <li>Only then persist the bookmark for that position.</li>
+      <li>Only from that persisted bookmark is the upstream checkpoint ever advanced.</li>
+    </ol>
+    <p>
+      Crash anywhere before step 3 and the bookmark still points at the last <em>proven</em>
+      position; on restart the connector resumes from there and re-reads the un-flushed changes.
+      Nothing committed is skipped.
+    </p>
+  </section>
+  <section>
+    <h2>Honest about the guarantee</h2>
+    <div class="callout">
+      <p>
+        Re-reading after a crash means a page can be delivered twice — so the default guarantee is
+        <b>at-least-once</b>, not exactly-once. That's the correct default: it never loses data. Pair
+        it with an idempotent sink (upsert by key) and the duplicates collapse on write, giving you
+        <b>effectively-once</b> end-to-end. faucet is explicit about which you're getting rather than
+        quietly promising more than the source can support.
+      </p>
+    </div>
+  </section>
+  <section>
+    <h2>Per-source, because the logs differ</h2>
+    <p>
+      Each source has its own resume unit, and faucet handles them on their own terms: Postgres
+      acknowledges a <code>confirmed_flush_lsn</code> back to its logical replication slot (so it
+      can free WAL); MongoDB and SQL Server are pull/poll-based and just resume from a stored token
+      or LSN map. The bookmark rule is the same everywhere; only the mechanism to persist and
+      resume it changes.
+    </p>
+  </section>
+  <section>
+    <h2>Read the details</h2>
+    <p>
+      The full treatment — per-source resume units, the acknowledgement flow, and the crash-resume
+      tests — is in the paper:
+      <a href="https://faucet-hq.github.io/papers/crash-safe-cdc">Crash-Safe Change Data Capture</a>.
+    </p>
+  </section>
+</BlogPost>
