@@ -69,12 +69,6 @@ const compare = [
           <span>faucet-stream</span><span>·</span><span>~12 min read</span><span>·</span>
           <span>Benchmark run pending</span>
         </div>
-        <div class="tags">
-          <a class="tag-pill" href={`${base}papers?tags=${encodeURIComponent('Governance')}`}>Governance</a>
-          <a class="tag-pill" href={`${base}papers?tags=${encodeURIComponent('Security')}`}>Security</a>
-          <a class="tag-pill" href={`${base}papers?tags=${encodeURIComponent('Lineage')}`}>Lineage</a>
-          <a class="tag-pill" href={`${base}papers?tags=${encodeURIComponent('Quality')}`}>Quality</a>
-        </div>
       </header>
 
       <section class="abstract">
@@ -362,9 +356,5 @@ const compare = [
   .tbd { margin-top: 1rem; padding: 0.9rem 1.1rem; border: 1px dashed color-mix(in srgb, var(--ink) 25%, var(--line)); border-radius: var(--radius-sm); color: var(--ink-faint); font-size: 0.9rem; }
 
   .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
-  .paper .tags { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .tag-pill { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; line-height: 1; color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 11%, transparent); border: none; border-radius: 999px; padding: 0.42rem 0.74rem; }
   .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
-  .paper a.tag-pill { border-bottom: none; transition: background 0.15s ease; }
-  .paper a.tag-pill:hover { background: color-mix(in srgb, var(--teal) 18%, transparent); }
 </style>
