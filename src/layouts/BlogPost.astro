@@ -12,8 +12,9 @@ export interface Props {
   date: string;
   tag: string;
   read: string;
+  tags?: string[];
 }
-const { title, dek, description, date, tag, read } = Astro.props;
+const { title, dek, description, date, tag, read, tags = [] } = Astro.props;
 ---
 
 <Base title={`${title} — faucet-stream blog`} description={description}>
@@ -26,6 +27,13 @@ const { title, dek, description, date, tag, read } = Astro.props;
         <h1>{title}</h1>
         <p class="dek">{dek}</p>
         <div class="meta"><span>faucet-stream</span><span>·</span><span>{date}</span><span>·</span><span>{read}</span></div>
+        {tags.length > 0 && (
+          <div class="tags">
+            {tags.map((t) => (
+              <a class="tag-pill" href={`${base}blog?tags=${encodeURIComponent(t)}`}>{t}</a>
+            ))}
+          </div>
+        )}
       </header>
       <slot />
       <p class="cta-inline">
@@ -64,4 +72,8 @@ const { title, dek, description, date, tag, read } = Astro.props;
   .paper td.yes { color: var(--teal-deep); font-weight: 550; }
   .paper .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
   .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+  .paper .tags { margin-top: 1.3rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .tag-pill { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.01em; line-height: 1; color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 10%, transparent); border: 1px solid color-mix(in srgb, var(--teal) 26%, transparent); border-radius: 999px; padding: 0.4rem 0.72rem; }
+  .paper a.tag-pill { border-bottom: 1px solid color-mix(in srgb, var(--teal) 26%, transparent); transition: background 0.15s ease, border-color 0.15s ease; }
+  .paper a.tag-pill:hover { background: color-mix(in srgb, var(--teal) 18%, transparent); border-color: color-mix(in srgb, var(--teal) 42%, transparent); }
 </style>

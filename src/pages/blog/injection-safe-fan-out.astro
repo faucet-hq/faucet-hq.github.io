@@ -1,10 +1,6 @@
 ---
-import Base from '../../layouts/Base.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import CTA from '../../components/CTA.astro';
+import BlogPost from '../../layouts/BlogPost.astro';
 
-const base = import.meta.env.BASE_URL;
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 
 const cfg = `# parent stream: one row per account
@@ -23,138 +19,96 @@ matrix:
           where account_id = \${parent.id}
             and region = \${parent.region}`;
 ---
-
-<Base
-  title="Injection-safe parent/child fan-out — faucet-stream blog"
+<BlogPost
+  title="Injection-safe by construction"
+  dek="Parent/child pipelines run a child query once per parent record. The obvious way to wire the parent's values into that query — string substitution — is also the classic way to get a SQL-injection bug. faucet-stream doesn't do it that way."
   description="How faucet-stream fans a parent stream out into per-parent child queries without ever string-interpolating a value into SQL — parameterized, and safe by construction."
+  date="August 25, 2026"
+  tag="Security"
+  read="~6 min read"
+  tags={['Security', 'Concurrency', 'CDC']}
 >
-  <Header />
-  <main id="main">
-    <article class="paper">
-      <header class="paper-head">
-        <a class="crumb" href={`${base}blog`}>← Blog</a>
-        <span class="kicker">Blog · Security</span>
-        <h1>Injection-safe by construction</h1>
-        <p class="dek">
-          Parent/child pipelines run a child query once per parent record. The obvious way to
-          wire the parent's values into that query — string substitution — is also the classic
-          way to get a SQL-injection bug. faucet-stream doesn't do it that way.
-        </p>
-        <div class="meta"><span>faucet-stream</span><span>·</span><span>August 25, 2026</span><span>·</span><span>~6 min read</span></div>
-      </header>
+  <section>
+    <h2>The shape: one parent, many children</h2>
+    <p>
+      A common movement pattern is a <b>parent/child fan-out</b> (a matrix run): a parent
+      stream yields records — accounts, tenants, report ids — and for each one a
+      <em>child</em> query runs, parameterized by that parent record. One config template,
+      <code>N</code> executions.
+    </p>
+    <pre class="code"><code>{cfg}</code></pre>
+    <p>
+      The interesting tokens are <code>{'${parent.id}'}</code> and
+      <code>{'${parent.region}'}</code>. They have to become real values in the child query
+      — the question is <em>how</em>.
+    </p>
+  </section>
 
-      <section>
-        <h2>The shape: one parent, many children</h2>
-        <p>
-          A common movement pattern is a <b>parent/child fan-out</b> (a matrix run): a parent
-          stream yields records — accounts, tenants, report ids — and for each one a
-          <em>child</em> query runs, parameterized by that parent record. One config template,
-          <code>N</code> executions.
-        </p>
-        <pre class="code"><code>{cfg}</code></pre>
-        <p>
-          The interesting tokens are <code>{'${parent.id}'}</code> and
-          <code>{'${parent.region}'}</code>. They have to become real values in the child query
-          — the question is <em>how</em>.
-        </p>
-      </section>
+  <section>
+    <h2>The trap: string interpolation</h2>
+    <p>
+      The tempting implementation is to paste the parent's value into the SQL string:
+      <code>{"where account_id = "}{"'"}{"${parent.id}"}{"'"}</code>. It works in the demo,
+      and it is a <b>SQL-injection hole</b>. A parent value of
+      <code>{"1'; drop table orders; --"}</code> — whether malicious or just a stray quote in
+      real data — is now executing SQL. Escaping-by-hand is a losing game; the only robust
+      answer is to never build SQL by concatenation.
+    </p>
+  </section>
 
-      <section>
-        <h2>The trap: string interpolation</h2>
-        <p>
-          The tempting implementation is to paste the parent's value into the SQL string:
-          <code>{"where account_id = "}{"'"}{"${parent.id}"}{"'"}</code>. It works in the demo,
-          and it is a <b>SQL-injection hole</b>. A parent value of
-          <code>{"1'; drop table orders; --"}</code> — whether malicious or just a stray quote in
-          real data — is now executing SQL. Escaping-by-hand is a losing game; the only robust
-          answer is to never build SQL by concatenation.
-        </p>
-      </section>
-
-      <section>
-        <h2>What faucet does: parameterize, per parent row</h2>
-        <p>
-          faucet-stream treats <code>{'${parent.…}'}</code> tokens as <b>bind parameters</b>, not
-          text. In the Postgres source, each token is <b>rewritten to an additional positional
-          bind marker</b> — appended after the query's static <code>params</code> — and filled
-          with the parent record's value at execution time. The SQL string the database compiles
-          is fixed; only the bound values change per parent row.
-        </p>
-        <div class="callout">
-          <p>
-            The value never enters the query text. So a parent field containing
-            <code>{"'; drop table …"}</code> is bound as a literal string argument and compared
-            as data — there is nothing to inject into. It is safe <em>by construction</em>, not
-            because someone remembered to escape it.
-          </p>
-        </div>
-        <p>
-          One query template therefore fans out into one <em>parameterized</em> execution per
-          parent record — the performance win of a template <em>and</em> the safety of prepared
-          statements, together.
-        </p>
-      </section>
-
-      <section>
-        <h2>The same discipline across connectors</h2>
-        <ul>
-          <li><b>Postgres</b> — <code>{'${parent.field}'}</code> → extra positional bind markers, filled per parent row.</li>
-          <li><b>MySQL</b> — the same tokens become safe <code>?</code> bind parameters, never string-interpolated.</li>
-          <li><b>MongoDB</b> — <code>{'{key}'}</code> placeholders in <code>filter</code>/<code>projection</code>/<code>sort</code> are resolved per parent record with JSON-safe escaping.</li>
-          <li><b>S3 / SFTP</b> — <code>{'${parent.field}'}</code> tokens in a <code>prefix</code>/path are substituted per parent record for object-store fan-out.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>And it runs in parallel — with a ceiling</h2>
-        <p>
-          The per-parent children aren't serialized: faucet runs them concurrently under a
-          semaphore whose width is <code>execution.max_concurrent</code> (default:
-          <code>min(cores, 8)</code>). The cap is deliberate — each child is a full pipeline with
-          its own pools, and they usually target one database, so an unbounded fan-out would
-          exhaust connections rather than go faster. Raise the knob when the workload genuinely
-          benefits.
-        </p>
-      </section>
-
-      <section>
-        <h2>Takeaway</h2>
-        <p>
-          Parameterized-by-default is a small decision with a large blast radius: it turns a whole
-          class of injection bugs into something you can't write. If you fan a parent stream out
-          into child queries with faucet, the safe path is the only path.
-        </p>
-      </section>
-
-      <p class="cta-inline">
-        See the matrix reference in the <a href={DOCS}>documentation</a>, or browse more on the
-        <a href={`${base}blog`}>blog</a>.
+  <section>
+    <h2>What faucet does: parameterize, per parent row</h2>
+    <p>
+      faucet-stream treats <code>{'${parent.…}'}</code> tokens as <b>bind parameters</b>, not
+      text. In the Postgres source, each token is <b>rewritten to an additional positional
+      bind marker</b> — appended after the query's static <code>params</code> — and filled
+      with the parent record's value at execution time. The SQL string the database compiles
+      is fixed; only the bound values change per parent row.
+    </p>
+    <div class="callout">
+      <p>
+        The value never enters the query text. So a parent field containing
+        <code>{"'; drop table …"}</code> is bound as a literal string argument and compared
+        as data — there is nothing to inject into. It is safe <em>by construction</em>, not
+        because someone remembered to escape it.
       </p>
-    </article>
-    <CTA />
-  </main>
-  <Footer />
-</Base>
+    </div>
+    <p>
+      One query template therefore fans out into one <em>parameterized</em> execution per
+      parent record — the performance win of a template <em>and</em> the safety of prepared
+      statements, together.
+    </p>
+  </section>
 
-<style>
-  .paper { max-width: 46rem; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) var(--gutter) 1rem; }
-  .paper-head { border-bottom: 1px solid var(--line); padding-bottom: 1.6rem; margin-bottom: 2rem; }
-  .crumb { color: var(--teal-deep); font-size: 0.9rem; }
-  .kicker { display: block; margin-top: 1rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); }
-  .paper h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin-top: 0.6rem; line-height: 1.1; }
-  .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
-  .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
-  .paper section { margin-top: 2.2rem; }
-  .paper h2 { font-size: 1.4rem; margin-bottom: 0.8rem; }
-  .paper p { line-height: 1.75; color: var(--ink-soft); margin-top: 0.9rem; }
-  .paper ul { margin-top: 1rem; padding-left: 1.3rem; line-height: 1.75; color: var(--ink-soft); }
-  .paper li { margin-top: 0.5rem; }
-  .paper b { color: var(--ink); }
-  .paper code { font-family: var(--font-mono); font-size: 0.85em; background: color-mix(in srgb, var(--teal) 10%, transparent); color: var(--teal-deep); padding: 0.06em 0.34em; border-radius: 5px; border: 1px solid color-mix(in srgb, var(--teal) 22%, transparent); }
-  .callout { margin-top: 1.3rem; border-left: 3px solid var(--teal); background: color-mix(in srgb, var(--teal) 7%, transparent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 1rem 1.2rem; }
-  .callout p { margin: 0; color: var(--ink); }
-  .code { margin: 1rem 0 0; background: #0b1220; border: 1px solid #1c2740; border-radius: var(--radius); padding: 1.1rem 1.2rem; overflow-x: auto; }
-  .code code { font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.7; color: #cdd9ee; white-space: pre; background: none; border: 0; padding: 0; }
-  .cta-inline { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
-  .paper a[href] { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
-</style>
+  <section>
+    <h2>The same discipline across connectors</h2>
+    <ul>
+      <li><b>Postgres</b> — <code>{'${parent.field}'}</code> → extra positional bind markers, filled per parent row.</li>
+      <li><b>MySQL</b> — the same tokens become safe <code>?</code> bind parameters, never string-interpolated.</li>
+      <li><b>MongoDB</b> — <code>{'{key}'}</code> placeholders in <code>filter</code>/<code>projection</code>/<code>sort</code> are resolved per parent record with JSON-safe escaping.</li>
+      <li><b>S3 / SFTP</b> — <code>{'${parent.field}'}</code> tokens in a <code>prefix</code>/path are substituted per parent record for object-store fan-out.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>And it runs in parallel — with a ceiling</h2>
+    <p>
+      The per-parent children aren't serialized: faucet runs them concurrently under a
+      semaphore whose width is <code>execution.max_concurrent</code> (default:
+      <code>min(cores, 8)</code>). The cap is deliberate — each child is a full pipeline with
+      its own pools, and they usually target one database, so an unbounded fan-out would
+      exhaust connections rather than go faster. Raise the knob when the workload genuinely
+      benefits.
+    </p>
+  </section>
+
+  <section>
+    <h2>Takeaway</h2>
+    <p>
+      Parameterized-by-default is a small decision with a large blast radius: it turns a whole
+      class of injection bugs into something you can't write. If you fan a parent stream out
+      into child queries with faucet, the safe path is the only path. See the matrix reference
+      in the <a href={DOCS}>documentation</a>.
+    </p>
+  </section>
+</BlogPost>
