@@ -266,8 +266,9 @@ const allTags = [...counts.keys()].sort(
   .post h2 { font-size: 1.25rem; line-height: 1.25; }
   .post p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
   .post p :global(code) { font-family: var(--font-mono); font-size: 0.88em; }
-  .card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
-  .tag-pill { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.01em; line-height: 1; color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 11%, transparent); border: none; border-radius: 999px; padding: 0.34rem 0.66rem; }
+  .card-tags { margin-top: 1rem; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.6; color: var(--teal-deep); }
+  .tag-pill { display: inline; color: var(--teal-deep); }
+  .tag-pill + .tag-pill::before { content: "•"; margin: 0 0.5rem; color: var(--ink-faint); letter-spacing: 0; }
   .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; align-self: flex-start; }
   .empty { margin-top: 1.4rem; color: var(--ink-soft); }
 
