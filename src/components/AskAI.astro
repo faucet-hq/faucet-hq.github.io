@@ -4,6 +4,16 @@
 // built client-side (see the inline script) so it always reflects the page the
 // visitor is actually on. Providers whose query param is unreliable (Gemini)
 // fall back to opening the assistant without a prefill.
+// Small brand-style marks, sized to the text (~1.15em) and tinted per provider.
+// Grok uses currentColor so it stays visible in dark mode.
+const ICONS = {
+  claude: `<svg viewBox="0 0 24 24" fill="none" stroke="#d97757" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v3.5M12 18v3.5M2.5 12H6M18 12h3.5M5.2 5.2l2.5 2.5M16.3 16.3l2.5 2.5M18.8 5.2l-2.5 2.5M7.7 16.3l-2.5 2.5"/></svg>`,
+  chatgpt: `<svg viewBox="0 0 24 24" fill="none" stroke="#10a37f" stroke-width="1.5"><g transform="translate(12 12)"><ellipse rx="3" ry="7"/><ellipse rx="3" ry="7" transform="rotate(60)"/><ellipse rx="3" ry="7" transform="rotate(120)"/></g></svg>`,
+  perplexity: `<svg viewBox="0 0 24 24" fill="none" stroke="#20b8cd" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.2l7.3 4.4v8.8L12 20.8l-7.3-4.4V7.6L12 3.2z"/><path d="M12 3.2v17.6"/></svg>`,
+  grok: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 18L16 6M11 18l6.5-8.5"/></svg>`,
+  gemini: `<svg viewBox="0 0 24 24" fill="#4285f4"><path d="M12 2l2.1 7.9L22 12l-7.9 2.1L12 22l-2.1-7.9L2 12l7.9-2.1z"/></svg>`,
+};
+
 const providers = [
   { id: 'claude',     label: 'Claude',     url: 'https://claude.ai/new',            param: 'q',    prefill: true  },
   { id: 'chatgpt',    label: 'ChatGPT',    url: 'https://chatgpt.com/',             param: 'q',    prefill: true  },
@@ -45,7 +55,7 @@ const providers = [
         data-param={p.param ?? ''}
         data-prefill={p.prefill ? '1' : '0'}
       >
-        <span class="askai-dot" data-p={p.id} aria-hidden="true"></span>
+        <span class="askai-ico" aria-hidden="true" set:html={ICONS[p.id]}></span>
         {p.label}
       </a>
     ))}
@@ -59,14 +69,17 @@ const providers = [
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    flex: none;               /* never let the header squeeze it into wrapping */
+    white-space: nowrap;      /* keep "Ask AI" on one line */
     height: 2.2rem;
-    padding: 0 0.7rem;
+    padding: 0 0.75rem;
     border-radius: 9px;
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--ink-soft);
     font-size: 0.9rem;
     font-weight: 550;
+    line-height: 1;
     cursor: pointer;
     transition: color 0.16s ease, background 0.16s ease, border-color 0.16s ease;
   }
@@ -109,13 +122,8 @@ const providers = [
     transition: background 0.14s ease;
   }
   .askai-item:hover, .askai-item:focus-visible { background: var(--surface-2); outline: none; }
-  .askai-dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; flex: none; background: var(--ink-faint); }
-  .askai-dot[data-p='claude']     { background: #d97757; }
-  .askai-dot[data-p='chatgpt']    { background: #10a37f; }
-  .askai-dot[data-p='perplexity'] { background: #20b8cd; }
-  .askai-dot[data-p='grok']       { background: #111827; border: 1px solid var(--line); }
-  .askai-dot[data-p='gemini']     { background: #4285f4; }
-  :root[data-theme='dark'] .askai-dot[data-p='grok'] { background: #e5e7eb; }
+  .askai-ico { width: 1.15em; height: 1.15em; flex: none; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+  .askai-ico :global(svg) { width: 100%; height: 100%; display: block; }
   .askai-foot {
     margin: 0.4rem 0.45rem 0.15rem;
     padding-top: 0.45rem;
