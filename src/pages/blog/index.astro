@@ -1,0 +1,83 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const posts = [
+  {
+    title: 'Injection-safe by construction: parameterized parent/child fan-out',
+    blurb:
+      'When a parent stream drives child queries, faucet fills `${parent.field}` tokens as positional bind parameters — never string-interpolated. Safe by construction, not by discipline.',
+    href: `${base}blog/injection-safe-fan-out`,
+    date: 'August 25, 2026',
+    tag: 'Security',
+  },
+  {
+    title: 'Secrets that never touch your config',
+    blurb:
+      'Reference a secret with `${vault:…}` / `${aws-sm:…}` / `${gcp-sm:…}` / `${azure-kv:…}` and faucet resolves it from the manager at run time, using the platform credential chain. Your config holds a pointer, never the value.',
+    href: `${base}blog/secrets-at-runtime`,
+    date: 'August 25, 2026',
+    tag: 'Security',
+  },
+];
+---
+
+<Base
+  title="Blog — faucet-stream"
+  description="Notes from the faucet-stream team: shorter, feature-focused posts on how the engine keeps data movement fast, safe, and honest."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Blog</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Notes from the team</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          Shorter than the <a href={`${base}papers`}>papers</a> — feature spotlights and the
+          reasoning behind them. Every claim is grounded in the real implementation.
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap posts">
+      {posts.map((p, i) => (
+        <a class="post" href={p.href} data-reveal style={`--reveal-delay:${(i % 2) * 0.06}s`}>
+          <div class="post-top">
+            <span class="ptag">{p.tag}</span>
+            <span class="pdate">{p.date}</span>
+          </div>
+          <h2>{p.title}</h2>
+          <p>{p.blurb}</p>
+          <span class="pread">Read the post →</span>
+        </a>
+      ))}
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 1rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 44rem; }
+  .lede a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+
+  .posts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.4rem; }
+  .post { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.6rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
+  .post:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .post-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.7rem; }
+  .ptag { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-deep); }
+  .pdate { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
+  .post h2 { font-size: 1.25rem; line-height: 1.25; }
+  .post p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
+  .post p :global(code) { font-family: var(--font-mono); font-size: 0.88em; }
+  .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; align-self: flex-start; }
+
+  @media (max-width: 720px) { .posts { grid-template-columns: 1fr; } }
+</style>
