@@ -70,13 +70,21 @@ const allTags = [...counts.keys()].sort(
     </section>
 
     <section class="wrap filterbar" aria-label="Filter papers">
-      <div class="filter-tags">
-        {STATUSES.map((s) => (
-          <button type="button" class="filter-pill" data-status={s} aria-pressed="false">{s}</button>
-        ))}
-        {allTags.map((t) => (
-          <button type="button" class="filter-pill" data-tag={t} aria-pressed="false">{t}</button>
-        ))}
+      <div class="filter-group">
+        <span class="filter-label">Status</span>
+        <div class="filter-tags">
+          {STATUSES.map((s) => (
+            <button type="button" class="filter-pill" data-status={s} aria-pressed="false">{s}</button>
+          ))}
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Topic</span>
+        <div class="filter-tags">
+          {allTags.map((t) => (
+            <button type="button" class="filter-pill" data-tag={t} aria-pressed="false">{t}</button>
+          ))}
+        </div>
       </div>
       <div class="filter-meta">
         <span id="filter-count"></span>
@@ -190,7 +198,9 @@ const allTags = [...counts.keys()].sort(
   .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
   .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 44rem; }
 
-  .filterbar { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.6rem; }
+  .filterbar { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.6rem; }
+  .filter-group { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.55rem 0.7rem; }
+  .filter-label { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); min-width: 3.4rem; }
   .filter-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .filter-pill { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 550; letter-spacing: 0.01em; line-height: 1; color: var(--ink-faint); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 0.42rem 0.74rem; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease; }
   .filter-pill:hover { color: var(--teal-deep); border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); }
