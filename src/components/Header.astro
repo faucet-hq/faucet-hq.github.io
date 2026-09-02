@@ -10,10 +10,17 @@ const nav = [
   { label: 'Governance', href: `${base}governance` },
   { label: 'Observability', href: `${base}observability` },
   { label: 'Compare', href: `${base}compare` },
-  { label: 'Papers', href: `${base}papers` },
-  { label: 'Blog', href: `${base}blog` },
+  {
+    label: 'Resources',
+    children: [
+      { label: 'Roadmap', href: `${base}roadmap` },
+      { label: 'Papers', href: `${base}papers` },
+      { label: 'Blog', href: `${base}blog` },
+    ],
+  },
   { label: 'Docs', href: DOCS },
 ];
+const isExternal = (href) => href.startsWith('http');
 ---
 
 <header class="site-header">
@@ -38,7 +45,20 @@ const nav = [
     </a>
 
     <nav class="nav" id="primary-nav" aria-label="Primary">
-      {nav.map((n) => <a href={n.href} target={n.href.startsWith('http') ? '_blank' : undefined} rel={n.href.startsWith('http') ? 'noopener noreferrer' : undefined}>{n.label}</a>)}
+      {nav.map((n) => (n.children
+        ? (
+          <div class="nav-group">
+            <button class="nav-group-btn" type="button" aria-haspopup="menu">
+              {n.label}
+              <svg class="chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="nav-menu" role="menu">
+              {n.children.map((c) => <a role="menuitem" href={c.href} target={isExternal(c.href) ? '_blank' : undefined} rel={isExternal(c.href) ? 'noopener noreferrer' : undefined}>{c.label}</a>)}
+            </div>
+          </div>
+        )
+        : <a href={n.href} target={isExternal(n.href) ? '_blank' : undefined} rel={isExternal(n.href) ? 'noopener noreferrer' : undefined}>{n.label}</a>
+      ))}
     </nav>
 
     <div class="header-actions">
@@ -89,7 +109,7 @@ const nav = [
 
   .nav {
     display: flex;
-    gap: 1.6rem;
+    gap: 1.5rem;
     margin-inline: auto;
     font-size: 0.95rem;
     color: var(--ink-soft);
@@ -113,10 +133,68 @@ const nav = [
   .nav a:hover { color: var(--ink); }
   .nav a:hover::after { width: 100%; }
 
+  /* Grouped "Resources" dropdown — opens on hover and on keyboard focus */
+  .nav-group { position: relative; display: flex; align-items: center; }
+  .nav-group-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    background: none;
+    border: 0;
+    padding-block: 0.2rem;
+    cursor: pointer;
+    transition: color 0.16s ease;
+  }
+  .nav-group:hover .nav-group-btn,
+  .nav-group:focus-within .nav-group-btn { color: var(--ink); }
+  .nav-group-btn .chev { opacity: 0.7; transition: transform 0.18s ease; }
+  .nav-group:hover .chev,
+  .nav-group:focus-within .chev { transform: rotate(180deg); }
+  .nav-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-top: 0.55rem;
+    transform: translateX(-50%) translateY(-6px);
+    display: flex;
+    flex-direction: column;
+    min-width: 9.5rem;
+    padding: 0.4rem;
+    gap: 0.1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    z-index: 60;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+  /* invisible bridge so the pointer can cross the gap without closing the menu */
+  .nav-menu::before { content: ''; position: absolute; left: 0; right: 0; top: -0.6rem; height: 0.6rem; }
+  .nav-group:hover .nav-menu,
+  .nav-group:focus-within .nav-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+  .nav-menu a {
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .nav-menu a::after { display: none; }
+  .nav-menu a:hover { background: var(--surface-2); color: var(--ink); }
+
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 0.85rem;
   }
   .gh {
     display: inline-grid;
@@ -171,7 +249,7 @@ const nav = [
   .nav-toggle[aria-expanded='true'] .i-bars { display: none; }
   .nav-toggle[aria-expanded='true'] .i-x { display: block; }
 
-  @media (max-width: 860px) {
+  @media (max-width: 920px) {
     .nav-toggle { display: inline-grid; }
     /* hamburger sits far left, brand beside it, actions pinned right */
     .brand { margin-inline-end: auto; }
@@ -201,6 +279,22 @@ const nav = [
     }
     .nav a:last-child { border-bottom: 0; }
     .nav a::after { display: none; }
+    /* flatten the Resources group into the vertical list */
+    .nav-group { display: contents; }
+    .nav-group-btn { display: none; }
+    .nav-menu {
+      position: static;
+      display: contents;
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      box-shadow: none;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+    .nav-menu::before { display: none; }
   }
   @media (max-width: 480px) {
     .install-cta { display: none; }
