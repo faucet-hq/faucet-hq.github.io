@@ -1,0 +1,193 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const EPIC = 'https://github.com/faucet-hq/faucet-stream/issues/38';
+const ISSUE = (n: number) => `https://github.com/faucet-hq/faucet-stream/issues/${n}`;
+
+// Curated view of the direction. The live, authoritative tracker is the GitHub
+// epic (#38) — this page links to it rather than duplicating every issue.
+const horizons = [
+  {
+    tag: 'Now',
+    heading: 'What we’re building',
+    blurb:
+      'The runtime and CLI are feature-complete; the active work is closing the one axis where a streaming data mover can still lose — memory — and going columnar end-to-end.',
+    themes: [
+      {
+        title: 'Constant memory at any scale',
+        body: 'Decouple peak memory from dataset size across every source and sink, so a large table never OOMs the runner.',
+        issues: [614, 623, 617, 618, 639],
+      },
+      {
+        title: 'Arrow end-to-end',
+        body: 'Vectorized, columnar-native transforms, quality, and masking — plus a byte-passthrough fast-load — so Arrow-to-Arrow moves never pay the row-conversion tax.',
+        issues: [636, 633, 635],
+      },
+      {
+        title: 'Warehouse & lakehouse loads',
+        body: 'Bulk load jobs over per-page commits, and correctness fixes on the BigQuery and Delta paths.',
+        issues: [612, 611, 620],
+      },
+    ],
+  },
+  {
+    tag: 'Next',
+    heading: 'On deck',
+    blurb:
+      'Scale the matrix runtime out further, and round out the serve control plane and operator DX.',
+    themes: [
+      {
+        title: 'Parallelism & scale',
+        body: 'Within-object partitioned extraction, discovery-driven fan-out, and cost-aware dispatch to cut makespan on wide tenants.',
+        issues: [649, 647, 644, 610],
+      },
+      {
+        title: 'Serve control plane & RBAC',
+        body: 'A first-class read/write/admin token trio with a verified permission matrix, structured JSON logging, and per-matrix-row run timings.',
+        issues: [608, 634, 645],
+      },
+      {
+        title: 'Incremental everywhere',
+        body: 'Bookmark-based incremental replication for the REST/Salesforce Bulk async-job path, and adaptive poll backoff.',
+        issues: [630, 628],
+      },
+    ],
+  },
+  {
+    tag: 'Exploring',
+    heading: 'Further out',
+    blurb:
+      'Ecosystem surface and adoption — the center of gravity now that the engine is done.',
+    themes: [
+      {
+        title: 'Connector & Template Hubs',
+        body: 'An auto-generated, crates.io-backed connector catalog with conformance badges, and a source/sink-split template hub with pull-based hosting.',
+        issues: [572, 571, 589],
+      },
+      {
+        title: 'Reach',
+        body: 'New connectors and platforms — RabbitMQ source/sink, prebuilt Windows binaries.',
+        issues: [561, 565],
+      },
+      {
+        title: 'Adoption & DX',
+        body: 'Docs, positioning, examples, community, and the technical white-paper program.',
+        issues: [91, 583, 314],
+      },
+    ],
+  },
+];
+---
+
+<Base
+  title="Roadmap — faucet-stream"
+  description="Where faucet-stream is headed: constant-memory streaming, Arrow-native columnar fast paths, matrix scale-out, and the connector/template ecosystem — tracked live on GitHub."
+>
+  <Header />
+  <main id="main">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Roadmap</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Where faucet-stream is headed</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          The runtime, CLI, and governance layer are feature-complete. What’s left is
+          making every connector as fast and memory-bounded as the engine already is —
+          and growing the ecosystem around it. This is the curated view; the live tracker
+          is the <a href={EPIC}>roadmap epic on GitHub</a>, where every issue is public
+          and open to comment.
+        </p>
+        <a class="epic-link" href={EPIC} data-reveal style="--reveal-delay:.15s">
+          Track it live on GitHub — epic #38 →
+        </a>
+      </div>
+    </section>
+
+    <section class="wrap shipped" data-reveal>
+      <h2>The foundation, shipped</h2>
+      <p>
+        Exactly-once and effectively-once delivery, unified write modes / upsert, CDC with
+        crash-safe bookmarks, a full in-flight governance layer (quality, contracts,
+        schema-drift, PII masking, SLAs), the <code>faucet serve</code> HTTP control plane
+        with triggers, clustering, RBAC, a web console, and a data-movement catalog —
+        plus multi-edge topology, cross-row joins, WASM transforms, and an MCP server.
+        The fleet ships <b>37 sources and 29 sinks</b> today.
+      </p>
+    </section>
+
+    {horizons.map((h) => (
+      <section class="wrap horizon">
+        <div class="horizon-head" data-reveal>
+          <span class={`htag htag--${h.tag.toLowerCase()}`}>{h.tag}</span>
+          <h2>{h.heading}</h2>
+          <p>{h.blurb}</p>
+        </div>
+        <div class="theme-grid">
+          {h.themes.map((t) => (
+            <article class="theme" data-reveal>
+              <h3>{t.title}</h3>
+              <p>{t.body}</p>
+              <div class="issues">
+                {t.issues.map((n) => (
+                  <a class="issue" href={ISSUE(n)}>#{n}</a>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    ))}
+
+    <section class="wrap note" data-reveal>
+      <p>
+        Priorities shift as the work and the community do. For the authoritative,
+        always-current picture — and to weigh in — follow
+        <a href={EPIC}>the roadmap epic</a> and the
+        <a href="https://github.com/faucet-hq/faucet-stream/issues">open issues</a> on GitHub.
+      </p>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<style>
+  .head { padding-bottom: 0.5rem; }
+  .head h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); margin-top: 1rem; }
+  .lede { margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 46rem; line-height: 1.6; }
+  .lede a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+  .epic-link { display: inline-block; margin-top: 1.4rem; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--teal-deep); border: 1px solid color-mix(in srgb, var(--teal) 45%, transparent); background: color-mix(in srgb, var(--teal) 10%, transparent); border-radius: 999px; padding: 0.55rem 1rem; transition: background 0.15s ease, border-color 0.15s ease; }
+  .epic-link:hover { background: color-mix(in srgb, var(--teal) 18%, transparent); border-color: color-mix(in srgb, var(--teal) 60%, transparent); }
+
+  .shipped { margin-top: 2.4rem; border: 1px solid var(--line); border-radius: var(--radius); background: color-mix(in srgb, var(--teal) 5%, var(--surface)); padding: 1.6rem 1.8rem; }
+  .shipped h2 { font-size: 1.15rem; }
+  .shipped p { margin-top: 0.6rem; color: var(--ink-soft); line-height: 1.7; }
+  .shipped b { color: var(--ink); }
+  .shipped code { font-family: var(--font-mono); font-size: 0.85em; color: var(--teal-deep); }
+
+  .horizon { margin-top: 3rem; }
+  .horizon-head h2 { font-size: 1.5rem; margin-top: 0.4rem; }
+  .horizon-head p { margin-top: 0.6rem; color: var(--ink-soft); max-width: 46rem; line-height: 1.65; }
+  .htag { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; padding: 0.25rem 0.7rem; border-radius: 999px; }
+  .htag--now { color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 14%, transparent); }
+  .htag--next { color: var(--ink-soft); background: color-mix(in srgb, var(--ink-faint) 12%, transparent); }
+  .htag--exploring { color: var(--ink-faint); background: color-mix(in srgb, var(--ink-faint) 8%, transparent); border: 1px solid var(--line); }
+
+  .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.1rem; margin-top: 1.3rem; }
+  .theme { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.4rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
+  .theme:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .theme h3 { font-size: 1.05rem; line-height: 1.3; }
+  .theme p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.92rem; line-height: 1.6; flex: 1; }
+  .issues { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .issue { font-family: var(--font-mono); font-size: 0.72rem; color: var(--teal-deep); background: color-mix(in srgb, var(--teal) 10%, transparent); border-radius: 999px; padding: 0.24rem 0.55rem; transition: background 0.15s ease; }
+  .issue:hover { background: color-mix(in srgb, var(--teal) 20%, transparent); }
+
+  .note { margin-top: 3rem; }
+  .note p { color: var(--ink-soft); line-height: 1.7; max-width: 46rem; }
+  .note a { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
+
+  @media (max-width: 860px) { .theme-grid { grid-template-columns: 1fr; } }
+</style>
