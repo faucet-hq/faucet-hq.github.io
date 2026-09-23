@@ -1,0 +1,390 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import CTA from '../components/CTA.astro';
+
+const base = import.meta.env.BASE_URL;
+const HUB_REPO = 'https://github.com/faucet-hq/template-hub';
+const INDEX_URL = 'https://raw.githubusercontent.com/faucet-hq/template-hub/main/index.json';
+const INDEX_FALLBACK = 'https://cdn.jsdelivr.net/gh/faucet-hq/template-hub@main/index.json';
+const DOCS = 'https://faucet-hq.github.io/faucet-stream/cookbook/template-hub.html';
+const CONTRIBUTING = `${HUB_REPO}/blob/main/CONTRIBUTING.md`;
+
+// "Publish" opens GitHub's new-file form pre-filled with a skeleton; for a
+// non-collaborator GitHub forks the repo and opens a pull request — which is
+// exactly how a template is registered in the hub.
+const SOURCE_SKELETON = `kind: source-template
+name: my-system                      # == the file name; lowercase, digits, - _
+description: My System — what it exports, in one line
+tags: [category]
+docs: https://developer.example.com/api
+params:
+  api_token: { type: string, required: true, secret: true, description: "API token" }
+source:
+  type: rest
+  config:
+    base_url: https://api.example.com/v1
+    auth: { type: bearer, config: { token: "\${param.api_token}" } }
+    records_path: $.data[*]
+    pagination: { type: NextLinkInBody, next_link_path: $.next }
+transforms:
+  - { type: keys_case, config: { mode: snake } }
+streams:
+  - name: customers
+    source: { config: { path: /customers } }
+    primary_keys: [id]
+    write: [overwrite, upsert]
+  - name: events
+    source: { config: { path: /events, replication_method: { type: Incremental, replication_key: updated_at } } }
+    primary_keys: [id]
+    write: [upsert, append]
+`;
+const SINK_SKELETON = `kind: sink-template
+name: my-destination                 # == the file name
+description: My Destination — one table per stream
+params:
+  dsn: { type: string, required: true, secret: true, description: "Connection string" }
+sink:
+  type: postgres
+  config:
+    connection_url: "\${param.dsn}"
+    auto_map: true
+per_stream:
+  table: "\${stream}"
+`;
+const newFile = (dir: string, name: string, body: string) =>
+  `${HUB_REPO}/new/main/${dir}?filename=${encodeURIComponent(name)}&value=${encodeURIComponent(body)}`;
+const PUBLISH_SOURCE = newFile('source-templates', 'my-system.yaml', SOURCE_SKELETON);
+const PUBLISH_SINK = newFile('sink-templates', 'my-destination.yaml', SINK_SKELETON);
+
+const SYNC_YAML = `version: 1
+origins:
+  - name: hub
+    source:
+      type: github
+      config: { repo: faucet-hq/template-hub, paths: [source-templates, sink-templates] }
+    launch: always
+    interval_secs: 3600`;
+---
+
+<Base
+  title="Template Hub — faucet-stream"
+  description="Pick a source template, pick a destination, run. The shared catalog of faucet-stream source × sink templates — browse every pairing, copy the command, publish your own with a pull request."
+>
+  <Header />
+  <main id="main" class="hub-page">
+    <section class="section head">
+      <div class="wrap">
+        <span class="eyebrow" data-reveal>Template Hub</span>
+        <h1 data-reveal style="--reveal-delay:.05s">Pick a source. Pick a destination. Run.</h1>
+        <p class="lede" data-reveal style="--reveal-delay:.1s">
+          A <strong>source template</strong> describes one system once — auth, pagination,
+          incremental cursors, and the streams it produces. A <strong>sink template</strong>
+          describes where rows land. Any source composes with any sink at run time, so a
+          template written for one warehouse works for every other destination here.
+        </p>
+        <div class="stats" id="hub-stats" data-reveal style="--reveal-delay:.14s" aria-live="polite">
+          <span class="stat"><b id="n-sources">…</b> sources</span>
+          <span class="stat"><b id="n-sinks">…</b> sinks</span>
+          <span class="stat"><b id="n-pairs">…</b> compatible pairings</span>
+          <span class="stat stat-meta" id="hub-meta"></span>
+        </div>
+        <div class="actions" data-reveal style="--reveal-delay:.18s">
+          <a class="btn" href="#publish">Publish a template</a>
+          <a class="btn btn--ghost" href={HUB_REPO} target="_blank" rel="noopener noreferrer">Catalog on GitHub →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap compose" id="compose" data-reveal>
+      <div class="compose-card">
+        <div class="compose-row">
+          <label>source
+            <select id="c-source" aria-label="Source template"></select>
+          </label>
+          <span class="times" aria-hidden="true">×</span>
+          <label>sink
+            <select id="c-sink" aria-label="Sink template"></select>
+          </label>
+        </div>
+        <div id="c-plan" class="plan" aria-live="polite"></div>
+        <div class="cmd" id="c-cmd-wrap" hidden>
+          <pre><code id="c-cmd"></code></pre>
+          <button class="copy" id="c-copy" type="button" aria-label="Copy command" title="Copy">copy</button>
+        </div>
+        <p class="hint">
+          Runs against the public hub with no checkout — the CLI caches the catalog under
+          <code>~/.cache/faucet/hub</code>. Install with
+          <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
+        </p>
+      </div>
+    </section>
+
+    <section class="wrap catalog" id="catalog">
+      <div class="catalog-head">
+        <h2 id="sources">Source templates</h2>
+        <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter templates" />
+      </div>
+      <div class="grid" id="source-grid" aria-busy="true">
+        <div class="empty" id="loading">Loading the catalog…</div>
+      </div>
+
+      <h2 id="sinks">Sink templates</h2>
+      <div class="grid" id="sink-grid"></div>
+
+      <h2 id="matrix">Compatibility matrix</h2>
+      <p class="matrix-note">✓ every stream has a write mode the sink supports · <i>n/m</i> only some streams do · click a cell to load the command above.</p>
+      <div class="matrix-scroll"><table class="matrix" id="matrix-table"></table></div>
+    </section>
+
+    <section class="wrap publish" id="publish" data-reveal>
+      <span class="eyebrow">Publish</span>
+      <h2>Registering a template is a pull request.</h2>
+      <p class="lede">
+        The catalog is a public repository. Open a pre-filled file, describe your system, and
+        CI lints it, composes it against every sink, and regenerates the index on merge — the
+        lint is the review bar. No credentials ever go in: every secret is a
+        <code>$&#123;param.NAME&#125;</code> the person running it supplies.
+      </p>
+      <div class="publish-grid">
+        <div class="pub-card">
+          <h3>1 · Open a skeleton</h3>
+          <p>GitHub forks the catalog for you and opens a pull request when you save.</p>
+          <div class="actions">
+            <a class="btn" href={PUBLISH_SOURCE} target="_blank" rel="noopener noreferrer">New source template →</a>
+            <a class="btn btn--ghost" href={PUBLISH_SINK} target="_blank" rel="noopener noreferrer">New sink template →</a>
+          </div>
+        </div>
+        <div class="pub-card">
+          <h3>2 · Check it locally</h3>
+          <pre><code>faucet hub lint  --hub .
+faucet hub check --hub . --source my-system --sink jsonl
+faucet hub check --hub . --source my-system --sink bigquery</code></pre>
+          <p>Every source must compose with at least two sinks. See <a href={CONTRIBUTING}>CONTRIBUTING</a> for the rules the lint enforces.</p>
+        </div>
+        <div class="pub-card">
+          <h3>3 · Or keep it private</h3>
+          <p>Your organisation's templates can live in any repository with the same layout:</p>
+          <pre><code>faucet run --hub github:acme/catalog --source acme-erp --sink snowflake …</code></pre>
+          <p>Set <code>GITHUB_TOKEN</code> for a private repo.</p>
+        </div>
+      </div>
+
+      <h3 class="mirror-h">Mirror the hub into your own server</h3>
+      <p>
+        <code>faucet serve</code> pulls the catalog into its template registry. The web console
+        then lists every template, offers each registered sink on a source's trigger form, and
+        shows this same matrix from your registry.
+      </p>
+      <pre><code>{SYNC_YAML}</code></pre>
+      <pre><code>faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code></pre>
+      <p class="docs-link">Full reference: <a href={DOCS}>Template Hub cookbook</a>.</p>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>
+
+<script is:inline define:vars={{ INDEX_URL, INDEX_FALLBACK, HUB_REPO }}>
+  (async () => {
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+    async function load() {
+      for (const url of [INDEX_URL, INDEX_FALLBACK]) {
+        try {
+          const r = await fetch(url, { cache: 'no-cache' });
+          if (r.ok) return await r.json();
+        } catch (e) { /* try the next */ }
+      }
+      throw new Error('catalog unreachable');
+    }
+
+    let idx;
+    try {
+      idx = await load();
+    } catch (e) {
+      $('loading').textContent = 'The catalog could not be loaded right now — browse it on GitHub: ' + HUB_REPO;
+      $('source-grid').setAttribute('aria-busy', 'false');
+      return;
+    }
+    const sources = idx.sources || [];
+    const sinks = idx.sinks || [];
+    const cells = new Map((idx.matrix || []).map((c) => [c.source + ' ' + c.sink, c]));
+    const cell = (s, k) => cells.get(s + ' ' + k);
+
+    // ── stats ────────────────────────────────────────────────────────────
+    $('n-sources').textContent = sources.length;
+    $('n-sinks').textContent = sinks.length;
+    $('n-pairs').textContent = (idx.matrix || []).filter((c) => c.compatible).length;
+    $('hub-meta').textContent = 'live from faucet-hq/template-hub';
+
+    // ── compose widget ──────────────────────────────────────────────────
+    const cs = $('c-source'), ck = $('c-sink');
+    cs.innerHTML = sources.map((s) => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+    ck.innerHTML = sinks.map((k) => `<option value="${esc(k.name)}">${esc(k.name)}</option>`).join('');
+    function renderPlan() {
+      const c = cell(cs.value, ck.value);
+      const plan = $('c-plan'), wrap = $('c-cmd-wrap');
+      if (!c) { plan.innerHTML = ''; wrap.hidden = true; return; }
+      const rows = (c.streams || []).map((p) =>
+        `<li class="ok"><span class="mono">${esc(p.stream)}</span><span class="mode">${esc(p.write_mode)}${p.satisfies ? ` <em>for ${esc(p.satisfies)}</em>` : ''}</span></li>`)
+        .concat((c.incompatible || []).map((i) => `<li class="bad"><span class="mono">${esc(i.stream)}</span><span class="mode">✗ ${esc(i.reason)}</span></li>`));
+      plan.innerHTML = `<div class="plan-head ${c.compatible ? 'is-ok' : 'is-bad'}">${c.compatible ? '✓ compatible' : `✗ ${(c.incompatible || []).length} stream(s) have no viable write mode`}</div><ul>${rows.join('')}</ul>`;
+      if (c.compatible && c.command) { $('c-cmd').textContent = c.command; wrap.hidden = false; } else { wrap.hidden = true; }
+    }
+    cs.onchange = ck.onchange = renderPlan;
+    $('c-copy').onclick = async () => {
+      try { await navigator.clipboard.writeText($('c-cmd').textContent); $('c-copy').textContent = 'copied'; setTimeout(() => ($('c-copy').textContent = 'copy'), 1200); } catch (e) { /* clipboard blocked */ }
+    };
+    renderPlan();
+
+    // ── cards ───────────────────────────────────────────────────────────
+    const paramList = (ps) => (ps || []).map((p) =>
+      `<li><span class="mono">${esc(p.name)}</span> <span class="ptype">${esc(p.type || 'string')}${p.required ? ' · required' : ''}${p.secret ? ' · secret' : ''}</span>${p.description ? `<span class="pdesc">${esc(p.description)}</span>` : ''}</li>`).join('');
+    const sourceCard = (s) => {
+      const compat = sinks.filter((k) => cell(s.name, k.name)?.compatible).map((k) => k.name);
+      return `<article class="card" data-search="${esc([s.name, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
+        <header><h3 class="mono">${esc(s.name)}</h3><span class="kind">${esc(s.source_type || '')}</span></header>
+        ${s.description ? `<p>${esc(s.description)}</p>` : ''}
+        ${(s.tags || []).length ? `<div class="tags">${s.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+        <details><summary>${(s.streams || []).length} stream${(s.streams || []).length === 1 ? '' : 's'} · ${(s.params || []).length} param${(s.params || []).length === 1 ? '' : 's'}</summary>
+          <ul class="streams">${(s.streams || []).map((st) => `<li><span class="mono">${esc(st.name)}</span><span class="mode">${(st.write || []).join(' → ')}${(st.primary_keys || []).length ? ` · key ${esc(st.primary_keys.join(', '))}` : ''}</span></li>`).join('')}</ul>
+          ${(s.params || []).length ? `<ul class="params">${paramList(s.params)}</ul>` : ''}
+        </details>
+        <footer><span class="compat">works with ${compat.length ? compat.map((n) => `<b>${esc(n)}</b>`).join(', ') : 'no sink yet'}</span>
+          <a href="${HUB_REPO}/blob/main/${esc(s.file || `source-templates/${s.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
+          ${s.docs ? `<a href="${esc(s.docs)}" target="_blank" rel="noopener noreferrer">API docs ↗</a>` : ''}</footer>
+      </article>`;
+    };
+    const sinkCard = (k) => `<article class="card" data-search="${esc([k.name, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
+        <header><h3 class="mono">${esc(k.name)}</h3><span class="kind">${esc(k.sink_type || '')}</span></header>
+        ${k.description ? `<p>${esc(k.description)}</p>` : ''}
+        <div class="tags">${(k.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('')}</div>
+        ${(k.params || []).length ? `<details><summary>${k.params.length} param${k.params.length === 1 ? '' : 's'}</summary><ul class="params">${paramList(k.params)}</ul></details>` : ''}
+        <footer><a href="${HUB_REPO}/blob/main/${esc(k.file || `sink-templates/${k.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
+          ${k.docs ? `<a href="${esc(k.docs)}" target="_blank" rel="noopener noreferrer">docs ↗</a>` : ''}</footer>
+      </article>`;
+    $('source-grid').innerHTML = sources.length ? sources.map(sourceCard).join('') : '<div class="empty">No source templates yet — be the first to publish one.</div>';
+    $('source-grid').setAttribute('aria-busy', 'false');
+    $('sink-grid').innerHTML = sinks.map(sinkCard).join('');
+
+    // ── filter ──────────────────────────────────────────────────────────
+    $('q').oninput = () => {
+      const q = $('q').value.trim().toLowerCase();
+      document.querySelectorAll('#catalog .card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); });
+    };
+
+    // ── matrix ──────────────────────────────────────────────────────────
+    const t = $('matrix-table');
+    t.innerHTML = `<thead><tr><th class="corner">source \\ sink</th>${sinks.map((k) => `<th>${esc(k.name)}</th>`).join('')}</tr></thead>
+      <tbody>${sources.map((s) => `<tr><th scope="row">${esc(s.name)}</th>${sinks.map((k) => {
+        const c = cell(s.name, k.name); if (!c) return '<td>—</td>';
+        const n = (c.streams || []).length, m = (s.streams || []).length;
+        const cls = c.compatible ? 'ok' : n ? 'partial' : 'bad';
+        return `<td class="${cls}"><button type="button" data-s="${esc(s.name)}" data-k="${esc(k.name)}" title="${esc((c.streams || []).map((p) => `${p.stream}: ${p.write_mode}`).join('\n'))}">${c.compatible ? '✓' : n ? `${n}/${m}` : '✗'}</button></td>`;
+      }).join('')}</tr>`).join('')}</tbody>`;
+    t.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-s]'); if (!b) return;
+      cs.value = b.dataset.s; ck.value = b.dataset.k; renderPlan();
+      document.getElementById('compose').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  })();
+</script>
+
+<style is:global>
+  .hub-page .head { padding-bottom: 1rem; }
+  .hub-page .head h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); margin-top: 1rem; }
+  .hub-page .lede { overflow-wrap: anywhere; margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 46rem; }
+  .hub-page .stats { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.4rem; font-size: 0.92rem; color: var(--ink-soft); align-items: baseline; }
+  .hub-page .stat b { font-family: var(--font-mono); color: var(--teal-text); font-size: 1.15rem; margin-right: 0.3rem; }
+  .hub-page .stat-meta { font-size: 0.8rem; color: var(--ink-faint); }
+  .hub-page .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.4rem; }
+
+  /* compose widget */
+  .hub-page .compose { padding-bottom: 2.5rem; }
+  .hub-page .compose-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.3rem 1.4rem; box-shadow: var(--shadow-sm); }
+  .hub-page .compose-row { display: flex; flex-wrap: wrap; align-items: end; gap: 0.9rem; }
+  .hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; }
+  .hub-page .compose-row select { font: inherit; font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 0; text-transform: none; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem; }
+  .hub-page .times { font-size: 1.4rem; color: var(--ink-faint); padding-bottom: 0.45rem; }
+  .hub-page .plan { margin-top: 1rem; }
+  .hub-page .plan-head { font-family: var(--font-mono); font-size: 0.82rem; margin-bottom: 0.5rem; }
+  .hub-page .plan-head.is-ok { color: var(--teal-text); }
+  .hub-page .plan-head.is-bad { color: #b91c1c; }
+  .hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.35rem 1.2rem; }
+  .hub-page .plan li { display: flex; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--line-soft); }
+  .hub-page .plan li.bad .mode { color: #b91c1c; }
+  .hub-page .plan .mode { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+  .hub-page .plan .mode em { font-style: normal; color: var(--ink-faint); }
+  .hub-page .cmd { position: relative; margin-top: 1rem; }
+  .hub-page .cmd pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.9rem 5.5rem 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+  .hub-page .cmd .copy { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-family: var(--font-mono); font-size: 0.72rem; background: rgba(255,255,255,0.08); color: var(--term-fg); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 0.25rem 0.7rem; cursor: pointer; }
+  .hub-page .cmd .copy:hover { background: rgba(255,255,255,0.16); }
+  .hub-page .hint { margin-top: 0.9rem; font-size: 0.82rem; color: var(--ink-faint); }
+  .hub-page .hint code { font-size: 0.78rem; overflow-wrap: anywhere; }
+
+  /* catalog */
+  .hub-page .catalog h2 { font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); margin: 2rem 0 0.9rem; border: 0; padding: 0; }
+  .hub-page .catalog-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; }
+  .hub-page .catalog-head h2 { margin-bottom: 0.9rem; }
+  .hub-page #q { font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.5rem 1rem; min-width: 18rem; margin-bottom: 0.9rem; }
+  .hub-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 1rem; }
+  .hub-page .empty { grid-column: 1 / -1; color: var(--ink-faint); padding: 1.5rem 0; }
+  .hub-page .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: var(--shadow-sm); }
+  .hub-page .card header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+  .hub-page .card h3 { font-size: 1rem; margin: 0; font-weight: 650; }
+  .hub-page .mono { font-family: var(--font-mono); }
+  .hub-page .kind { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; }
+  .hub-page .card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .hub-page .tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .hub-page .tag { font-family: var(--font-mono); font-size: 0.68rem; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; }
+  .hub-page .mode-tag { color: var(--ink-soft); background: var(--surface-2); }
+  .hub-page .card details { font-size: 0.86rem; }
+  .hub-page .card summary { cursor: pointer; color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.76rem; }
+  .hub-page .card ul { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+  .hub-page .streams li, .hub-page .params li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.2rem 0.8rem; padding: 0.3rem 0; border-top: 1px dashed var(--line-soft); }
+  .hub-page .streams .mode, .hub-page .ptype { color: var(--ink-faint); font-family: var(--font-mono); font-size: 0.74rem; }
+  .hub-page .pdesc { flex-basis: 100%; color: var(--ink-faint); font-size: 0.78rem; }
+  .hub-page .card footer { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; font-size: 0.78rem; color: var(--ink-faint); align-items: baseline; }
+  .hub-page .card footer a { color: var(--teal-text); text-decoration: none; }
+  .hub-page .card footer a:hover { text-decoration: underline; }
+  .hub-page .compat { flex: 1 1 100%; }
+  .hub-page .compat b { color: var(--ink-soft); font-weight: 600; }
+
+  /* matrix */
+  .hub-page .matrix-note { font-size: 0.85rem; color: var(--ink-faint); margin: -0.3rem 0 0.8rem; }
+  .hub-page .matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  .hub-page .matrix { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+  .hub-page .matrix th, .hub-page .matrix td { padding: 0.55rem 0.8rem; text-align: center; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
+  .hub-page .matrix thead th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--ink-soft); background: var(--surface-2); }
+  .hub-page .matrix tbody th { text-align: left; font-family: var(--font-mono); font-weight: 600; }
+  .hub-page .matrix .corner { color: var(--ink-faint); font-weight: 500; }
+  .hub-page .matrix button { font: inherit; font-family: var(--font-mono); border: 0; border-radius: 999px; padding: 0.25rem 0.8rem; cursor: pointer; background: var(--surface-2); color: var(--ink-soft); }
+  .hub-page .matrix td.ok button { color: var(--teal-text); background: var(--teal-wash); }
+  .hub-page .matrix td.partial button { color: #b45309; background: rgba(245, 158, 11, 0.14); }
+  .hub-page .matrix td.bad button { color: #b91c1c; background: rgba(220, 38, 38, 0.1); }
+  .hub-page .matrix button:hover { filter: brightness(0.95); }
+
+  /* publish */
+  .hub-page .publish { padding: 3rem 0 1rem; }
+  .hub-page .publish h2 { margin: 0.6rem 0 0.8rem; font-size: clamp(1.5rem, 3vw, 2.1rem); }
+  .hub-page .publish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.6rem; }
+  .hub-page .pub-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .hub-page .pub-card h3 { margin: 0; font-size: 1rem; }
+  .hub-page .pub-card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .hub-page .pub-card .actions { margin-top: 0.2rem; }
+  .hub-page .publish pre, .hub-page .pub-card pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; }
+  .hub-page .publish > pre { margin-top: 0.8rem; }
+  .hub-page .mirror-h { margin: 2.4rem 0 0.5rem; font-size: 1.15rem; }
+  .hub-page .publish > p { color: var(--ink-soft); font-size: 0.95rem; max-width: 46rem; }
+  .hub-page .docs-link { margin-top: 1rem; }
+
+  @media (max-width: 720px) {
+    .hub-page .compose-row label { flex-basis: 100%; }
+    .hub-page .times { display: none; }
+    .hub-page #q { min-width: 0; width: 100%; }
+  }
+</style>
