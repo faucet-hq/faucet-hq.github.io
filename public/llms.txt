@@ -8,6 +8,7 @@ faucet-stream moves data between databases, warehouses, streaming systems, objec
 - [Home](https://faucet-hq.github.io/): what faucet-stream is — one engine for the whole data-movement path.
 - [Why faucet-stream](https://faucet-hq.github.io/#why): a runtime, not just connectors — throughput, governance, and reliability built in.
 - [Connectors](https://faucet-hq.github.io/connectors): the full source/sink catalog (databases, CDC, warehouses, streaming, files, APIs) with change-data-capture and Arrow columnar badges.
+- [Template Hub](https://faucet-hq.github.io/hub): the shared catalog of source × sink templates (github.com/faucet-hq/template-hub) — pick a source and a destination, copy the `faucet run --source X --sink Y` command; publish a template with a pull request; mirror the hub into `faucet serve`.
 - [Benchmarks](https://faucet-hq.github.io/benchmarks): reproducible throughput and peak-memory numbers vs. Meltano, with methodology.
 - [Governance](https://faucet-hq.github.io/governance): masking, quality, contracts, drift policy, column lineage, and SLAs enforced in the pipe.
 - [Observability](https://faucet-hq.github.io/observability): Prometheus metrics and OpenTelemetry tracing for every source, sink, transform, and state op.
