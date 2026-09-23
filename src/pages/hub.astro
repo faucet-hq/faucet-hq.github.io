@@ -16,6 +16,7 @@ const CONTRIBUTING = `${HUB_REPO}/blob/main/CONTRIBUTING.md`;
 // exactly how a template is registered in the hub.
 const SOURCE_SKELETON = `kind: source-template
 name: my-system                      # == the file name; lowercase, digits, - _
+owner: your-github-login             # == the directory this file lives in (your GitHub user or org)
 description: My System — what it exports, in one line
 tags: [category]
 docs: https://developer.example.com/api
@@ -42,6 +43,7 @@ streams:
 `;
 const SINK_SKELETON = `kind: sink-template
 name: my-destination                 # == the file name
+owner: your-github-login             # == the directory this file lives in
 description: My Destination — one table per stream
 params:
   dsn: { type: string, required: true, secret: true, description: "Connection string" }
@@ -55,8 +57,10 @@ per_stream:
 `;
 const newFile = (dir: string, name: string, body: string) =>
   `${HUB_REPO}/new/main/${dir}?filename=${encodeURIComponent(name)}&value=${encodeURIComponent(body)}`;
-const PUBLISH_SOURCE = newFile('source-templates', 'my-system.yaml', SOURCE_SKELETON);
-const PUBLISH_SINK = newFile('sink-templates', 'my-destination.yaml', SINK_SKELETON);
+// The namespace directory is the publisher's GitHub login; a static page cannot
+// know it, so the filename carries the placeholder and CI corrects a wrong one.
+const PUBLISH_SOURCE = newFile('source-templates', 'your-github-login/my-system.yaml', SOURCE_SKELETON);
+const PUBLISH_SINK = newFile('sink-templates', 'your-github-login/my-destination.yaml', SINK_SKELETON);
 
 const SYNC_YAML = `version: 1
 origins:
@@ -88,6 +92,7 @@ origins:
           <span class="stat"><b id="n-sources">…</b> sources</span>
           <span class="stat"><b id="n-sinks">…</b> sinks</span>
           <span class="stat"><b id="n-pairs">…</b> compatible pairings</span>
+          <span class="stat"><b id="n-official">…</b> official</span>
           <span class="stat stat-meta" id="hub-meta"></span>
         </div>
         <div class="actions" data-reveal style="--reveal-delay:.18s">
@@ -142,15 +147,20 @@ origins:
       <span class="eyebrow">Publish</span>
       <h2>Registering a template is a pull request.</h2>
       <p class="lede">
-        The catalog is a public repository. Open a pre-filled file, describe your system, and
-        CI lints it, composes it against every sink, and regenerates the index on merge — the
-        lint is the review bar. No credentials ever go in: every secret is a
-        <code>$&#123;param.NAME&#125;</code> the person running it supplies.
+        The catalog is a public repository. Open a pre-filled file under <strong>your own
+        namespace</strong> — <code>source-templates/&lt;your-github-login&gt;/</code> — describe
+        your system, and CI lints it, composes it against every sink, and regenerates the index
+        on merge. The namespace is yours: only the GitHub user or org that owns it can change it,
+        and a hundred people can publish their own <code>netsuite</code> without colliding
+        (<code>acme/netsuite</code>, <code>octo/netsuite</code>, …). Every merged change becomes
+        the next version — v1, v2, v3 — and a sidecar decides which one is <em>stable</em>. No
+        credentials ever go in: every secret is a <code>$&#123;param.NAME&#125;</code> the
+        person running it supplies.
       </p>
       <div class="publish-grid">
         <div class="pub-card">
           <h3>1 · Open a skeleton</h3>
-          <p>GitHub forks the catalog for you and opens a pull request when you save.</p>
+          <p>Rename the <code>your-github-login</code> folder to your GitHub user or org. GitHub forks the catalog for you and opens a pull request when you save; the first PR into a namespace also adds its <code>OWNERS</code> file.</p>
           <div class="actions">
             <a class="btn" href={PUBLISH_SOURCE} target="_blank" rel="noopener noreferrer">New source template →</a>
             <a class="btn btn--ghost" href={PUBLISH_SINK} target="_blank" rel="noopener noreferrer">New sink template →</a>
@@ -212,19 +222,30 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     }
     const sources = idx.sources || [];
     const sinks = idx.sinks || [];
-    const cells = new Map((idx.matrix || []).map((c) => [c.source + ' ' + c.sink, c]));
-    const cell = (s, k) => cells.get(s + ' ' + k);
+    const cells = new Map((idx.matrix || []).map((c) => [c.source + '\u0000' + c.sink, c]));
+    const grouped = (list) => {
+      const byName = new Map();
+      for (const t of list) { const k = t.name; if (!byName.has(k)) byName.set(k, []); byName.get(k).push(t); }
+      return byName;
+    };
+    const cell = (s, k) => cells.get(s + '\u0000' + k);
 
     // ── stats ────────────────────────────────────────────────────────────
     $('n-sources').textContent = sources.length;
     $('n-sinks').textContent = sinks.length;
     $('n-pairs').textContent = (idx.matrix || []).filter((c) => c.compatible).length;
+    $('n-official').textContent = sources.filter((s) => s.official !== false && !s.owner).length;
+    const idOf = (t) => t.id || t.name;
+    const verOf = (t) => (t.newest ? ` <span class="ver" title="${t.versions ? esc(t.versions.map((v) => 'v' + v.version + ' · ' + (v.date || '').slice(0, 10)).join('\n')) : ''}">v${t.newest}${t.stable && t.stable !== t.newest ? ` · stable v${t.stable}` : ''}</span>` : '');
+    const ownerBadge = (t) => (t.owner
+      ? `<a class="owner" href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer" title="published by ${esc(t.owner)}">@${esc(t.owner)}</a>`
+      : `<span class="official" title="maintained by faucet-hq">official</span>`);
     $('hub-meta').textContent = 'live from faucet-hq/template-hub';
 
     // ── compose widget ──────────────────────────────────────────────────
     const cs = $('c-source'), ck = $('c-sink');
-    cs.innerHTML = sources.map((s) => `<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
-    ck.innerHTML = sinks.map((k) => `<option value="${esc(k.name)}">${esc(k.name)}</option>`).join('');
+    cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${s.owner ? '' : ' (official)'}</option>`).join('');
+    ck.innerHTML = sinks.map((k) => `<option value="${esc(idOf(k))}">${esc(idOf(k))}${k.owner ? '' : ' (official)'}</option>`).join('');
     function renderPlan() {
       const c = cell(cs.value, ck.value);
       const plan = $('c-plan'), wrap = $('c-cmd-wrap');
@@ -245,9 +266,10 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     const paramList = (ps) => (ps || []).map((p) =>
       `<li><span class="mono">${esc(p.name)}</span> <span class="ptype">${esc(p.type || 'string')}${p.required ? ' · required' : ''}${p.secret ? ' · secret' : ''}</span>${p.description ? `<span class="pdesc">${esc(p.description)}</span>` : ''}</li>`).join('');
     const sourceCard = (s) => {
-      const compat = sinks.filter((k) => cell(s.name, k.name)?.compatible).map((k) => k.name);
-      return `<article class="card" data-search="${esc([s.name, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${esc(s.name)}</h3><span class="kind">${esc(s.source_type || '')}</span></header>
+      const compat = sinks.filter((k) => cell(idOf(s), idOf(k))?.compatible).map((k) => idOf(k));
+      const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s));
+      return `<article class="card" data-search="${esc([idOf(s), s.owner, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
+        <header><h3 class="mono">${esc(idOf(s))}</h3><span class="badges">${ownerBadge(s)}${verOf(s)}<span class="kind">${esc(s.source_type || '')}</span></span></header>
         ${s.description ? `<p>${esc(s.description)}</p>` : ''}
         ${(s.tags || []).length ? `<div class="tags">${s.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         <details><summary>${(s.streams || []).length} stream${(s.streams || []).length === 1 ? '' : 's'} · ${(s.params || []).length} param${(s.params || []).length === 1 ? '' : 's'}</summary>
@@ -255,12 +277,13 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
           ${(s.params || []).length ? `<ul class="params">${paramList(s.params)}</ul>` : ''}
         </details>
         <footer><span class="compat">works with ${compat.length ? compat.map((n) => `<b>${esc(n)}</b>`).join(', ') : 'no sink yet'}</span>
+          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.map((v) => `<b>${esc(idOf(v))}</b>`).join(', ')}</span>` : ''}
           <a href="${HUB_REPO}/blob/main/${esc(s.file || `source-templates/${s.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
           ${s.docs ? `<a href="${esc(s.docs)}" target="_blank" rel="noopener noreferrer">API docs ↗</a>` : ''}</footer>
       </article>`;
     };
-    const sinkCard = (k) => `<article class="card" data-search="${esc([k.name, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${esc(k.name)}</h3><span class="kind">${esc(k.sink_type || '')}</span></header>
+    const sinkCard = (k) => `<article class="card" data-search="${esc([idOf(k), k.owner, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
+        <header><h3 class="mono">${esc(idOf(k))}</h3><span class="badges">${ownerBadge(k)}${verOf(k)}<span class="kind">${esc(k.sink_type || '')}</span></span></header>
         ${k.description ? `<p>${esc(k.description)}</p>` : ''}
         <div class="tags">${(k.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('')}</div>
         ${(k.params || []).length ? `<details><summary>${k.params.length} param${k.params.length === 1 ? '' : 's'}</summary><ul class="params">${paramList(k.params)}</ul></details>` : ''}
@@ -279,12 +302,12 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
 
     // ── matrix ──────────────────────────────────────────────────────────
     const t = $('matrix-table');
-    t.innerHTML = `<thead><tr><th class="corner">source \\ sink</th>${sinks.map((k) => `<th>${esc(k.name)}</th>`).join('')}</tr></thead>
-      <tbody>${sources.map((s) => `<tr><th scope="row">${esc(s.name)}</th>${sinks.map((k) => {
-        const c = cell(s.name, k.name); if (!c) return '<td>—</td>';
+    t.innerHTML = `<thead><tr><th class="corner">source \\ sink</th>${sinks.map((k) => `<th>${esc(idOf(k))}</th>`).join('')}</tr></thead>
+      <tbody>${sources.map((s) => `<tr><th scope="row">${esc(idOf(s))}</th>${sinks.map((k) => {
+        const c = cell(idOf(s), idOf(k)); if (!c) return '<td>—</td>';
         const n = (c.streams || []).length, m = (s.streams || []).length;
         const cls = c.compatible ? 'ok' : n ? 'partial' : 'bad';
-        return `<td class="${cls}"><button type="button" data-s="${esc(s.name)}" data-k="${esc(k.name)}" title="${esc((c.streams || []).map((p) => `${p.stream}: ${p.write_mode}`).join('\n'))}">${c.compatible ? '✓' : n ? `${n}/${m}` : '✗'}</button></td>`;
+        return `<td class="${cls}"><button type="button" data-s="${esc(idOf(s))}" data-k="${esc(idOf(k))}" title="${esc((c.streams || []).map((p) => `${p.stream}: ${p.write_mode}`).join('\n'))}">${c.compatible ? '✓' : n ? `${n}/${m}` : '✗'}</button></td>`;
       }).join('')}</tr>`).join('')}</tbody>`;
     t.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-s]'); if (!b) return;
@@ -337,6 +360,11 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .card header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
   .hub-page .card h3 { font-size: 1rem; margin: 0; font-weight: 650; }
   .hub-page .mono { font-family: var(--font-mono); }
+  .hub-page .badges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; justify-content: flex-end; }
+  .hub-page .owner { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; }
+  .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
+  .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; }
+  .hub-page .ver { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); white-space: nowrap; }
   .hub-page .kind { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; }
   .hub-page .card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
   .hub-page .tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
