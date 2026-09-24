@@ -1,0 +1,177 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { loadReleases } from '../lib/releases.js';
+
+const RELEASES = 'https://github.com/faucet-hq/faucet-stream/releases';
+const { entries, error } = await loadReleases();
+
+const esc = (s: string) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+// Release notes are one-line markdown: `code`, **bold** and [links](url).
+const md = (s: string) =>
+  esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+const fmtDay = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const SECTION_LABEL: Record<string, string> = { 'Bug Fixes': 'Fixes' };
+const crateLabel = (c: string) => (c === 'faucet-cli' ? 'faucet CLI' : c);
+const allCrates = [...new Set(entries.flatMap((e) => e.crates.map((c) => c.crate)))].sort((a, b) =>
+  a === 'faucet-cli' ? -1 : b === 'faucet-cli' ? 1 : a.localeCompare(b));
+---
+
+<Base
+  title="Changelog — faucet-stream"
+  description="Every faucet-stream release: new features, fixes and performance work, one entry per release across the CLI and every crate."
+>
+  <Header />
+  <main id="main" class="changelog-page">
+    <section class="section cl-head">
+      <div class="wrap">
+        <span class="eyebrow">Changelog</span>
+        <h1>What's new in faucet-stream</h1>
+        <p class="lede">
+          One entry per release, across the <code>faucet</code> CLI and every crate. Each crate
+          versions independently; the chips show which ones moved and to what.
+        </p>
+        {entries.length > 0 && (
+          <div class="cl-tools">
+            <label for="cl-crate">Show changes for</label>
+            <select id="cl-crate" class="cl-select">
+              <option value="">every crate</option>
+              {allCrates.map((c) => <option value={c}>{crateLabel(c)}</option>)}
+            </select>
+            <a class="cl-gh" href={RELEASES} target="_blank" rel="noopener noreferrer">All GitHub releases ↗</a>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <section class="section cl-body">
+      <div class="wrap">
+        {error && (
+          <p class="cl-empty">The release history could not be loaded when this page was built. Every release is on <a href={RELEASES}>GitHub Releases</a>.</p>
+        )}
+        <ol class="cl-timeline">
+          {entries.map((e) => (
+            <li class="cl-entry" data-crates={e.crates.map((c) => c.crate).join(' ')}>
+              <div class="cl-when">
+                <time datetime={e.day}>{fmtDay(e.day)}</time>
+                <a class="cl-headline" href={e.head.url} target="_blank" rel="noopener noreferrer">
+                  {crateLabel(e.head.crate)} <b>{e.head.version}</b>
+                </a>
+              </div>
+              <div class="cl-card">
+                {e.sections.map((s) => (
+                  <div class={`cl-section cl-${s.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <h2><span class="cl-dot" aria-hidden="true"></span>{SECTION_LABEL[s.name] || s.name}</h2>
+                    <ul>
+                      {s.items.map((i) => (
+                        <li data-crates={i.crates.join(' ')}>
+                          {i.scope.length > 0 && <span class="cl-scope">{i.scope.join(', ')}</span>}
+                          <span set:html={md(i.text)} />
+                          {i.pr && <a class="cl-pr" href={i.url} target="_blank" rel="noopener noreferrer">#{i.pr}</a>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <details class="cl-crates">
+                  <summary>{e.crates.length} {e.crates.length === 1 ? 'crate' : 'crates'} released</summary>
+                  <div class="cl-chips">
+                    {e.crates.map((c) => (
+                      <a class="cl-chip" href={c.url} target="_blank" rel="noopener noreferrer">{c.crate} <b>{c.version}</b></a>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p class="cl-empty" id="cl-none" hidden>No release changed that crate.</p>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Base>
+
+<script is:inline>
+  (() => {
+    const sel = document.getElementById('cl-crate');
+    if (!sel) return;
+    const apply = () => {
+      const c = sel.value;
+      let shown = 0;
+      document.querySelectorAll('.cl-entry').forEach((e) => {
+        const hit = !c || e.dataset.crates.split(' ').includes(c);
+        e.hidden = !hit;
+        if (!hit) return;
+        shown++;
+        // Within an entry, keep only the changes that touched the chosen crate.
+        e.querySelectorAll('.cl-section li').forEach((li) => { li.hidden = c && !li.dataset.crates.split(' ').includes(c); });
+        e.querySelectorAll('.cl-section').forEach((s) => { s.hidden = ![...s.querySelectorAll('li')].some((li) => !li.hidden); });
+      });
+      document.getElementById('cl-none').hidden = shown > 0;
+      const u = new URL(location.href);
+      if (c) u.searchParams.set('crate', c); else u.searchParams.delete('crate');
+      history.replaceState(null, '', u);
+    };
+    const wanted = new URLSearchParams(location.search).get('crate');
+    if (wanted && [...sel.options].some((o) => o.value === wanted)) sel.value = wanted;
+    sel.addEventListener('change', apply);
+    apply();
+  })();
+</script>
+
+<style is:global>
+  .changelog-page .section { padding-block: clamp(2.5rem, 5vw, 4rem); }
+  .changelog-page .cl-head { padding-bottom: 1.5rem; }
+  .changelog-page .cl-head h1 { font-size: clamp(2rem, 4.5vw, 3rem); margin-top: 1rem; }
+  .changelog-page .lede { margin-top: 1rem; font-size: 1.08rem; color: var(--ink-soft); max-width: 42rem; }
+  .changelog-page .cl-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin-top: 1.6rem; font-size: 0.9rem; color: var(--ink-soft); }
+  .changelog-page .cl-select {
+    -webkit-appearance: none; appearance: none; box-sizing: border-box; height: 2.5rem; font: inherit; font-size: 0.88rem; color: var(--ink);
+    background-color: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0 2.2rem 0 1rem; cursor: pointer;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-faint) 50%), linear-gradient(135deg, var(--ink-faint) 50%, transparent 50%);
+    background-position: calc(100% - 1.15rem) 52%, calc(100% - 0.8rem) 52%; background-size: 0.35rem 0.35rem, 0.35rem 0.35rem; background-repeat: no-repeat;
+  }
+  .changelog-page .cl-select:focus-visible { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px color-mix(in srgb, var(--teal) 22%, transparent); }
+  .changelog-page .cl-gh { margin-left: auto; color: var(--teal-text); font-size: 0.88rem; }
+  .changelog-page .cl-body { background: var(--surface-2); border-top: 1px solid var(--line); }
+  .changelog-page .cl-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem; }
+  .changelog-page .cl-entry { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; }
+  .changelog-page .cl-when { display: flex; flex-direction: column; gap: 0.35rem; padding-top: 0.2rem; position: sticky; top: 5.5rem; align-self: start; }
+  .changelog-page .cl-when time { font-size: 0.85rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .changelog-page .cl-headline { font-size: 1rem; color: var(--ink); text-decoration: none; }
+  .changelog-page .cl-headline b { font-family: var(--font-mono); color: var(--teal-text); }
+  .changelog-page .cl-headline:hover { color: var(--teal-text); }
+  .changelog-page .cl-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.4rem; display: grid; gap: 1.1rem; box-shadow: var(--shadow-sm); }
+  .changelog-page .cl-section h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 0.5rem; }
+  .changelog-page .cl-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ink-faint); }
+  .changelog-page .cl-features .cl-dot { background: var(--teal); }
+  .changelog-page .cl-bug-fixes .cl-dot { background: #d97706; }
+  .changelog-page .cl-performance .cl-dot { background: #0284c7; }
+  .changelog-page .cl-section ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
+  .changelog-page .cl-section li { position: relative; padding-left: 1rem; font-size: 0.93rem; color: var(--ink); line-height: 1.5; }
+  .changelog-page .cl-section li::before { content: ''; position: absolute; left: 0.2rem; top: 0.65em; width: 0.3rem; height: 1px; background: var(--ink-faint); }
+  .changelog-page .cl-section li code { font-size: 0.85em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; }
+  .changelog-page .cl-section li a { color: var(--teal-text); }
+  .changelog-page .cl-pr { margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint) !important; text-decoration: none; }
+  .changelog-page .cl-pr:hover { color: var(--teal-text) !important; }
+  .changelog-page .cl-crates { border-top: 1px solid var(--line); padding-top: 0.8rem; font-size: 0.85rem; }
+  .changelog-page .cl-crates summary { cursor: pointer; color: var(--ink-soft); }
+  .changelog-page .cl-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.7rem; }
+  .changelog-page .cl-chip { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; background: var(--surface-2); }
+  .changelog-page .cl-chip b { color: var(--ink); font-weight: 600; }
+  .changelog-page .cl-chip:hover { border-color: var(--teal-deep); }
+  .changelog-page .cl-scope { display: inline-block; margin-right: 0.45rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.35rem; vertical-align: 0.05em; }
+  .changelog-page .cl-empty { color: var(--ink-soft); }
+  .changelog-page .cl-empty a { color: var(--teal-text); }
+  .changelog-page [hidden] { display: none !important; }
+  @media (max-width: 720px) {
+    .changelog-page .cl-entry { grid-template-columns: 1fr; gap: 0.6rem; }
+    .changelog-page .cl-when { position: static; flex-direction: row; align-items: baseline; gap: 0.8rem; }
+    .changelog-page .cl-gh { margin-left: 0; }
+  }
+</style>

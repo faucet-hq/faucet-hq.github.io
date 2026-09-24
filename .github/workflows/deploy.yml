@@ -9,6 +9,9 @@ on:
   push:
     branches: [main, dev]
   workflow_dispatch:
+  # Daily rebuild so /changelog picks up new releases without a site push.
+  schedule:
+    - cron: "17 6 * * *"
 
 permissions:
   contents: read
@@ -67,6 +70,8 @@ jobs:
           # preview traffic out of the counts). Empty when the secret is unset =
           # no beacon injected. Add repo secret CF_WEB_ANALYTICS_TOKEN to activate.
           CF_WEB_ANALYTICS_TOKEN: ${{ secrets.CF_WEB_ANALYTICS_TOKEN }}
+          # Read-only: /changelog is built from faucet-stream's GitHub releases.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm ci
           npm run build
@@ -81,6 +86,7 @@ jobs:
         working-directory: dev
         env:
           BASE_PATH: /dev/
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm ci
           npm run build

@@ -276,3 +276,46 @@
   .hub-page .hstat:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion: reduce) { .hub-page .hstat, .hub-page .hstat-l { transition: none; } }
+/* parameters table: flags get their own (unlabelled) column so they line up */
+.hub-page .tpl-table td.flags { white-space: nowrap; }
+.hub-page .tpl-table td.flags > span { display: inline-block; margin: 0 0.3rem 0.25rem 0; }
+.hub-page .req, .hub-page .secret { text-transform: none; letter-spacing: 0; font-size: 0.7rem; margin-left: 0; }
+.hub-page .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hub-page .tpl-table td code { font-size: 0.82em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; }
+/* Grid children must be allowed to shrink, or a wide table widens the whole page. */
+.hub-page .tpl-details > * { min-width: 0; }
+@media (max-width: 560px) {
+  /* Parameters: one stacked block per parameter instead of a sideways-scrolling table. */
+  .hub-page .tpl-params thead { display: none; }
+  .hub-page .tpl-params, .hub-page .tpl-params tbody, .hub-page .tpl-params tr, .hub-page .tpl-params td { display: block; width: auto; }
+  .hub-page .tpl-params tr { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); }
+  .hub-page .tpl-params tr:last-child { border-bottom: 0; }
+  .hub-page .tpl-params td { padding: 0.1rem 0; border: 0; white-space: normal; }
+  .hub-page .tpl-params td:first-child { display: inline-block; font-weight: 650; margin-right: 0.5rem; }
+  .hub-page .tpl-params td.flags { display: inline-block; }
+  .hub-page .tpl-params td[data-label] { display: inline-block; margin-right: 1rem; font-size: 0.8rem; color: var(--ink-soft); }
+  .hub-page .tpl-params td[data-label]::before { content: attr(data-label) " "; font-family: var(--font-body); color: var(--ink-faint); }
+  .hub-page .tpl-params td:last-child { margin-top: 0.3rem; }
+  /* Version rows wrap instead of squeezing into columns. */
+  .hub-page .tpl-versions li { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+}
+/* Source and sink: two tints of equal weight (data flows from teal to blue), so neither reads as selected. */
+.hub-page { --tint-source: #0f766e; --tint-sink: #0369a1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hub-page { --tint-source: #5eead4; --tint-sink: #7dd3fc; } }
+:root[data-theme="dark"] .hub-page { --tint-source: #5eead4; --tint-sink: #7dd3fc; }
+.hub-page .pub-choice {
+  --_t: var(--tint-source);
+  --_bg: color-mix(in srgb, var(--_t) 11%, var(--surface));
+  --_fg: var(--_t);
+  background: var(--_bg); color: var(--_t);
+  border: 1px solid color-mix(in srgb, var(--_t) 32%, transparent); box-shadow: none; font-weight: 600;
+}
+.hub-page .pub-choice--sink { --_t: var(--tint-sink); }
+.hub-page .pub-choice:hover { --_bg: color-mix(in srgb, var(--_t) 18%, var(--surface)); background: var(--_bg); color: var(--_t); border-color: color-mix(in srgb, var(--_t) 55%, transparent); box-shadow: var(--shadow-sm); }
+.hub-page .pub-choice:focus-visible { outline: 2px solid var(--_t); outline-offset: 2px; }
+/* Topic tags are links to a search, set as text rather than as badges. */
+.hub-page .topics { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; margin-top: 0.9rem; }
+.hub-page .topic { font-size: 0.9rem; color: var(--ink-soft); text-decoration: none; }
+.hub-page .topic:hover { color: var(--teal-text); text-decoration: underline; text-underline-offset: 3px; }
+.hub-page .tpl-facts a { color: var(--teal-text); text-decoration: none; }
+.hub-page .tpl-facts a:hover { text-decoration: underline; text-underline-offset: 3px; }
