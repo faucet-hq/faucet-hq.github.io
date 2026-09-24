@@ -91,7 +91,7 @@ origins:
         <div class="stats" id="hub-stats" data-reveal style="--reveal-delay:.14s" aria-live="polite">
           <a class="stat" href="#sources"><b id="n-sources">…</b> sources</a>
           <a class="stat" href="#sinks"><b id="n-sinks">…</b> sinks</a>
-          <a class="stat" href="#matrix"><b id="n-pairs">…</b> compatible pairings</a>
+          <a class="stat" href="#compose"><b id="n-pairs">…</b> compatible pairings</a>
           <span class="stat"><b id="n-official">…</b> official</span>
           <span class="stat stat-meta" id="hub-meta"></span>
         </div>
@@ -107,7 +107,7 @@ origins:
         <div class="section-head" data-reveal>
           <span class="eyebrow">Try a pairing</span>
           <h2>Pick any two. Get the command.</h2>
-          <p>Choose a source and a sink to see how each stream will be written, and copy the command that runs it.</p>
+          <p>Choose a source to see which sinks it runs on, pick one to see how each stream will be written, and copy the command that runs it.</p>
         </div>
         <div class="compose-card">
           <div class="compose-row">
@@ -119,6 +119,7 @@ origins:
               <select id="c-sink" aria-label="Sink template"></select>
             </label>
           </div>
+          <div id="c-fit" class="fit"></div>
           <div id="c-plan" class="plan" aria-live="polite"></div>
           <div class="cmd" id="c-cmd-wrap" hidden>
             <pre><code id="c-cmd"></code></pre>
@@ -183,16 +184,6 @@ origins:
       </div>
     </section>
 
-    <section class="section catalog" id="matrix">
-      <div class="wrap">
-        <div class="section-head" data-reveal>
-          <span class="eyebrow">Compatibility</span>
-          <h2>Which source runs on which sink</h2>
-          <p>✓ every stream has a write mode the sink supports · <i>n/m</i> only some streams do. Click a cell to load its command in <a href="#compose">Try a pairing</a>.</p>
-        </div>
-        <div class="matrix-scroll"><table class="matrix" id="matrix-table"></table></div>
-      </div>
-    </section>
 
     <section class="section band publish" id="publish">
       <div class="wrap">
@@ -240,7 +231,7 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       <p>
         <code>faucet serve</code> pulls the catalog into its template registry. The web console
         then lists every template, offers each registered sink on a source's trigger form, and
-        shows this same matrix from your registry.
+        shows which sinks each registered source runs on.
       </p>
       <pre><code>{SYNC_YAML}</code></pre>
       <pre><code>faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code></pre>
@@ -337,6 +328,7 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
     cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${isOfficial(s) ? ' (official)' : ''}</option>`).join('');
     ck.innerHTML = sinks.map((k) => `<option value="${esc(idOf(k))}">${esc(idOf(k))}${isOfficial(k) ? ' (official)' : ''}</option>`).join('');
     function renderPlan() {
+      renderFit();
       const c = cell(cs.value, ck.value);
       const plan = $('c-plan'), wrap = $('c-cmd-wrap');
       if (!c) { plan.innerHTML = ''; wrap.hidden = true; return; }
@@ -346,7 +338,49 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       plan.innerHTML = `<div class="plan-head ${c.compatible ? 'is-ok' : 'is-bad'}">${c.compatible ? '✓ compatible' : `✗ ${(c.incompatible || []).length} stream(s) have no viable write mode`}</div><ul>${rows.join('')}</ul>`;
       if (c.compatible && c.command) { $('c-cmd').textContent = c.command; wrap.hidden = false; } else { wrap.hidden = true; }
     }
-    cs.onchange = ck.onchange = renderPlan;
+    // Which sinks the chosen source runs on — one row of chips instead of a
+    // sources × sinks matrix, which stops being readable past a handful of each.
+    const FIT_SHOWN = 12;
+    let fitExpanded = false;
+    const fitOf = (sid, k) => {
+      const c = cell(sid, idOf(k));
+      const n = (c?.streams || []).length;
+      return c?.compatible ? 'ok' : n ? 'partial' : 'bad';
+    };
+    function renderFit() {
+      const sid = cs.value;
+      const src = sources.find((s) => idOf(s) === sid);
+      if (!src) { $('c-fit').innerHTML = ''; return; }
+      const rankFit = { ok: 0, partial: 1, bad: 2 };
+      const q = ($('c-fit-q')?.value || '').trim().toLowerCase();
+      const all = [...sinks].sort((a, b) => (rankFit[fitOf(sid, a)] - rankFit[fitOf(sid, b)]) || SORTS.rank(a, b));
+      const full = all.filter((k) => fitOf(sid, k) === 'ok').length;
+      const partial = all.filter((k) => fitOf(sid, k) === 'partial').length;
+      const matching = q ? all.filter((k) => [idOf(k), k.sink_type, k.description].join(' ').toLowerCase().includes(q)) : all;
+      const shown = fitExpanded || q ? matching : matching.slice(0, FIT_SHOWN);
+      const chip = (k) => {
+        const f = fitOf(sid, k), c = cell(sid, idOf(k));
+        const label = f === 'ok' ? '✓' : f === 'partial' ? `${(c.streams || []).length}/${(src.streams || []).length}` : '✗';
+        const title = f === 'ok' ? 'every stream has a write mode this sink supports' : f === 'partial' ? 'only some streams have a write mode this sink supports' : 'no stream can be written to this sink';
+        return `<button type="button" class="fit-chip is-${f}${idOf(k) === ck.value ? ' is-current' : ''}" data-k="${esc(idOf(k))}" title="${title}"><span class="fit-mark">${label}</span>${esc(idOf(k))}</button>`;
+      };
+      const needsFilter = sinks.length > FIT_SHOWN;
+      $('c-fit').innerHTML = `
+        <div class="fit-head"><span>Runs fully on <b>${full}</b> of ${sinks.length} sink${sinks.length === 1 ? '' : 's'}${partial ? ` · partly on ${partial}` : ''}</span>
+          ${needsFilter ? `<input id="c-fit-q" class="filter fit-filter" type="search" placeholder="find a sink…" aria-label="Find a sink for this source" value="${esc(q)}" />` : ''}</div>
+        <div class="fit-chips">${shown.map(chip).join('') || '<span class="fit-none">No sink matches.</span>'}
+          ${!q && matching.length > FIT_SHOWN ? `<button type="button" class="linkish fit-more">${fitExpanded ? 'show fewer' : `+${matching.length - FIT_SHOWN} more`}</button>` : ''}</div>`;
+      const fq = $('c-fit-q');
+      if (fq && q) { fq.focus(); fq.setSelectionRange(q.length, q.length); }
+    }
+    $('c-fit').addEventListener('click', (e) => {
+      const b = e.target.closest('.fit-chip');
+      if (b) { ck.value = b.dataset.k; renderPlan(); return; }
+      if (e.target.closest('.fit-more')) { fitExpanded = !fitExpanded; renderFit(); }
+    });
+    $('c-fit').addEventListener('input', (e) => { if (e.target.id === 'c-fit-q') renderFit(); });
+    cs.onchange = () => { fitExpanded = false; renderPlan(); };
+    ck.onchange = renderPlan;
     $('c-copy').onclick = async () => {
       try { await navigator.clipboard.writeText($('c-cmd').textContent); $('c-copy').textContent = 'copied'; setTimeout(() => ($('c-copy').textContent = 'copy'), 1200); } catch (e) { /* clipboard blocked */ }
     };
@@ -355,6 +389,8 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
     // ── cards ───────────────────────────────────────────────────────────
     const paramList = (ps) => (ps || []).map((p) =>
       `<li><span class="mono">${esc(p.name)}</span> <span class="ptype">${esc(p.type || 'string')}${p.required ? ' · required' : ''}${p.secret ? ' · secret' : ''}</span>${p.description ? `<span class="pdesc">${esc(p.description)}</span>` : ''}</li>`).join('');
+    // Cards summarise; Try a pairing holds the per-sink detail.
+    const VARIANTS_SHOWN = 3;
     const sourceCard = (s) => {
       const compat = sinks.filter((k) => cell(idOf(s), idOf(k))?.compatible).map((k) => idOf(k));
       const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s)).sort(SORTS.rank);
@@ -367,8 +403,10 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
           <ul class="streams">${(s.streams || []).map((st) => `<li><span class="mono">${esc(st.name)}</span><span class="mode">${(st.write || []).join(' → ')}${(st.primary_keys || []).length ? ` · key ${esc(st.primary_keys.join(', '))}` : ''}</span></li>`).join('')}</ul>
           ${(s.params || []).length ? `<ul class="params">${paramList(s.params)}</ul>` : ''}
         </details>
-        <footer><span class="compat">works with ${compat.length ? compat.map((n) => `<b>${esc(n)}</b>`).join(', ') : 'no sink yet'}</span>
-          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.map((v) => `<b>${esc(idOf(v))}</b>${trustOf(v).stars != null ? ` ★ ${starsOf(v)}` : ''}`).join(', ')}</span>` : ''}
+        <footer><span class="compat">${compat.length
+            ? `works with <button type="button" class="linkish try-src" data-src="${esc(idOf(s))}" title="Open Try a pairing with this source">${compat.length} of ${sinks.length} sink${sinks.length === 1 ? '' : 's'}</button>`
+            : 'no compatible sink yet'}</span>
+          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.slice(0, VARIANTS_SHOWN).map((v) => `<b>${esc(idOf(v))}</b>${trustOf(v).stars != null ? ` ★ ${starsOf(v)}` : ''}`).join(', ')}${variants.length > VARIANTS_SHOWN ? ` <button type="button" class="linkish more-variants" data-name="${esc(s.name)}">+${variants.length - VARIANTS_SHOWN} more</button>` : ''}</span>` : ''}
           <a href="${HUB_REPO}/blob/main/${esc(s.file || `source-templates/${s.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
           ${s.docs ? `<a href="${esc(s.docs)}" target="_blank" rel="noopener noreferrer">API docs ↗</a>` : ''}</footer>
       </article>`;
@@ -425,21 +463,21 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       };
     }
     $('source-grid').setAttribute('aria-busy', 'false');
-
-    // ── matrix ──────────────────────────────────────────────────────────
-    const t = $('matrix-table');
-    t.innerHTML = `<thead><tr><th class="corner">source \\ sink</th>${sinks.map((k) => `<th>${esc(idOf(k))}</th>`).join('')}</tr></thead>
-      <tbody>${sources.map((s) => `<tr><th scope="row">${esc(idOf(s))}</th>${sinks.map((k) => {
-        const c = cell(idOf(s), idOf(k)); if (!c) return '<td>—</td>';
-        const n = (c.streams || []).length, m = (s.streams || []).length;
-        const cls = c.compatible ? 'ok' : n ? 'partial' : 'bad';
-        return `<td class="${cls}"><button type="button" data-s="${esc(idOf(s))}" data-k="${esc(idOf(k))}" title="${esc((c.streams || []).map((p) => `${p.stream}: ${p.write_mode}`).join('\n'))}">${c.compatible ? '✓' : n ? `${n}/${m}` : '✗'}</button></td>`;
-      }).join('')}</tr>`).join('')}</tbody>`;
-    t.addEventListener('click', (e) => {
-      const b = e.target.closest('button[data-s]'); if (!b) return;
-      cs.value = b.dataset.s; ck.value = b.dataset.k; renderPlan();
-      document.getElementById('compose').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $('source-grid').addEventListener('click', (e) => {
+      const tryBtn = e.target.closest('.try-src');
+      if (tryBtn) {
+        $('c-source').value = tryBtn.dataset.src;
+        renderPlan();
+        document.getElementById('compose').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+        return;
+      }
+      const more = e.target.closest('.more-variants');
+      if (more) {
+        $('q-sources').value = more.dataset.name;
+        applyFilter('sources');
+      }
     });
+
   })();
 </script>
 
@@ -504,6 +542,25 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   .hub-page .official:hover { text-decoration: underline; }
   /* `display` on cards/empties would otherwise beat the hidden attribute the filters set. */
   .hub-page [hidden] { display: none !important; }
+  .hub-page .fit { margin-top: 1rem; display: grid; gap: 0.6rem; }
+  .hub-page .fit-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.88rem; color: var(--ink-soft); }
+  .hub-page .fit-head b { color: var(--teal-text); font-variant-numeric: tabular-nums; }
+  .hub-page .fit-filter { min-width: 0; width: 14rem; margin: 0; padding: 0.35rem 0.8rem; font-size: 0.82rem; }
+  .hub-page .fit-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .hub-page .fit-chip { display: inline-flex; align-items: center; gap: 0.4rem; font: inherit; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.7rem 0.25rem 0.35rem; cursor: pointer; }
+  .hub-page .fit-chip:hover { border-color: var(--teal-deep); }
+  .hub-page .fit-chip.is-current { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+  .hub-page .fit-mark { display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem; padding: 0 0.3rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+  .hub-page .fit-chip.is-ok .fit-mark { background: var(--teal-wash); color: var(--teal-text); }
+  .hub-page { --fit-partial: #b45309; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hub-page { --fit-partial: #fbbf24; } }
+  :root[data-theme="dark"] .hub-page { --fit-partial: #fbbf24; }
+  .hub-page .fit-chip.is-partial .fit-mark { background: color-mix(in srgb, var(--fit-partial) 18%, transparent); color: var(--fit-partial); }
+  .hub-page .fit-chip.is-bad { color: var(--ink-faint); }
+  .hub-page .fit-chip.is-bad .fit-mark { background: var(--surface-2); color: var(--ink-faint); }
+  .hub-page .fit-none { font-size: 0.85rem; color: var(--ink-faint); }
+  .hub-page .linkish { font: inherit; color: var(--teal-text); background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 2px; }
+  .hub-page .linkish:hover { text-decoration-color: currentColor; }
   .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
   .hub-page .catalog-tools .filter { margin-bottom: 0; }
   .hub-page .sort { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -531,19 +588,6 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   .hub-page .card footer a:hover { text-decoration: underline; }
   .hub-page .compat { flex: 1 1 100%; }
   .hub-page .compat b { color: var(--ink-soft); font-weight: 600; }
-
-  /* matrix */
-  .hub-page .matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-  .hub-page .matrix { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
-  .hub-page .matrix th, .hub-page .matrix td { padding: 0.55rem 0.8rem; text-align: center; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
-  .hub-page .matrix thead th { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.04em; color: var(--ink-soft); background: var(--surface-2); }
-  .hub-page .matrix tbody th { text-align: left; font-family: var(--font-mono); font-weight: 600; }
-  .hub-page .matrix .corner { color: var(--ink-faint); font-weight: 500; }
-  .hub-page .matrix button { font: inherit; font-family: var(--font-mono); border: 0; border-radius: 999px; padding: 0.25rem 0.8rem; cursor: pointer; background: var(--surface-2); color: var(--ink-soft); }
-  .hub-page .matrix td.ok button { color: var(--teal-text); background: var(--teal-wash); }
-  .hub-page .matrix td.partial button { color: #b45309; background: rgba(245, 158, 11, 0.14); }
-  .hub-page .matrix td.bad button { color: #b91c1c; background: rgba(220, 38, 38, 0.1); }
-  .hub-page .matrix button:hover { filter: brightness(0.95); }
 
   /* publish */
   .hub-page .publish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
