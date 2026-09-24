@@ -1,0 +1,182 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import '../../styles/hub.css';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<Base
+  title="Template — Template Hub — faucet-stream"
+  description="One Template Hub template in full: what it reads or writes, its streams and parameters, where it runs, and the command to run it."
+>
+  <Header />
+  <main id="main" class="hub-page tpl-page">
+    <section class="section head tpl-hero">
+      <div class="wrap">
+        <a class="back" href={`${base}hub/`}>← Template Hub</a>
+        <div id="tpl-head" aria-busy="true"><p class="empty">Loading the template…</p></div>
+      </div>
+    </section>
+
+    <section class="section band" id="run" hidden>
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Run it</span>
+          <h2 id="run-title">Pick a destination. Get the command.</h2>
+          <p id="run-lede"></p>
+        </div>
+        <div class="compose-card">
+          <div id="pairing"></div>
+          <p class="hint">
+            Runs against the public hub with no checkout. Install with
+            <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="details" hidden>
+      <div class="wrap tpl-details" id="tpl-details"></div>
+    </section>
+
+    <section class="section band" id="more" hidden>
+      <div class="wrap" id="tpl-more"></div>
+    </section>
+  </main>
+  <Footer />
+</Base>
+
+<script is:inline define:vars={{ HUB_BASE: base }}>window.HUB_BASE = HUB_BASE;</script>
+<script is:inline src={`${base}hub-core.js`}></script>
+<script is:inline>
+  (async () => {
+    const H = window.HubCore;
+    const { esc, idOf, plural } = H;
+    const $ = (id) => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const kind = params.get('kind') === 'sink' ? 'sink' : 'source';
+    const id = params.get('id') || '';
+    const head = $('tpl-head');
+
+    let cat;
+    try {
+      cat = await H.load();
+    } catch (e) {
+      head.innerHTML = `<p class="empty">The catalog could not be loaded right now. Browse it on <a href="${H.HUB_REPO}">GitHub</a>.</p>`;
+      head.setAttribute('aria-busy', 'false');
+      return;
+    }
+    const t = cat.find(kind, id);
+    if (!t) {
+      head.innerHTML = `<h1>Not in the hub</h1><p class="lede">There is no ${kind} template <code>${esc(id)}</code>. It may have been renamed or removed. <a href="${H.BASE}hub/">Browse the catalog</a>.</p>`;
+      head.setAttribute('aria-busy', 'false');
+      return;
+    }
+    document.title = `${idOf(t)} — Template Hub — faucet-stream`;
+    const tr = H.trustOf(t);
+    const typeLabel = H.typeOf(kind, t);
+
+    // ── header: identity, trust, links ──────────────────────────────────
+    const facts = [];
+    if (tr.stars != null) {
+      facts.push(`<span class="fact"><b class="star">★ ${H.starsOf(t)}</b> ${H.starsOf(t) === 1 ? 'star' : 'stars'}</span>`);
+    }
+    if (tr.updated) facts.push(`<span class="fact">updated ${esc(tr.updated)}</span>`);
+    if (tr.stable_since && tr.stable_since !== tr.updated) facts.push(`<span class="fact">stable since ${esc(tr.stable_since)}</span>`);
+    if (tr.open_issues != null) {
+      const q = encodeURIComponent(`is:issue is:open label:"template:${idOf(t)}"`);
+      facts.push(`<a class="fact" href="${H.HUB_REPO}/issues?q=${q}" target="_blank" rel="noopener noreferrer">${plural(tr.open_issues, 'open issue')}</a>`);
+    }
+    if (tr.publisher && t.owner) {
+      const p = tr.publisher;
+      const age = p.account_age_days != null ? (p.account_age_days >= 365 ? `${Math.floor(p.account_age_days / 365)}y on GitHub` : `${p.account_age_days}d on GitHub`) : '';
+      facts.push(`<span class="fact">@${esc(t.owner)}${p.templates != null ? ` · ${plural(p.templates, 'template')}` : ''}${age ? ` · ${age}` : ''}</span>`);
+    }
+    const version = t.newest ? `<span class="ver">v${t.stable || t.newest}${t.stable && t.newest && t.stable !== t.newest ? ` · newest v${t.newest}` : ''}</span>` : '';
+    const links = [
+      tr.star_url ? `<a class="btn" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer">★ Upvote on GitHub</a>` : '',
+      t.file ? `<a class="btn btn--ghost" href="${H.HUB_REPO}/blob/main/${esc(t.file)}" target="_blank" rel="noopener noreferrer">View the file ↗</a>` : '',
+      t.docs ? `<a class="btn btn--ghost" href="${esc(t.docs)}" target="_blank" rel="noopener noreferrer">${kind === 'source' ? 'API docs' : 'Docs'} ↗</a>` : '',
+    ].join('');
+    head.innerHTML = `
+      <span class="eyebrow">${kind === 'source' ? 'Source template' : 'Sink template'}</span>
+      <h1 class="mono tpl-title">${H.titleOf(t)}</h1>
+      <div class="badges tpl-badges">${H.ownerBadge(t)}${typeLabel ? `<span class="kind">${esc(typeLabel)}</span>` : ''}${version}</div>
+      ${t.description ? `<p class="lede">${esc(t.description)}</p>` : ''}
+      ${(t.tags || []).length ? `<div class="tags">${t.tags.map((g) => `<span class="tag">${esc(g)}</span>`).join('')}</div>` : ''}
+      ${facts.length ? `<div class="tpl-facts">${facts.join('')}</div>` : ''}
+      ${links ? `<div class="actions">${links}</div>` : ''}`;
+    head.setAttribute('aria-busy', 'false');
+
+    // ── run it ──────────────────────────────────────────────────────────
+    $('run').hidden = false;
+    if (kind === 'source') {
+      $('run-title').textContent = 'Pick a destination. Get the command.';
+      $('run-lede').textContent = 'How each stream is written to the sink you choose, and the command that runs it.';
+      H.pairing($('pairing'), cat, { source: idOf(t) }, { sink: params.get('sink') || undefined });
+    } else {
+      $('run-title').textContent = 'Pick a source. Get the command.';
+      $('run-lede').textContent = 'Which sources run on this sink, how each stream would be written, and the command that runs it.';
+      H.pairing($('pairing'), cat, { sink: idOf(t) }, { source: params.get('source') || undefined });
+    }
+
+    // ── details: streams / write modes, parameters, versions ────────────
+    const blocks = [];
+    if (kind === 'source' && (t.streams || []).length) {
+      blocks.push(`<div class="tpl-block">
+        <h2>Streams <span class="count">${t.streams.length}</span></h2>
+        <p class="tpl-note">Each stream lists the write modes it asks for, in order of preference; the sink uses the first it supports.</p>
+        <div class="table-scroll"><table class="tpl-table">
+          <thead><tr><th>Stream</th><th>Write modes</th><th>Primary key</th></tr></thead>
+          <tbody>${t.streams.map((st) => `<tr><td class="mono">${esc(st.name)}${st.description ? `<span class="sub">${esc(st.description)}</span>` : ''}</td><td>${(st.write || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join(' ')}</td><td class="mono">${(st.primary_keys || []).map(esc).join(', ') || '<span class="dim">—</span>'}</td></tr>`).join('')}</tbody>
+        </table></div></div>`);
+    }
+    if (kind === 'sink') {
+      blocks.push(`<div class="tpl-block">
+        <h2>Write modes</h2>
+        <p class="tpl-note">What this destination supports natively. Each source stream lists the modes it wants in order of preference, and the first one this sink supports is used.</p>
+        <div class="tags">${(t.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('') || '<span class="dim">none declared</span>'}</div></div>`);
+    }
+    const ps = t.params || [];
+    blocks.push(`<div class="tpl-block">
+      <h2>Parameters <span class="count">${ps.length}</span></h2>
+      ${ps.length ? `<p class="tpl-note">Supplied at run time with <code>--param NAME=VALUE</code>. Secrets are never stored in the template.</p>
+      <div class="table-scroll"><table class="tpl-table">
+        <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>${ps.map((p) => `<tr><td class="mono">${esc(p.name)}${p.required ? ' <span class="req">required</span>' : ''}${p.secret ? ' <span class="secret">secret</span>' : ''}</td><td class="mono">${esc(p.type || 'string')}${p.default != null && p.default !== '' ? `<span class="sub">default ${esc(JSON.stringify(p.default))}</span>` : ''}</td><td>${esc(p.description || '')}</td></tr>`).join('')}</tbody>
+      </table></div>` : '<p class="tpl-note">None: it runs as-is.</p>'}</div>`);
+    const versions = [...(t.versions || [])].reverse();
+    const live = versions.filter((v) => !v.deprecated);
+    const retired = versions.length - live.length;
+    if (versions.length) {
+      const flag = kind === 'source' ? '--source' : '--sink';
+      blocks.push(`<div class="tpl-block">
+        <h2>Versions <span class="count">${live.length}</span></h2>
+        <p class="tpl-note">Every accepted change is the next version. Unpinned runs use <b>stable</b>; pin one with <code>${flag} ${esc(idOf(t))}@N</code>.</p>
+        <ol class="tpl-versions">${live.map((v) => `<li>
+          <span class="mono v">v${v.version}</span>
+          ${v.version === t.stable ? '<span class="official">stable</span>' : ''}${v.version === t.newest && v.version !== t.stable ? '<span class="kind">newest</span>' : ''}
+          <span class="dim">${esc((v.date || '').slice(0, 10))}</span>
+          ${v.commit && t.file ? `<a href="${H.HUB_REPO}/blob/${esc(v.commit)}/${esc(t.file)}" target="_blank" rel="noopener noreferrer" class="mono">${esc(v.commit.slice(0, 7))} ↗</a>` : ''}
+          ${v.pr ? `<a href="${H.HUB_REPO}/pull/${v.pr}" target="_blank" rel="noopener noreferrer">#${v.pr}</a>` : ''}
+        </li>`).join('')}</ol>
+        ${retired ? `<p class="tpl-note">${plural(retired, 'deprecated version')} hidden.</p>` : ''}</div>`);
+    }
+    $('tpl-details').innerHTML = blocks.join('');
+    $('details').hidden = false;
+
+    // ── other templates for the same system (sources) ───────────────────
+    if (kind === 'source') {
+      const others = cat.sources.filter((o) => o.name === t.name && idOf(o) !== idOf(t)).sort(H.SORTS.rank);
+      if (others.length) {
+        $('tpl-more').innerHTML = `
+          <div class="section-head"><span class="eyebrow">Alternatives</span><h2>Other templates for ${esc(t.name)}</h2>
+          <p>Published by other namespaces, best first: official, then stars, then most recently updated.</p></div>
+          <div class="grid">${others.map((o) => H.card('source', o)).join('')}</div>`;
+        $('more').hidden = false;
+      }
+    }
+  })();
+</script>
