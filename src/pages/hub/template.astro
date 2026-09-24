@@ -30,8 +30,8 @@ const base = import.meta.env.BASE_URL;
         <div class="compose-card">
           <div id="pairing"></div>
           <p class="hint">
-            Runs against the public hub with no checkout. Install with
-            <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
+            Runs against the public hub with no checkout; the CLI caches the catalog under <code>~/.cache/faucet/hub</code>.
+            <a href="https://faucet-hq.github.io/faucet-stream/getting-started/installation.html">Install the CLI →</a>
           </p>
         </div>
       </div>
@@ -94,7 +94,7 @@ const base = import.meta.env.BASE_URL;
       const age = p.account_age_days != null ? (p.account_age_days >= 365 ? `${Math.floor(p.account_age_days / 365)}y on GitHub` : `${p.account_age_days}d on GitHub`) : '';
       facts.push(`<span class="fact">@${esc(t.owner)}${p.templates != null ? ` · ${plural(p.templates, 'template')}` : ''}${age ? ` · ${age}` : ''}</span>`);
     }
-    const version = t.newest ? `<span class="ver">v${t.stable || t.newest}${t.stable && t.newest && t.stable !== t.newest ? ` · newest v${t.newest}` : ''}</span>` : '';
+    const version = t.newest ? `<span class="ver" title="the version unpinned runs use">v${t.stable || t.newest} stable${t.stable && t.newest && t.stable !== t.newest ? ` · v${t.newest} newest` : ''}</span>` : '';
     const links = [
       tr.star_url ? `<a class="btn" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer">★ Upvote on GitHub</a>` : '',
       t.file ? `<a class="btn btn--ghost" href="${H.HUB_REPO}/blob/main/${esc(t.file)}" target="_blank" rel="noopener noreferrer">View the file ↗</a>` : '',
@@ -157,12 +157,12 @@ const base = import.meta.env.BASE_URL;
         <p class="tpl-note">Every accepted change is the next version. Unpinned runs use <b>stable</b>; pin one with <code>${flag} ${esc(idOf(t))}@N</code>.</p>
         <ol class="tpl-versions">${live.map((v) => `<li>
           <span class="mono v">v${v.version}</span>
-          ${v.version === t.stable ? '<span class="official">stable</span>' : ''}${v.version === t.newest && v.version !== t.stable ? '<span class="kind">newest</span>' : ''}
+          <span class="vstatus">${v.version === t.stable ? '<span class="official">stable</span>' : v.version === t.newest ? '<span class="kind">newest</span>' : ''}</span>
           <span class="dim">${esc((v.date || '').slice(0, 10))}</span>
           ${v.commit && t.file ? `<a href="${H.HUB_REPO}/blob/${esc(v.commit)}/${esc(t.file)}" target="_blank" rel="noopener noreferrer" class="mono">${esc(v.commit.slice(0, 7))} ↗</a>` : ''}
           ${v.pr ? `<a href="${H.HUB_REPO}/pull/${v.pr}" target="_blank" rel="noopener noreferrer">#${v.pr}</a>` : ''}
         </li>`).join('')}</ol>
-        ${retired ? `<p class="tpl-note">${plural(retired, 'deprecated version')} hidden.</p>` : ''}</div>`);
+        ${retired ? `<p class="tpl-note tpl-after">${plural(retired, 'deprecated version')} hidden.</p>` : ''}</div>`);
     }
     $('tpl-details').innerHTML = blocks.join('');
     $('details').hidden = false;
