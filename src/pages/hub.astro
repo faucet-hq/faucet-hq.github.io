@@ -453,5 +453,11 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       if (open) { closeAll(); open.previousElementSibling.focus(); }
     });
     $('source-grid').setAttribute('aria-busy', 'false');
+    // The browser jumps to #sinks / #sources before the catalog renders; the
+    // cards then push sections down, so land on the requested one again.
+    if (location.hash) {
+      const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+    }
   })();
 </script>
