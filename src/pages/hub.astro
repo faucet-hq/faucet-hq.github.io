@@ -211,14 +211,14 @@ origins:
         <div class="pub-card">
           <h3>2 · Check it locally</h3>
           <pre><code>faucet hub lint  --hub .
-faucet hub check --hub . --source my-system --sink jsonl
-faucet hub check --hub . --source my-system --sink bigquery</code></pre>
+faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/jsonl
+faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/bigquery</code></pre>
           <p>Every source must compose with at least two sinks. See <a href={CONTRIBUTING}>CONTRIBUTING</a> for the rules the lint enforces.</p>
         </div>
         <div class="pub-card">
           <h3>3 · Or keep it private</h3>
           <p>Your organisation's templates can live in any repository with the same layout:</p>
-          <pre><code>faucet run --hub github:acme/catalog --source acme-erp --sink snowflake …</code></pre>
+          <pre><code>faucet run --hub github:acme/catalog --source acme/erp --sink acme/snowflake …</code></pre>
           <p>Set <code>GITHUB_TOKEN</code> for a private repo.</p>
         </div>
       </div>
