@@ -152,7 +152,8 @@ origins:
         your system, and CI lints it, composes it against every sink, and regenerates the index
         on merge. The namespace is yours: only the GitHub user or org that owns it can change it,
         and a hundred people can publish their own <code>netsuite</code> without colliding
-        (<code>acme/netsuite</code>, <code>octo/netsuite</code>, …). Every merged change becomes
+        (<code>acme/netsuite</code>, <code>octo/netsuite</code>, …). The hub's own templates live
+        in <code>faucet-hq/</code>, owned by the org the same way. Every merged change becomes
         the next version — v1, v2, v3 — and a sidecar decides which one is <em>stable</em>. No
         credentials ever go in: every secret is a <code>$&#123;param.NAME&#125;</code> the
         person running it supplies.
@@ -234,18 +235,22 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     $('n-sources').textContent = sources.length;
     $('n-sinks').textContent = sinks.length;
     $('n-pairs').textContent = (idx.matrix || []).filter((c) => c.compatible).length;
-    $('n-official').textContent = sources.filter((s) => s.official !== false && !s.owner).length;
+    const OFFICIAL_OWNER = 'faucet-hq';
+    const isOfficial = (t) => t.owner === OFFICIAL_OWNER || t.official === true;
+    $('n-official').textContent = sources.filter(isOfficial).length;
     const idOf = (t) => t.id || t.name;
     const verOf = (t) => (t.newest ? ` <span class="ver" title="${t.versions ? esc(t.versions.map((v) => 'v' + v.version + ' · ' + (v.date || '').slice(0, 10)).join('\n')) : ''}">v${t.newest}${t.stable && t.stable !== t.newest ? ` · stable v${t.stable}` : ''}</span>` : '');
-    const ownerBadge = (t) => (t.owner
-      ? `<a class="owner" href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer" title="published by ${esc(t.owner)}">@${esc(t.owner)}</a>`
-      : `<span class="official" title="maintained by faucet-hq">official</span>`);
+    const ownerBadge = (t) => (isOfficial(t)
+      ? `<a class="official" href="https://github.com/${OFFICIAL_OWNER}" target="_blank" rel="noopener noreferrer" title="maintained by the faucet-hq org">official · @${OFFICIAL_OWNER}</a>`
+      : t.owner
+        ? `<a class="owner" href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer" title="published by ${esc(t.owner)}">@${esc(t.owner)}</a>`
+        : `<span class="owner" title="unscoped template">unscoped</span>`);
     $('hub-meta').textContent = 'live from faucet-hq/template-hub';
 
     // ── compose widget ──────────────────────────────────────────────────
     const cs = $('c-source'), ck = $('c-sink');
-    cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${s.owner ? '' : ' (official)'}</option>`).join('');
-    ck.innerHTML = sinks.map((k) => `<option value="${esc(idOf(k))}">${esc(idOf(k))}${k.owner ? '' : ' (official)'}</option>`).join('');
+    cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${isOfficial(s) ? ' (official)' : ''}</option>`).join('');
+    ck.innerHTML = sinks.map((k) => `<option value="${esc(idOf(k))}">${esc(idOf(k))}${isOfficial(k) ? ' (official)' : ''}</option>`).join('');
     function renderPlan() {
       const c = cell(cs.value, ck.value);
       const plan = $('c-plan'), wrap = $('c-cmd-wrap');
@@ -363,7 +368,8 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .badges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; justify-content: flex-end; }
   .hub-page .owner { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; }
   .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
-  .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; }
+  .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; text-decoration: none; }
+  .hub-page .official:hover { text-decoration: underline; }
   .hub-page .ver { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); white-space: nowrap; }
   .hub-page .kind { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; }
   .hub-page .card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
