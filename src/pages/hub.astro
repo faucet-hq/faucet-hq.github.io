@@ -89,13 +89,13 @@ origins:
           describes where rows land. Any source composes with any sink at run time, so a
           template written for one warehouse works for every other destination here.
         </p>
-        <div class="stats" id="hub-stats" data-reveal style="--reveal-delay:.14s" aria-live="polite">
-          <a class="stat" href="#sources"><b id="n-sources">…</b> sources</a>
-          <a class="stat" href="#sinks"><b id="n-sinks">…</b> sinks</a>
-          <a class="stat" href="#compose"><b id="n-pairs">…</b> compatible pairings</a>
-          <span class="stat"><b id="n-official">…</b> official</span>
-          <span class="stat stat-meta" id="hub-meta"></span>
+        <div class="hub-stats" id="hub-stats" data-reveal style="--reveal-delay:.14s" aria-live="polite">
+          <a class="hstat" href="#sources"><span class="hstat-n" id="n-sources">…</span><span class="hstat-l">source templates</span></a>
+          <a class="hstat" href="#sinks"><span class="hstat-n" id="n-sinks">…</span><span class="hstat-l">sink templates</span></a>
+          <a class="hstat" href="#compose"><span class="hstat-n" id="n-pairs">…</span><span class="hstat-l">compatible pairings</span></a>
+          <a class="hstat" href="?owner=faucet-hq#sources" title="Show only the official templates"><span class="hstat-n" id="n-official">…</span><span class="hstat-l">official</span></a>
         </div>
+        <p class="hub-live" data-reveal style="--reveal-delay:.16s"><span class="live-dot" aria-hidden="true"></span><span id="hub-meta"></span></p>
         <div class="actions" data-reveal style="--reveal-delay:.18s">
           <a class="btn" href="#publish">Publish a template</a>
           <a class="btn btn--ghost" href={HUB_REPO} target="_blank" rel="noopener noreferrer">Catalog on GitHub →</a>
@@ -251,7 +251,7 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
     $('n-sinks').textContent = sinks.length;
     $('n-pairs').textContent = cat.compatiblePairs;
     $('n-official').textContent = sources.filter(H.isOfficial).length;
-    $('hub-meta').textContent = 'live from faucet-hq/template-hub';
+    $('hub-meta').textContent = 'Live from faucet-hq/template-hub';
 
     // ── try a pairing ────────────────────────────────────────────────────
     const params = new URLSearchParams(location.search);
