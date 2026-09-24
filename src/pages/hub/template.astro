@@ -152,20 +152,45 @@ const base = import.meta.env.BASE_URL;
     const retired = versions.length - live.length;
     if (versions.length) {
       const flag = kind === 'source' ? '--source' : '--sink';
-      blocks.push(`<div class="tpl-block">
-        <h2>Versions <span class="count">${live.length}</span></h2>
-        <p class="tpl-note">Every accepted change is the next version. Unpinned runs use <b>stable</b>; pin one with <code>${flag} ${esc(idOf(t))}@N</code>.</p>
-        <ol class="tpl-versions">${live.map((v) => `<li>
+      const row = (v) => `<li class="${v.deprecated ? 'is-deprecated' : ''}"${v.deprecated ? ' hidden' : ''}>
           <span class="mono v">v${v.version}</span>
-          <span class="vstatus">${v.version === t.stable ? '<span class="official">stable</span>' : v.version === t.newest ? '<span class="kind">newest</span>' : ''}</span>
+          <span class="vstatus">${v.deprecated ? '<span class="dep">deprecated</span>' : v.version === t.stable ? '<span class="official">stable</span>' : v.version === t.newest ? '<span class="kind">newest</span>' : ''}</span>
           <span class="dim">${esc((v.date || '').slice(0, 10))}</span>
-          ${v.commit && t.file ? `<a href="${H.HUB_REPO}/blob/${esc(v.commit)}/${esc(t.file)}" target="_blank" rel="noopener noreferrer" class="mono">${esc(v.commit.slice(0, 7))} ↗</a>` : ''}
-          ${v.pr ? `<a href="${H.HUB_REPO}/pull/${v.pr}" target="_blank" rel="noopener noreferrer">#${v.pr}</a>` : ''}
-        </li>`).join('')}</ol>
-        ${retired ? `<p class="tpl-note tpl-after">${plural(retired, 'deprecated version')} hidden.</p>` : ''}</div>`);
+          ${v.commit && t.file ? `<a href="${H.HUB_REPO}/blob/${esc(v.commit)}/${esc(t.file)}" target="_blank" rel="noopener noreferrer" class="mono">${esc(v.commit.slice(0, 7))} ↗</a>` : '<span></span>'}
+          <span class="vmeta">${v.pr ? `<a href="${H.HUB_REPO}/pull/${v.pr}" target="_blank" rel="noopener noreferrer">#${v.pr}</a>` : ''}${v.deprecated && v.reason ? `<span class="vreason">${esc(v.reason)}</span>` : ''}</span>
+        </li>`;
+      blocks.push(`<div class="tpl-block" id="versions">
+        <div class="tpl-block-head">
+          <h2>Versions <span class="count">${live.length}</span></h2>
+          <div class="tpl-block-tools">
+            ${retired ? `<label class="switch"><input type="checkbox" id="show-deprecated" /> Show deprecated versions <span class="dim">(${retired})</span></label>` : ''}
+            ${t.file ? `<a class="linkish manage" id="manage-versions" href="${H.HUB_REPO}/blob/main/${esc(t.file)}" target="_blank" rel="noopener noreferrer" title="Owners set stable and deprecate versions in the template's sidecar file">Manage versions ↗</a>` : ''}
+          </div>
+        </div>
+        <p class="tpl-note">Every accepted change is the next version; a published version never changes. Unpinned runs use <b>stable</b>; pin one with <code>${flag} ${esc(idOf(t))}@N</code>.</p>
+        <ol class="tpl-versions">${versions.map(row).join('')}</ol></div>`);
     }
     $('tpl-details').innerHTML = blocks.join('');
     $('details').hidden = false;
+    const showDep = $('show-deprecated');
+    if (showDep) {
+      showDep.addEventListener('change', () => {
+        document.querySelectorAll('.tpl-versions .is-deprecated').forEach((li) => { li.hidden = !showDep.checked; });
+      });
+    }
+    // Owners manage versions in the sidecar beside the template: edit it, or create it pre-filled.
+    const manage = $('manage-versions');
+    if (manage && t.file) {
+      const sidecar = t.file.replace(/\.(ya?ml|json)$/, '.faucet.yaml');
+      const skeleton = `# Version management for ${idOf(t)} (only the namespace's owners can change this).\n# stable: ${t.stable || t.newest || 1}        # the version unpinned runs use\n# deprecated:\n#   1: "why, and which version to use instead"\n`;
+      const dir = sidecar.slice(0, sidecar.lastIndexOf('/'));
+      const name = sidecar.slice(sidecar.lastIndexOf('/') + 1);
+      const create = `${H.HUB_REPO}/new/main/${dir}?filename=${encodeURIComponent(name)}&value=${encodeURIComponent(skeleton)}`;
+      manage.href = create;
+      fetch(`https://raw.githubusercontent.com/faucet-hq/template-hub/main/${sidecar}`, { method: 'HEAD', cache: 'no-cache' })
+        .then((r) => { if (r.ok) manage.href = `${H.HUB_REPO}/edit/main/${sidecar}`; })
+        .catch(() => {});
+    }
 
     // ── other templates for the same system (sources) ───────────────────
     if (kind === 'source') {

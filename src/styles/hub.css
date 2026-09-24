@@ -241,3 +241,19 @@
 @media (max-width: 720px) { .hub-page .cmd pre { white-space: pre-wrap; overflow-wrap: anywhere; } }
 @media (max-width: 560px) { .hub-page .facet-pop, .hub-page .facet-pop.is-right { position: fixed; left: 1rem; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); top: auto; width: auto; max-width: none; } .hub-page .facet-opts { max-height: 45vh; } }
 .hub-page .facet-pop.is-right { left: auto; right: 0; }
+/* Two peer choices: one style, one width. */
+.hub-page .pub-choices { display: grid; grid-template-columns: 1fr; gap: 0.6rem; margin-top: auto; }
+.hub-page .pub-choices .btn { width: 100%; justify-content: center; box-sizing: border-box; }
+/* versions block: toggle + owner link */
+.hub-page .tpl-block-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1.2rem; }
+.hub-page .tpl-block-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.2rem; font-size: 0.85rem; }
+.hub-page .switch { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--ink-soft); cursor: pointer; }
+.hub-page .switch input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--teal); cursor: pointer; }
+.hub-page .manage { font-size: 0.85rem; text-decoration: none; }
+.hub-page .tpl-versions li.is-deprecated { background: var(--surface-2); }
+.hub-page .tpl-versions li.is-deprecated .v, .hub-page .tpl-versions li.is-deprecated .dim { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.hub-page .dep { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1.5; padding: 0.05rem 0.55rem; border-radius: 999px; color: var(--fit-partial); background: color-mix(in srgb, var(--fit-partial) 14%, transparent); }
+.hub-page .vmeta { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; align-items: baseline; }
+.hub-page .vreason { color: var(--ink-soft); font-size: 0.82rem; }
+.hub-page .tpl-versions li { grid-template-columns: 2.6rem 6.4rem 6.2rem auto 1fr; }
+@media (max-width: 520px) { .hub-page .tpl-versions li { grid-template-columns: 2.4rem 6rem 1fr; } }
