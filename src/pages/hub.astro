@@ -129,7 +129,17 @@ origins:
     <section class="wrap catalog" id="catalog">
       <div class="catalog-head">
         <h2 id="sources">Source templates</h2>
-        <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter templates" />
+        <div class="catalog-tools">
+          <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter templates" />
+          <label class="sort">Sort
+            <select id="sort" aria-label="Sort templates">
+              <option value="rank">Recommended</option>
+              <option value="stars">Most starred</option>
+              <option value="updated">Recently updated</option>
+              <option value="name">Name</option>
+            </select>
+          </label>
+        </div>
       </div>
       <div class="grid" id="source-grid" aria-busy="true">
         <div class="empty" id="loading">Loading the catalog…</div>
@@ -248,6 +258,35 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
         : `<span class="owner" title="unscoped template">unscoped</span>`);
     $('hub-meta').textContent = 'live from faucet-hq/template-hub';
 
+    // ── trust signals (#685) ───────────────────────────────────────────
+    const trustOf = (t) => t.trust || {};
+    const starsOf = (t) => trustOf(t).stars || 0;
+    const updatedOf = (t) => trustOf(t).updated || '';
+    const byId = (a, b) => idOf(a).localeCompare(idOf(b));
+    // Recommended: official first, then stars, then freshness — same order as `faucet hub list`.
+    const SORTS = {
+      rank: (a, b) => (isOfficial(b) - isOfficial(a)) || (starsOf(b) - starsOf(a)) || updatedOf(b).localeCompare(updatedOf(a)) || byId(a, b),
+      stars: (a, b) => (starsOf(b) - starsOf(a)) || SORTS.rank(a, b),
+      updated: (a, b) => updatedOf(b).localeCompare(updatedOf(a)) || byId(a, b),
+      name: byId,
+    };
+    const trustLine = (t) => {
+      const tr = trustOf(t);
+      const bits = [];
+      if (tr.star_url) {
+        bits.push(`<a class="star" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer" title="👍 the discussion to star it — accounts under 30 days old and the template's own publishers don't count">★ ${starsOf(t)} <span>· star on GitHub</span></a>`);
+      } else if (tr.stars != null) {
+        bits.push(`<span class="star">★ ${starsOf(t)}</span>`);
+      }
+      if (tr.updated) bits.push(`<span class="fact">updated ${esc(tr.updated)}</span>`);
+      if (tr.stable_since && tr.stable_since !== tr.updated) bits.push(`<span class="fact">stable since ${esc(tr.stable_since)}</span>`);
+      if (tr.open_issues) {
+        const q = encodeURIComponent(`is:issue is:open label:"template:${idOf(t)}"`);
+        bits.push(`<a class="fact issues" href="${HUB_REPO}/issues?q=${q}" target="_blank" rel="noopener noreferrer">${tr.open_issues} open issue${tr.open_issues === 1 ? '' : 's'}</a>`);
+      }
+      return bits.length ? `<div class="trust">${bits.join('')}</div>` : '';
+    };
+
     // ── compose widget ──────────────────────────────────────────────────
     const cs = $('c-source'), ck = $('c-sink');
     cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${isOfficial(s) ? ' (official)' : ''}</option>`).join('');
@@ -273,17 +312,18 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       `<li><span class="mono">${esc(p.name)}</span> <span class="ptype">${esc(p.type || 'string')}${p.required ? ' · required' : ''}${p.secret ? ' · secret' : ''}</span>${p.description ? `<span class="pdesc">${esc(p.description)}</span>` : ''}</li>`).join('');
     const sourceCard = (s) => {
       const compat = sinks.filter((k) => cell(idOf(s), idOf(k))?.compatible).map((k) => idOf(k));
-      const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s));
+      const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s)).sort(SORTS.rank);
       return `<article class="card" data-search="${esc([idOf(s), s.owner, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
         <header><h3 class="mono">${titleOf(s)}</h3><span class="badges">${ownerBadge(s)}${verOf(s)}<span class="kind">${esc(s.source_type || '')}</span></span></header>
         ${s.description ? `<p>${esc(s.description)}</p>` : ''}
+        ${trustLine(s)}
         ${(s.tags || []).length ? `<div class="tags">${s.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         <details><summary>${(s.streams || []).length} stream${(s.streams || []).length === 1 ? '' : 's'} · ${(s.params || []).length} param${(s.params || []).length === 1 ? '' : 's'}</summary>
           <ul class="streams">${(s.streams || []).map((st) => `<li><span class="mono">${esc(st.name)}</span><span class="mode">${(st.write || []).join(' → ')}${(st.primary_keys || []).length ? ` · key ${esc(st.primary_keys.join(', '))}` : ''}</span></li>`).join('')}</ul>
           ${(s.params || []).length ? `<ul class="params">${paramList(s.params)}</ul>` : ''}
         </details>
         <footer><span class="compat">works with ${compat.length ? compat.map((n) => `<b>${esc(n)}</b>`).join(', ') : 'no sink yet'}</span>
-          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.map((v) => `<b>${esc(idOf(v))}</b>`).join(', ')}</span>` : ''}
+          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.map((v) => `<b>${esc(idOf(v))}</b>${trustOf(v).stars != null ? ` ★ ${starsOf(v)}` : ''}`).join(', ')}</span>` : ''}
           <a href="${HUB_REPO}/blob/main/${esc(s.file || `source-templates/${s.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
           ${s.docs ? `<a href="${esc(s.docs)}" target="_blank" rel="noopener noreferrer">API docs ↗</a>` : ''}</footer>
       </article>`;
@@ -291,19 +331,34 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     const sinkCard = (k) => `<article class="card" data-search="${esc([idOf(k), k.owner, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
         <header><h3 class="mono">${titleOf(k)}</h3><span class="badges">${ownerBadge(k)}${verOf(k)}<span class="kind">${esc(k.sink_type || '')}</span></span></header>
         ${k.description ? `<p>${esc(k.description)}</p>` : ''}
+        ${trustLine(k)}
         <div class="tags">${(k.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('')}</div>
         ${(k.params || []).length ? `<details><summary>${k.params.length} param${k.params.length === 1 ? '' : 's'}</summary><ul class="params">${paramList(k.params)}</ul></details>` : ''}
         <footer><a href="${HUB_REPO}/blob/main/${esc(k.file || `sink-templates/${k.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
           ${k.docs ? `<a href="${esc(k.docs)}" target="_blank" rel="noopener noreferrer">docs ↗</a>` : ''}</footer>
       </article>`;
-    $('source-grid').innerHTML = sources.length ? sources.map(sourceCard).join('') : '<div class="empty">No source templates yet — be the first to publish one.</div>';
-    $('source-grid').setAttribute('aria-busy', 'false');
-    $('sink-grid').innerHTML = sinks.map(sinkCard).join('');
-
-    // ── filter ──────────────────────────────────────────────────────────
-    $('q').oninput = () => {
+    const applyFilter = () => {
       const q = $('q').value.trim().toLowerCase();
       document.querySelectorAll('#catalog .card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); });
+    };
+    const renderGrids = () => {
+      const cmp = SORTS[$('sort').value] || SORTS.rank;
+      $('source-grid').innerHTML = sources.length ? [...sources].sort(cmp).map(sourceCard).join('') : '<div class="empty">No source templates yet — be the first to publish one.</div>';
+      $('sink-grid').innerHTML = [...sinks].sort(cmp).map(sinkCard).join('');
+      applyFilter();
+    };
+    const wanted = new URLSearchParams(location.search).get('sort');
+    if (wanted && SORTS[wanted]) $('sort').value = wanted;
+    renderGrids();
+    $('source-grid').setAttribute('aria-busy', 'false');
+
+    // ── filter + sort ───────────────────────────────────────────────────
+    $('q').oninput = applyFilter;
+    $('sort').onchange = () => {
+      const u = new URL(location.href);
+      if ($('sort').value === 'rank') u.searchParams.delete('sort'); else u.searchParams.set('sort', $('sort').value);
+      history.replaceState(null, '', u);
+      renderGrids();
     };
 
     // ── matrix ──────────────────────────────────────────────────────────
@@ -375,6 +430,16 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
   .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; text-decoration: none; }
   .hub-page .official:hover { text-decoration: underline; }
+  .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.9rem; }
+  .hub-page .catalog-tools #q { margin-bottom: 0; }
+  .hub-page .sort { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
+  .hub-page .sort select { font: inherit; text-transform: none; letter-spacing: 0; font-size: 0.85rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
+  .hub-page .trust { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; font-size: 0.8rem; }
+  .hub-page .trust .star { color: var(--teal-text); text-decoration: none; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .hub-page .trust .star span { font-weight: 400; color: var(--ink-faint); }
+  .hub-page .trust a.star:hover span { text-decoration: underline; color: var(--teal-text); }
+  .hub-page .trust .fact { color: var(--ink-faint); white-space: nowrap; }
+  .hub-page .trust a.issues { color: var(--ink-soft); }
   .hub-page .ver { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); white-space: nowrap; }
   .hub-page .kind { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; }
   .hub-page .card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
@@ -425,5 +490,8 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     .hub-page .compose-row label { flex-basis: 100%; }
     .hub-page .times { display: none; }
     .hub-page #q { min-width: 0; width: 100%; }
+    .hub-page .cmd pre { padding: 2.6rem 1rem 0.9rem; }
+    .hub-page .catalog-tools { width: 100%; }
+    .hub-page .catalog-tools #q { flex: 1 1 12rem; }
   }
 </style>
