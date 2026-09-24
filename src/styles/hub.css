@@ -276,3 +276,26 @@
   .hub-page .hstat:nth-child(n+3) { border-top: 1px solid var(--line); }
 }
 @media (prefers-reduced-motion: reduce) { .hub-page .hstat, .hub-page .hstat-l { transition: none; } }
+/* parameters table: flags get their own (unlabelled) column so they line up */
+.hub-page .tpl-table td.flags { white-space: nowrap; }
+.hub-page .tpl-table td.flags > span { display: inline-block; margin: 0 0.3rem 0.25rem 0; }
+.hub-page .req, .hub-page .secret { text-transform: none; letter-spacing: 0; font-size: 0.7rem; margin-left: 0; }
+.hub-page .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hub-page .tpl-table td code { font-size: 0.82em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; }
+/* Grid children must be allowed to shrink, or a wide table widens the whole page. */
+.hub-page .tpl-details > * { min-width: 0; }
+@media (max-width: 560px) {
+  /* Parameters: one stacked block per parameter instead of a sideways-scrolling table. */
+  .hub-page .tpl-params thead { display: none; }
+  .hub-page .tpl-params, .hub-page .tpl-params tbody, .hub-page .tpl-params tr, .hub-page .tpl-params td { display: block; width: auto; }
+  .hub-page .tpl-params tr { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--line); }
+  .hub-page .tpl-params tr:last-child { border-bottom: 0; }
+  .hub-page .tpl-params td { padding: 0.1rem 0; border: 0; white-space: normal; }
+  .hub-page .tpl-params td:first-child { display: inline-block; font-weight: 650; margin-right: 0.5rem; }
+  .hub-page .tpl-params td.flags { display: inline-block; }
+  .hub-page .tpl-params td[data-label] { display: inline-block; margin-right: 1rem; font-size: 0.8rem; color: var(--ink-soft); }
+  .hub-page .tpl-params td[data-label]::before { content: attr(data-label) " "; font-family: var(--font-body); color: var(--ink-faint); }
+  .hub-page .tpl-params td:last-child { margin-top: 0.3rem; }
+  /* Version rows wrap instead of squeezing into columns. */
+  .hub-page .tpl-versions li { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+}

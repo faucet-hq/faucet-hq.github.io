@@ -54,6 +54,8 @@ const base = import.meta.env.BASE_URL;
   (async () => {
     const H = window.HubCore;
     const { esc, idOf, plural } = H;
+    // Descriptions are plain text; `backticks` become inline code.
+    const inlineCode = (text) => esc(text || '').replace(/`([^`]+)`/g, '<code>$1</code>');
     const $ = (id) => document.getElementById(id);
     const params = new URLSearchParams(location.search);
     const kind = params.get('kind') === 'sink' ? 'sink' : 'source';
@@ -143,9 +145,14 @@ const base = import.meta.env.BASE_URL;
     blocks.push(`<div class="tpl-block">
       <h2>Parameters <span class="count">${ps.length}</span></h2>
       ${ps.length ? `<p class="tpl-note">Supplied at run time with <code>--param NAME=VALUE</code>. Secrets are never stored in the template.</p>
-      <div class="table-scroll"><table class="tpl-table">
-        <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
-        <tbody>${ps.map((p) => `<tr><td class="mono">${esc(p.name)}${p.required ? ' <span class="req">required</span>' : ''}${p.secret ? ' <span class="secret">secret</span>' : ''}</td><td class="mono">${esc(p.type || 'string')}${p.default != null && p.default !== '' ? `<span class="sub">default ${esc(JSON.stringify(p.default))}</span>` : ''}</td><td>${esc(p.description || '')}</td></tr>`).join('')}</tbody>
+      <div class="table-scroll"><table class="tpl-table tpl-params">
+        <thead><tr><th>Name</th><th><span class="sr-only">Flags</span></th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>${ps.map((p) => `<tr>
+          <td class="mono">${esc(p.name)}</td>
+          <td class="flags">${p.required ? '<span class="req">required</span>' : ''}${p.secret ? '<span class="secret">secret</span>' : ''}</td>
+          <td class="mono" data-label="type">${esc(p.type || 'string')}</td>
+          <td class="mono" data-label="default">${p.default != null && p.default !== '' ? esc(typeof p.default === 'string' ? p.default : JSON.stringify(p.default)) : '<span class="dim">—</span>'}</td>
+          <td>${inlineCode(p.description)}</td></tr>`).join('')}</tbody>
       </table></div>` : '<p class="tpl-note">None: it runs as-is.</p>'}</div>`);
     const versions = [...(t.versions || [])].reverse();
     const live = versions.filter((v) => !v.deprecated);
