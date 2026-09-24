@@ -89,9 +89,9 @@ origins:
           template written for one warehouse works for every other destination here.
         </p>
         <div class="stats" id="hub-stats" data-reveal style="--reveal-delay:.14s" aria-live="polite">
-          <span class="stat"><b id="n-sources">…</b> sources</span>
-          <span class="stat"><b id="n-sinks">…</b> sinks</span>
-          <span class="stat"><b id="n-pairs">…</b> compatible pairings</span>
+          <a class="stat" href="#sources"><b id="n-sources">…</b> sources</a>
+          <a class="stat" href="#sinks"><b id="n-sinks">…</b> sinks</a>
+          <a class="stat" href="#matrix"><b id="n-pairs">…</b> compatible pairings</a>
           <span class="stat"><b id="n-official">…</b> official</span>
           <span class="stat stat-meta" id="hub-meta"></span>
         </div>
@@ -102,61 +102,91 @@ origins:
       </div>
     </section>
 
-    <section class="wrap compose" id="compose" data-reveal>
-      <div class="compose-card">
-        <div class="compose-row">
-          <label>source
-            <select id="c-source" aria-label="Source template"></select>
-          </label>
-          <span class="times" aria-hidden="true">×</span>
-          <label>sink
-            <select id="c-sink" aria-label="Sink template"></select>
-          </label>
+    <section class="section band compose" id="compose">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Try a pairing</span>
+          <h2>Pick any two. Get the command.</h2>
+          <p>Choose a source and a sink to see how each stream will be written, and copy the command that runs it.</p>
         </div>
-        <div id="c-plan" class="plan" aria-live="polite"></div>
-        <div class="cmd" id="c-cmd-wrap" hidden>
-          <pre><code id="c-cmd"></code></pre>
-          <button class="copy" id="c-copy" type="button" aria-label="Copy command" title="Copy">copy</button>
+        <div class="compose-card">
+          <div class="compose-row">
+            <label>source
+              <select id="c-source" aria-label="Source template"></select>
+            </label>
+            <span class="times" aria-hidden="true">×</span>
+            <label>sink
+              <select id="c-sink" aria-label="Sink template"></select>
+            </label>
+          </div>
+          <div id="c-plan" class="plan" aria-live="polite"></div>
+          <div class="cmd" id="c-cmd-wrap" hidden>
+            <pre><code id="c-cmd"></code></pre>
+            <button class="copy" id="c-copy" type="button" aria-label="Copy command" title="Copy">copy</button>
+          </div>
+          <p class="hint">
+            Runs against the public hub with no checkout — the CLI caches the catalog under
+            <code>~/.cache/faucet/hub</code>. Install with
+            <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
+          </p>
         </div>
-        <p class="hint">
-          Runs against the public hub with no checkout — the CLI caches the catalog under
-          <code>~/.cache/faucet/hub</code>. Install with
-          <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
-        </p>
       </div>
     </section>
 
-    <section class="wrap catalog" id="catalog">
-      <div class="catalog-head">
-        <h2 id="sources">Source templates</h2>
-        <div class="catalog-tools">
-          <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter templates" />
-          <label class="sort">Sort
-            <select id="sort" aria-label="Sort templates">
-              <option value="rank">Recommended</option>
-              <option value="stars">Most starred</option>
-              <option value="updated">Recently updated</option>
-              <option value="name">Name</option>
-            </select>
-          </label>
+    <section class="section catalog" id="sources">
+      <div class="wrap">
+        <div class="catalog-head">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Catalog</span>
+            <h2>Source templates</h2>
+            <p>One file per system: auth, pagination, incremental cursors and the streams it produces. Written once, it runs on every sink below.</p>
+          </div>
+          <div class="catalog-tools">
+            <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter source and sink templates" />
+            <label class="sort">Sort
+              <select id="sort" aria-label="Sort templates">
+                <option value="rank">Recommended</option>
+                <option value="stars">Most starred</option>
+                <option value="updated">Recently updated</option>
+                <option value="name">Name</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="grid" id="source-grid" aria-busy="true">
+          <div class="empty" id="loading">Loading the catalog…</div>
         </div>
       </div>
-      <div class="grid" id="source-grid" aria-busy="true">
-        <div class="empty" id="loading">Loading the catalog…</div>
-      </div>
-
-      <h2 id="sinks">Sink templates</h2>
-      <div class="grid" id="sink-grid"></div>
-
-      <h2 id="matrix">Compatibility matrix</h2>
-      <p class="matrix-note">✓ every stream has a write mode the sink supports · <i>n/m</i> only some streams do · click a cell to load the command above.</p>
-      <div class="matrix-scroll"><table class="matrix" id="matrix-table"></table></div>
     </section>
 
-    <section class="wrap publish" id="publish" data-reveal>
+    <section class="section band catalog" id="sinks">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Destinations</span>
+          <h2>Sink templates</h2>
+          <p>Where rows land. Each sink lists the write modes it supports natively; a source asks for a mode per stream.</p>
+        </div>
+        <div class="grid" id="sink-grid"></div>
+      </div>
+    </section>
+
+    <section class="section catalog" id="matrix">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Compatibility</span>
+          <h2>Which source runs on which sink</h2>
+          <p>✓ every stream has a write mode the sink supports · <i>n/m</i> only some streams do. Click a cell to load its command in <a href="#compose">Try a pairing</a>.</p>
+        </div>
+        <div class="matrix-scroll"><table class="matrix" id="matrix-table"></table></div>
+      </div>
+    </section>
+
+    <section class="section band publish" id="publish">
+      <div class="wrap">
+      <div class="section-head publish-head" data-reveal>
       <span class="eyebrow">Publish</span>
       <h2>Registering a template is a pull request.</h2>
-      <p class="lede">
+      <p>
         The catalog is a public repository. Open a pre-filled file under <strong>your own
         namespace</strong> — <code>source-templates/&lt;your-github-login&gt;/</code> — describe
         your system, and CI lints it, composes it against every sink, and regenerates the index
@@ -168,6 +198,7 @@ origins:
         credentials ever go in: every secret is a <code>$&#123;param.NAME&#125;</code> the
         person running it supplies.
       </p>
+      </div>
       <div class="publish-grid">
         <div class="pub-card">
           <h3>1 · Open a skeleton</h3>
@@ -201,6 +232,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       <pre><code>{SYNC_YAML}</code></pre>
       <pre><code>faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code></pre>
       <p class="docs-link">Full reference: <a href={DOCS}>Template Hub cookbook</a>.</p>
+      </div>
     </section>
 
     <CTA />
@@ -339,7 +371,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       </article>`;
     const applyFilter = () => {
       const q = $('q').value.trim().toLowerCase();
-      document.querySelectorAll('#catalog .card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); });
+      document.querySelectorAll('.hub-page .catalog .card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); });
     };
     const renderGrids = () => {
       const cmp = SORTS[$('sort').value] || SORTS.rank;
@@ -379,16 +411,24 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
 </script>
 
 <style is:global>
-  .hub-page .head { padding-bottom: 1rem; }
+  /* Section rhythm: every block is a section with a heading; tinted bands alternate so boundaries read at a glance. */
+  .hub-page .section { padding-block: clamp(3rem, 6vw, 4.75rem); }
+  .hub-page .band { background: var(--surface-2); border-block: 1px solid var(--line); }
+  .hub-page section[id] { scroll-margin-top: 4.5rem; }
+  .hub-page .section-head { margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
+  .hub-page .section-head h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); margin-top: 0.8rem; }
+  .hub-page .section-head p { font-size: 1rem; margin-top: 0.7rem; max-width: 42rem; }
+  .hub-page .head { padding-bottom: clamp(2.5rem, 5vw, 3.5rem); }
   .hub-page .head h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); margin-top: 1rem; }
   .hub-page .lede { overflow-wrap: anywhere; margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 46rem; }
   .hub-page .stats { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.4rem; font-size: 0.92rem; color: var(--ink-soft); align-items: baseline; }
   .hub-page .stat b { font-family: var(--font-mono); color: var(--teal-text); font-size: 1.15rem; margin-right: 0.3rem; }
+  .hub-page a.stat { color: inherit; text-decoration: none; }
+  .hub-page a.stat:hover { color: var(--teal-text); }
   .hub-page .stat-meta { font-size: 0.8rem; color: var(--ink-faint); }
   .hub-page .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.4rem; }
 
   /* compose widget */
-  .hub-page .compose { padding-bottom: 2.5rem; }
   .hub-page .compose-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.3rem 1.4rem; box-shadow: var(--shadow-sm); }
   .hub-page .compose-row { display: flex; flex-wrap: wrap; align-items: end; gap: 0.9rem; }
   .hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; }
@@ -411,9 +451,8 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .hint code { font-size: 0.78rem; overflow-wrap: anywhere; }
 
   /* catalog */
-  .hub-page .catalog h2 { font-family: var(--font-mono); font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal-deep); margin: 2rem 0 0.9rem; border: 0; padding: 0; }
-  .hub-page .catalog-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem; }
-  .hub-page .catalog-head h2 { margin-bottom: 0.9rem; }
+  .hub-page .catalog-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0 1.5rem; }
+  .hub-page .catalog-head .section-head { flex: 1 1 26rem; }
   .hub-page #q { font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.5rem 1rem; min-width: 18rem; margin-bottom: 0.9rem; }
   .hub-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 1rem; }
   .hub-page .empty { grid-column: 1 / -1; color: var(--ink-faint); padding: 1.5rem 0; }
@@ -430,7 +469,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
   .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; text-decoration: none; }
   .hub-page .official:hover { text-decoration: underline; }
-  .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.9rem; }
+  .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
   .hub-page .catalog-tools #q { margin-bottom: 0; }
   .hub-page .sort { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
   .hub-page .sort select { font: inherit; text-transform: none; letter-spacing: 0; font-size: 0.85rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
@@ -459,7 +498,6 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .compat b { color: var(--ink-soft); font-weight: 600; }
 
   /* matrix */
-  .hub-page .matrix-note { font-size: 0.85rem; color: var(--ink-faint); margin: -0.3rem 0 0.8rem; }
   .hub-page .matrix-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
   .hub-page .matrix { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
   .hub-page .matrix th, .hub-page .matrix td { padding: 0.55rem 0.8rem; text-align: center; border-bottom: 1px solid var(--line-soft); white-space: nowrap; }
@@ -473,17 +511,16 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .matrix button:hover { filter: brightness(0.95); }
 
   /* publish */
-  .hub-page .publish { padding: 3rem 0 1rem; }
-  .hub-page .publish h2 { margin: 0.6rem 0 0.8rem; font-size: clamp(1.5rem, 3vw, 2.1rem); }
-  .hub-page .publish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-top: 1.6rem; }
+  .hub-page .publish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
   .hub-page .pub-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
   .hub-page .pub-card h3 { margin: 0; font-size: 1rem; }
   .hub-page .pub-card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
   .hub-page .pub-card .actions { margin-top: 0.2rem; }
   .hub-page .publish pre, .hub-page .pub-card pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; }
-  .hub-page .publish > pre { margin-top: 0.8rem; }
+  .hub-page .publish .wrap > pre { margin-top: 0.8rem; }
+  .hub-page .publish-head { max-width: 46rem; }
   .hub-page .mirror-h { margin: 2.4rem 0 0.5rem; font-size: 1.15rem; }
-  .hub-page .publish > p { color: var(--ink-soft); font-size: 0.95rem; max-width: 46rem; }
+  .hub-page .publish .wrap > p { color: var(--ink-soft); font-size: 0.95rem; max-width: 46rem; }
   .hub-page .docs-link { margin-top: 1rem; }
 
   @media (max-width: 720px) {
