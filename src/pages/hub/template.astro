@@ -93,7 +93,7 @@ const base = import.meta.env.BASE_URL;
     }
     if (t.owner) {
       const n = tr.publisher?.templates;
-      facts.push(`<span class="fact">Published by <a href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer">@${esc(t.owner)}</a>${n > 1 ? ` · <a href="${H.BASE}hub/?owner=${encodeURIComponent(t.owner)}&sink_owner=${encodeURIComponent(t.owner)}#sources">all ${n} templates →</a>` : ''}</span>`);
+      facts.push(`<span class="fact">Published by <a href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer">@${esc(t.owner)}</a>${n > 1 ? `<span class="sep" aria-hidden="true">·</span><a href="${H.BASE}hub/?owner=${encodeURIComponent(t.owner)}&sink_owner=${encodeURIComponent(t.owner)}#sources">all ${n} templates →</a>` : ''}</span>`);
     }
     const version = t.newest ? `<span class="ver" title="the version unpinned runs use">v${t.stable || t.newest} stable${t.stable && t.newest && t.stable !== t.newest ? ` · v${t.newest} newest` : ''}</span>` : '';
     const links = [
