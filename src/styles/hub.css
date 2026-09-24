@@ -123,6 +123,7 @@
 .hub-page .tpl-hero .tags { margin-top: 1rem; }
 .hub-page .tpl-facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 1.1rem; font-size: 0.9rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .hub-page .tpl-facts .star { color: var(--teal-text); }
+.hub-page .tpl-facts .sep { margin-inline: 0.55rem; color: var(--ink-faint); }
 .hub-page .tpl-facts a { color: var(--ink-soft); }
 .hub-page .tpl-facts a:hover { color: var(--teal-text); }
 .hub-page .tpl-hero .actions { margin-top: 1.4rem; display: flex; flex-wrap: wrap; gap: 0.6rem; }
