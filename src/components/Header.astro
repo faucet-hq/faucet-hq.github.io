@@ -5,12 +5,17 @@ const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const base = import.meta.env.BASE_URL; // "/" or "/dev/"
 const nav = [
   { label: 'Why', href: `${base}#why` },
-  { label: 'Benchmarks', href: `${base}benchmarks` },
+  {
+    label: 'Product',
+    children: [
+      { label: 'Benchmarks', href: `${base}benchmarks` },
+      { label: 'Governance', href: `${base}governance` },
+      { label: 'Observability', href: `${base}observability` },
+      { label: 'Compare', href: `${base}compare` },
+    ],
+  },
   { label: 'Connectors', href: `${base}connectors` },
   { label: 'Hub', href: `${base}hub` },
-  { label: 'Governance', href: `${base}governance` },
-  { label: 'Observability', href: `${base}observability` },
-  { label: 'Compare', href: `${base}compare` },
   {
     label: 'Resources',
     children: [
@@ -192,6 +197,8 @@ const isExternal = (href) => href.startsWith('http');
   .nav-menu a::after { display: none; }
   .nav-menu a:hover { background: var(--surface-2); color: var(--ink); }
 
+  /* Nothing in the bar may shrink or wrap: it either fits, or the links collapse into the menu. */
+  .nav-toggle, .brand, .brand-mark, .nav a, .nav-group-btn, .nav-group-btn .chev, .header-actions > * { flex-shrink: 0; white-space: nowrap; }
   .header-actions {
     display: flex;
     align-items: center;
@@ -250,7 +257,8 @@ const isExternal = (href) => href.startsWith('http');
   .nav-toggle[aria-expanded='true'] .i-bars { display: none; }
   .nav-toggle[aria-expanded='true'] .i-x { display: block; }
 
-  @media (max-width: 920px) {
+  /* Below this width the full row no longer fits the frame, so links move into the menu. */
+  @media (max-width: 1100px) {
     .nav-toggle { display: inline-grid; }
     /* hamburger sits far left, brand beside it, actions pinned right */
     .brand { margin-inline-end: auto; }
@@ -265,7 +273,7 @@ const isExternal = (href) => href.startsWith('http');
       gap: 0;
       display: none;
       padding: 0.4rem var(--gutter) 1rem;
-      background: color-mix(in srgb, var(--paper) 97%, transparent);
+      background: var(--paper);
       backdrop-filter: saturate(1.4) blur(12px);
       -webkit-backdrop-filter: saturate(1.4) blur(12px);
       border-bottom: 1px solid var(--line);
@@ -296,6 +304,12 @@ const isExternal = (href) => href.startsWith('http');
       transform: none;
     }
     .nav-menu::before { display: none; }
+  }
+  /* Phones: tighter spacing so every control keeps its full size. */
+  @media (max-width: 560px) {
+    .bar { gap: 0.75rem; }
+    .header-actions { gap: 0.35rem; }
+    .install-cta { padding-inline: 0.9rem; }
   }
   @media (max-width: 480px) {
     .install-cta { display: none; }
