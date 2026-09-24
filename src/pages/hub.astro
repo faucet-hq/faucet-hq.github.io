@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CTA from '../components/CTA.astro';
+import '../styles/hub.css';
 
 const base = import.meta.env.BASE_URL;
 const HUB_REPO = 'https://github.com/faucet-hq/template-hub';
@@ -110,21 +111,7 @@ origins:
           <p>Choose a source to see which sinks it runs on, pick one to see how each stream will be written, and copy the command that runs it.</p>
         </div>
         <div class="compose-card">
-          <div class="compose-row">
-            <label>source
-              <select id="c-source" aria-label="Source template"></select>
-            </label>
-            <span class="times" aria-hidden="true">×</span>
-            <label>sink
-              <select id="c-sink" aria-label="Sink template"></select>
-            </label>
-          </div>
-          <div id="c-fit" class="fit"></div>
-          <div id="c-plan" class="plan" aria-live="polite"></div>
-          <div class="cmd" id="c-cmd-wrap" hidden>
-            <pre><code id="c-cmd"></code></pre>
-            <button class="copy" id="c-copy" type="button" aria-label="Copy command" title="Copy">copy</button>
-          </div>
+          <div id="pairing"></div>
           <p class="hint">
             Runs against the public hub with no checkout — the CLI caches the catalog under
             <code>~/.cache/faucet/hub</code>. Install with
@@ -244,199 +231,49 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   <Footer />
 </Base>
 
-<script is:inline define:vars={{ INDEX_URL, INDEX_FALLBACK, HUB_REPO }}>
+<script is:inline define:vars={{ HUB_BASE: base }}>window.HUB_BASE = HUB_BASE;</script>
+<script is:inline src={`${base}hub-core.js`}></script>
+<script is:inline>
   (async () => {
+    const H = window.HubCore;
     const $ = (id) => document.getElementById(id);
-    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-
-    async function load() {
-      for (const url of [INDEX_URL, INDEX_FALLBACK]) {
-        try {
-          const r = await fetch(url, { cache: 'no-cache' });
-          if (r.ok) return await r.json();
-        } catch (e) { /* try the next */ }
-      }
-      throw new Error('catalog unreachable');
-    }
-
-    let idx;
+    let cat;
     try {
-      idx = await load();
+      cat = await H.load();
     } catch (e) {
-      $('loading').textContent = 'The catalog could not be loaded right now — browse it on GitHub: ' + HUB_REPO;
+      $('loading').textContent = 'The catalog could not be loaded right now — browse it on GitHub: ' + H.HUB_REPO;
       $('source-grid').setAttribute('aria-busy', 'false');
       return;
     }
-    const sources = idx.sources || [];
-    const sinks = idx.sinks || [];
-    const cells = new Map((idx.matrix || []).map((c) => [c.source + '\u0000' + c.sink, c]));
-    const grouped = (list) => {
-      const byName = new Map();
-      for (const t of list) { const k = t.name; if (!byName.has(k)) byName.set(k, []); byName.get(k).push(t); }
-      return byName;
-    };
-    const cell = (s, k) => cells.get(s + '\u0000' + k);
-
-    // ── stats ────────────────────────────────────────────────────────────
+    const { sources, sinks } = cat;
     $('n-sources').textContent = sources.length;
     $('n-sinks').textContent = sinks.length;
-    $('n-pairs').textContent = (idx.matrix || []).filter((c) => c.compatible).length;
-    const OFFICIAL_OWNER = 'faucet-hq';
-    const isOfficial = (t) => t.owner === OFFICIAL_OWNER || t.official === true;
-    $('n-official').textContent = sources.filter(isOfficial).length;
-    const idOf = (t) => t.id || t.name;
-    const titleOf = (t) => (t.owner ? `<span class="ns">${esc(t.owner)}/</span>${esc(t.name)}` : esc(t.name));
-    const verOf = (t) => (t.newest ? ` <span class="ver" title="${t.versions ? esc(t.versions.map((v) => 'v' + v.version + ' · ' + (v.date || '').slice(0, 10)).join('\n')) : ''}">v${t.newest}${t.stable && t.stable !== t.newest ? ` · stable v${t.stable}` : ''}</span>` : '');
-    const ownerBadge = (t) => (isOfficial(t)
-      ? `<a class="official" href="https://github.com/${OFFICIAL_OWNER}" target="_blank" rel="noopener noreferrer" title="maintained by the faucet-hq org">official · @${OFFICIAL_OWNER}</a>`
-      : t.owner
-        ? `<a class="owner" href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer" title="published by ${esc(t.owner)}">@${esc(t.owner)}</a>`
-        : `<span class="owner" title="unscoped template">unscoped</span>`);
+    $('n-pairs').textContent = cat.compatiblePairs;
+    $('n-official').textContent = sources.filter(H.isOfficial).length;
     $('hub-meta').textContent = 'live from faucet-hq/template-hub';
 
-    // ── trust signals (#685) ───────────────────────────────────────────
-    const trustOf = (t) => t.trust || {};
-    const starsOf = (t) => trustOf(t).stars || 0;
-    const updatedOf = (t) => trustOf(t).updated || '';
-    const byId = (a, b) => idOf(a).localeCompare(idOf(b));
-    // Recommended: official first, then stars, then freshness — same order as `faucet hub list`.
-    const SORTS = {
-      rank: (a, b) => (isOfficial(b) - isOfficial(a)) || (starsOf(b) - starsOf(a)) || updatedOf(b).localeCompare(updatedOf(a)) || byId(a, b),
-      stars: (a, b) => (starsOf(b) - starsOf(a)) || SORTS.rank(a, b),
-      updated: (a, b) => updatedOf(b).localeCompare(updatedOf(a)) || byId(a, b),
-      name: byId,
-    };
-    const trustLine = (t) => {
-      const tr = trustOf(t);
-      const bits = [];
-      if (tr.star_url) {
-        bits.push(`<a class="star" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer" title="Upvote (↑) the template's discussion to star it">★ ${starsOf(t)} <span>· upvote on GitHub</span></a>`);
-      } else if (tr.stars != null) {
-        bits.push(`<span class="star">★ ${starsOf(t)}</span>`);
-      }
-      if (tr.updated) bits.push(`<span class="fact">updated ${esc(tr.updated)}</span>`);
-      if (tr.stable_since && tr.stable_since !== tr.updated) bits.push(`<span class="fact">stable since ${esc(tr.stable_since)}</span>`);
-      if (tr.open_issues) {
-        const q = encodeURIComponent(`is:issue is:open label:"template:${idOf(t)}"`);
-        bits.push(`<a class="fact issues" href="${HUB_REPO}/issues?q=${q}" target="_blank" rel="noopener noreferrer">${tr.open_issues} open issue${tr.open_issues === 1 ? '' : 's'}</a>`);
-      }
-      return bits.length ? `<div class="trust">${bits.join('')}</div>` : '';
-    };
+    // ── try a pairing ────────────────────────────────────────────────────
+    const params = new URLSearchParams(location.search);
+    H.pairing($('pairing'), cat, {}, { source: params.get('source') || undefined, sink: params.get('sink') || undefined });
 
-    // ── compose widget ──────────────────────────────────────────────────
-    const cs = $('c-source'), ck = $('c-sink');
-    cs.innerHTML = sources.map((s) => `<option value="${esc(idOf(s))}">${esc(idOf(s))}${isOfficial(s) ? ' (official)' : ''}</option>`).join('');
-    ck.innerHTML = sinks.map((k) => `<option value="${esc(idOf(k))}">${esc(idOf(k))}${isOfficial(k) ? ' (official)' : ''}</option>`).join('');
-    function renderPlan() {
-      renderFit();
-      const c = cell(cs.value, ck.value);
-      const plan = $('c-plan'), wrap = $('c-cmd-wrap');
-      if (!c) { plan.innerHTML = ''; wrap.hidden = true; return; }
-      const rows = (c.streams || []).map((p) =>
-        `<li class="ok"><span class="mono">${esc(p.stream)}</span><span class="mode">${esc(p.write_mode)}${p.satisfies ? ` <em>for ${esc(p.satisfies)}</em>` : ''}</span></li>`)
-        .concat((c.incompatible || []).map((i) => `<li class="bad"><span class="mono">${esc(i.stream)}</span><span class="mode">✗ ${esc(i.reason)}</span></li>`));
-      plan.innerHTML = `<div class="plan-head ${c.compatible ? 'is-ok' : 'is-bad'}">${c.compatible ? '✓ compatible' : `✗ ${(c.incompatible || []).length} stream(s) have no viable write mode`}</div><ul>${rows.join('')}</ul>`;
-      if (c.compatible && c.command) { $('c-cmd').textContent = c.command; wrap.hidden = false; } else { wrap.hidden = true; }
-    }
-    // Which sinks the chosen source runs on — one row of chips instead of a
-    // sources × sinks matrix, which stops being readable past a handful of each.
-    const FIT_SHOWN = 12;
-    let fitExpanded = false;
-    const fitOf = (sid, k) => {
-      const c = cell(sid, idOf(k));
-      const n = (c?.streams || []).length;
-      return c?.compatible ? 'ok' : n ? 'partial' : 'bad';
-    };
-    function renderFit() {
-      const sid = cs.value;
-      const src = sources.find((s) => idOf(s) === sid);
-      if (!src) { $('c-fit').innerHTML = ''; return; }
-      const rankFit = { ok: 0, partial: 1, bad: 2 };
-      const q = ($('c-fit-q')?.value || '').trim().toLowerCase();
-      const all = [...sinks].sort((a, b) => (rankFit[fitOf(sid, a)] - rankFit[fitOf(sid, b)]) || SORTS.rank(a, b));
-      const full = all.filter((k) => fitOf(sid, k) === 'ok').length;
-      const partial = all.filter((k) => fitOf(sid, k) === 'partial').length;
-      const matching = q ? all.filter((k) => [idOf(k), k.sink_type, k.description].join(' ').toLowerCase().includes(q)) : all;
-      const shown = fitExpanded || q ? matching : matching.slice(0, FIT_SHOWN);
-      const chip = (k) => {
-        const f = fitOf(sid, k), c = cell(sid, idOf(k));
-        const label = f === 'ok' ? '✓' : f === 'partial' ? `${(c.streams || []).length}/${(src.streams || []).length}` : '✗';
-        const title = f === 'ok' ? 'every stream has a write mode this sink supports' : f === 'partial' ? 'only some streams have a write mode this sink supports' : 'no stream can be written to this sink';
-        return `<button type="button" class="fit-chip is-${f}${idOf(k) === ck.value ? ' is-current' : ''}" data-k="${esc(idOf(k))}" title="${title}"><span class="fit-mark">${label}</span>${esc(idOf(k))}</button>`;
-      };
-      const needsFilter = sinks.length > FIT_SHOWN;
-      $('c-fit').innerHTML = `
-        <div class="fit-head"><span>Runs fully on <b>${full}</b> of ${sinks.length} sink${sinks.length === 1 ? '' : 's'}${partial ? ` · partly on ${partial}` : ''}</span>
-          ${needsFilter ? `<input id="c-fit-q" class="filter fit-filter" type="search" placeholder="find a sink…" aria-label="Find a sink for this source" value="${esc(q)}" />` : ''}</div>
-        <div class="fit-chips">${shown.map(chip).join('') || '<span class="fit-none">No sink matches.</span>'}
-          ${!q && matching.length > FIT_SHOWN ? `<button type="button" class="linkish fit-more">${fitExpanded ? 'show fewer' : `+${matching.length - FIT_SHOWN} more`}</button>` : ''}</div>`;
-      const fq = $('c-fit-q');
-      if (fq && q) { fq.focus(); fq.setSelectionRange(q.length, q.length); }
-    }
-    $('c-fit').addEventListener('click', (e) => {
-      const b = e.target.closest('.fit-chip');
-      if (b) { ck.value = b.dataset.k; renderPlan(); return; }
-      if (e.target.closest('.fit-more')) { fitExpanded = !fitExpanded; renderFit(); }
-    });
-    $('c-fit').addEventListener('input', (e) => { if (e.target.id === 'c-fit-q') renderFit(); });
-    cs.onchange = () => { fitExpanded = false; renderPlan(); };
-    ck.onchange = renderPlan;
-    $('c-copy').onclick = async () => {
-      try { await navigator.clipboard.writeText($('c-cmd').textContent); $('c-copy').textContent = 'copied'; setTimeout(() => ($('c-copy').textContent = 'copy'), 1200); } catch (e) { /* clipboard blocked */ }
-    };
-    renderPlan();
-
-    // ── cards ───────────────────────────────────────────────────────────
-    const paramList = (ps) => (ps || []).map((p) =>
-      `<li><span class="mono">${esc(p.name)}</span> <span class="ptype">${esc(p.type || 'string')}${p.required ? ' · required' : ''}${p.secret ? ' · secret' : ''}</span>${p.description ? `<span class="pdesc">${esc(p.description)}</span>` : ''}</li>`).join('');
-    // Cards summarise; Try a pairing holds the per-sink detail.
-    const VARIANTS_SHOWN = 3;
-    const sourceCard = (s) => {
-      const compat = sinks.filter((k) => cell(idOf(s), idOf(k))?.compatible).map((k) => idOf(k));
-      const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s)).sort(SORTS.rank);
-      return `<article class="card" data-search="${esc([idOf(s), s.owner, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${titleOf(s)}</h3><span class="badges">${ownerBadge(s)}${verOf(s)}<span class="kind">${esc(s.source_type || '')}</span></span></header>
-        ${s.description ? `<p>${esc(s.description)}</p>` : ''}
-        ${trustLine(s)}
-        ${(s.tags || []).length ? `<div class="tags">${s.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-        <details><summary>${(s.streams || []).length} stream${(s.streams || []).length === 1 ? '' : 's'} · ${(s.params || []).length} param${(s.params || []).length === 1 ? '' : 's'}</summary>
-          <ul class="streams">${(s.streams || []).map((st) => `<li><span class="mono">${esc(st.name)}</span><span class="mode">${(st.write || []).join(' → ')}${(st.primary_keys || []).length ? ` · key ${esc(st.primary_keys.join(', '))}` : ''}</span></li>`).join('')}</ul>
-          ${(s.params || []).length ? `<ul class="params">${paramList(s.params)}</ul>` : ''}
-        </details>
-        <footer><span class="compat">${compat.length
-            ? `works with <button type="button" class="linkish try-src" data-src="${esc(idOf(s))}" title="Open Try a pairing with this source">${compat.length} of ${sinks.length} sink${sinks.length === 1 ? '' : 's'}</button>`
-            : 'no compatible sink yet'}</span>
-          ${variants.length ? `<span class="compat">also for ${esc(s.name)}: ${variants.slice(0, VARIANTS_SHOWN).map((v) => `<b>${esc(idOf(v))}</b>${trustOf(v).stars != null ? ` ★ ${starsOf(v)}` : ''}`).join(', ')}${variants.length > VARIANTS_SHOWN ? ` <button type="button" class="linkish more-variants" data-name="${esc(s.name)}">+${variants.length - VARIANTS_SHOWN} more</button>` : ''}</span>` : ''}
-          <a href="${HUB_REPO}/blob/main/${esc(s.file || `source-templates/${s.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
-          ${s.docs ? `<a href="${esc(s.docs)}" target="_blank" rel="noopener noreferrer">API docs ↗</a>` : ''}</footer>
-      </article>`;
-    };
-    const sinkCard = (k) => `<article class="card" data-search="${esc([idOf(k), k.owner, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${titleOf(k)}</h3><span class="badges">${ownerBadge(k)}${verOf(k)}<span class="kind">${esc(k.sink_type || '')}</span></span></header>
-        ${k.description ? `<p>${esc(k.description)}</p>` : ''}
-        ${trustLine(k)}
-        <div class="tags">${(k.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('')}</div>
-        ${(k.params || []).length ? `<details><summary>${k.params.length} param${k.params.length === 1 ? '' : 's'}</summary><ul class="params">${paramList(k.params)}</ul></details>` : ''}
-        <footer><a href="${HUB_REPO}/blob/main/${esc(k.file || `sink-templates/${k.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
-          ${k.docs ? `<a href="${esc(k.docs)}" target="_blank" rel="noopener noreferrer">docs ↗</a>` : ''}</footer>
-      </article>`;
-    // Each catalog section filters and sorts its own grid. `?sort=` / `?sink_sort=` share a view.
+    // ── catalog: each section filters and sorts its own grid (`?sort=` / `?sink_sort=`) ──
     const SECTIONS = {
-      sources: { list: sources, card: sourceCard, grid: 'source-grid', param: 'sort', noun: 'source templates',
+      sources: { kind: 'source', list: sources, grid: 'source-grid', param: 'sort', noun: 'source templates',
         none: '<div class="empty">No source templates yet — be the first to publish one.</div>' },
-      sinks: { list: sinks, card: sinkCard, grid: 'sink-grid', param: 'sink_sort', noun: 'sink templates',
+      sinks: { kind: 'sink', list: sinks, grid: 'sink-grid', param: 'sink_sort', noun: 'sink templates',
         none: '<div class="empty">No sink templates yet.</div>' },
     };
     const applyFilter = (key) => {
       const sec = SECTIONS[key];
-      const q = $('q-' + key).value.trim().toLowerCase();
+      const raw = $('q-' + key).value.trim();
+      const q = raw.toLowerCase();
       const grid = $(sec.grid);
       let shown = 0;
       grid.querySelectorAll('.card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); if (!c.hidden) shown++; });
       let miss = grid.querySelector('.no-match');
       if (q && !shown && sec.list.length) {
         if (!miss) { miss = document.createElement('div'); miss.className = 'empty no-match'; grid.append(miss); }
-        miss.textContent = `No ${sec.noun} match “${$('q-' + key).value.trim()}”.`;
+        miss.textContent = `No ${sec.noun} match “${raw}”.`;
         miss.hidden = false;
       } else if (miss) {
         miss.hidden = true;
@@ -444,14 +281,13 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
     };
     const renderGrid = (key) => {
       const sec = SECTIONS[key];
-      const cmp = SORTS[$('sort-' + key).value] || SORTS.rank;
-      $(sec.grid).innerHTML = sec.list.length ? [...sec.list].sort(cmp).map(sec.card).join('') : sec.none;
+      const cmp = H.SORTS[$('sort-' + key).value] || H.SORTS.rank;
+      $(sec.grid).innerHTML = sec.list.length ? [...sec.list].sort(cmp).map((t) => H.card(sec.kind, t)).join('') : sec.none;
       applyFilter(key);
     };
-    const params = new URLSearchParams(location.search);
     for (const [key, sec] of Object.entries(SECTIONS)) {
       const wanted = params.get(sec.param);
-      if (wanted && SORTS[wanted]) $('sort-' + key).value = wanted;
+      if (wanted && H.SORTS[wanted]) $('sort-' + key).value = wanted;
       renderGrid(key);
       $('q-' + key).oninput = () => applyFilter(key);
       $('sort-' + key).onchange = () => {
@@ -463,151 +299,5 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       };
     }
     $('source-grid').setAttribute('aria-busy', 'false');
-    $('source-grid').addEventListener('click', (e) => {
-      const tryBtn = e.target.closest('.try-src');
-      if (tryBtn) {
-        $('c-source').value = tryBtn.dataset.src;
-        renderPlan();
-        document.getElementById('compose').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
-        return;
-      }
-      const more = e.target.closest('.more-variants');
-      if (more) {
-        $('q-sources').value = more.dataset.name;
-        applyFilter('sources');
-      }
-    });
-
   })();
 </script>
-
-<style is:global>
-  /* Section rhythm: every block is a section with a heading; tinted bands alternate so boundaries read at a glance. */
-  .hub-page .section { padding-block: clamp(3rem, 6vw, 4.75rem); }
-  .hub-page .band { background: var(--surface-2); border-block: 1px solid var(--line); }
-  .hub-page section[id] { scroll-margin-top: 4.5rem; }
-  .hub-page .section-head { margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
-  .hub-page .section-head h2 { font-size: clamp(1.6rem, 3.2vw, 2.3rem); margin-top: 0.8rem; }
-  .hub-page .section-head p { font-size: 1rem; margin-top: 0.7rem; max-width: 42rem; }
-  .hub-page .head { padding-bottom: clamp(2.5rem, 5vw, 3.5rem); }
-  .hub-page .head h1 { font-size: clamp(2rem, 4.5vw, 3.2rem); margin-top: 1rem; }
-  .hub-page .lede { overflow-wrap: anywhere; margin-top: 1.1rem; font-size: 1.1rem; color: var(--ink-soft); max-width: 46rem; }
-  .hub-page .stats { display: flex; flex-wrap: wrap; gap: 1.4rem; margin-top: 1.4rem; font-size: 0.92rem; color: var(--ink-soft); align-items: baseline; }
-  .hub-page .stat b { font-family: var(--font-mono); color: var(--teal-text); font-size: 1.15rem; margin-right: 0.3rem; }
-  .hub-page a.stat { color: inherit; text-decoration: none; }
-  .hub-page a.stat:hover { color: var(--teal-text); }
-  .hub-page .stat-meta { font-size: 0.8rem; color: var(--ink-faint); }
-  .hub-page .actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.4rem; }
-
-  /* compose widget */
-  .hub-page .compose-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.3rem 1.4rem; box-shadow: var(--shadow-sm); }
-  .hub-page .compose-row { display: flex; flex-wrap: wrap; align-items: end; gap: 0.9rem; }
-  .hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; }
-  .hub-page .compose-row select { font: inherit; font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 0; text-transform: none; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem; }
-  .hub-page .times { font-size: 1.4rem; color: var(--ink-faint); padding-bottom: 0.45rem; }
-  .hub-page .plan { margin-top: 1rem; }
-  .hub-page .plan-head { font-family: var(--font-mono); font-size: 0.82rem; margin-bottom: 0.5rem; }
-  .hub-page .plan-head.is-ok { color: var(--teal-text); }
-  .hub-page .plan-head.is-bad { color: #b91c1c; }
-  .hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.35rem 1.2rem; }
-  .hub-page .plan li { display: flex; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--line-soft); }
-  .hub-page .plan li.bad .mode { color: #b91c1c; }
-  .hub-page .plan .mode { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
-  .hub-page .plan .mode em { font-style: normal; color: var(--ink-faint); }
-  .hub-page .cmd { position: relative; margin-top: 1rem; }
-  .hub-page .cmd pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.9rem 5.5rem 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
-  .hub-page .cmd .copy { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-family: var(--font-mono); font-size: 0.72rem; background: rgba(255,255,255,0.08); color: var(--term-fg); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 0.25rem 0.7rem; cursor: pointer; }
-  .hub-page .cmd .copy:hover { background: rgba(255,255,255,0.16); }
-  .hub-page .hint { margin-top: 0.9rem; font-size: 0.82rem; color: var(--ink-faint); }
-  .hub-page .hint code { font-size: 0.78rem; overflow-wrap: anywhere; }
-
-  /* catalog */
-  .hub-page .catalog-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0 1.5rem; }
-  .hub-page .catalog-head .section-head { flex: 1 1 26rem; }
-  .hub-page .filter { font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.5rem 1rem; min-width: 18rem; margin-bottom: 0.9rem; }
-  .hub-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 1rem; }
-  .hub-page .empty { grid-column: 1 / -1; color: var(--ink-faint); padding: 1.5rem 0; }
-  .hub-page .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: var(--shadow-sm); }
-  .hub-page .card header { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
-  .hub-page .card header h3 { overflow-wrap: anywhere; line-height: 1.3; }
-  .hub-page .card header .ns { color: var(--ink-faint); font-weight: 500; }
-  .hub-page .card header .badges { justify-content: flex-start; }
-  .hub-page .badges > * { white-space: nowrap; }
-  .hub-page .card h3 { font-size: 1rem; margin: 0; font-weight: 650; }
-  .hub-page .mono { font-family: var(--font-mono); }
-  .hub-page .badges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; justify-content: flex-end; }
-  .hub-page .owner { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-soft); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; }
-  .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
-  .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; text-decoration: none; }
-  .hub-page .official:hover { text-decoration: underline; }
-  /* `display` on cards/empties would otherwise beat the hidden attribute the filters set. */
-  .hub-page [hidden] { display: none !important; }
-  .hub-page .fit { margin-top: 1rem; display: grid; gap: 0.6rem; }
-  .hub-page .fit-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.88rem; color: var(--ink-soft); }
-  .hub-page .fit-head b { color: var(--teal-text); font-variant-numeric: tabular-nums; }
-  .hub-page .fit-filter { min-width: 0; width: 14rem; margin: 0; padding: 0.35rem 0.8rem; font-size: 0.82rem; }
-  .hub-page .fit-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
-  .hub-page .fit-chip { display: inline-flex; align-items: center; gap: 0.4rem; font: inherit; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.25rem 0.7rem 0.25rem 0.35rem; cursor: pointer; }
-  .hub-page .fit-chip:hover { border-color: var(--teal-deep); }
-  .hub-page .fit-chip.is-current { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
-  .hub-page .fit-mark { display: inline-grid; place-items: center; min-width: 1.4rem; height: 1.4rem; padding: 0 0.3rem; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
-  .hub-page .fit-chip.is-ok .fit-mark { background: var(--teal-wash); color: var(--teal-text); }
-  .hub-page { --fit-partial: #b45309; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hub-page { --fit-partial: #fbbf24; } }
-  :root[data-theme="dark"] .hub-page { --fit-partial: #fbbf24; }
-  .hub-page .fit-chip.is-partial .fit-mark { background: color-mix(in srgb, var(--fit-partial) 18%, transparent); color: var(--fit-partial); }
-  .hub-page .fit-chip.is-bad { color: var(--ink-faint); }
-  .hub-page .fit-chip.is-bad .fit-mark { background: var(--surface-2); color: var(--ink-faint); }
-  .hub-page .fit-none { font-size: 0.85rem; color: var(--ink-faint); }
-  .hub-page .linkish { font: inherit; color: var(--teal-text); background: none; border: 0; padding: 0; cursor: pointer; font-weight: 600; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 2px; }
-  .hub-page .linkish:hover { text-decoration-color: currentColor; }
-  .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
-  .hub-page .catalog-tools .filter { margin-bottom: 0; }
-  .hub-page .sort { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
-  .hub-page .sort select { font: inherit; text-transform: none; letter-spacing: 0; font-size: 0.85rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
-  .hub-page .trust { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; font-size: 0.8rem; }
-  .hub-page .trust .star { color: var(--teal-text); text-decoration: none; font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .hub-page .trust .star span { font-weight: 400; color: var(--ink-faint); }
-  .hub-page .trust a.star:hover span { text-decoration: underline; color: var(--teal-text); }
-  .hub-page .trust .fact { color: var(--ink-faint); white-space: nowrap; }
-  .hub-page .trust a.issues { color: var(--ink-soft); }
-  .hub-page .ver { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); white-space: nowrap; }
-  .hub-page .kind { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap; }
-  .hub-page .card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
-  .hub-page .tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .hub-page .tag { font-family: var(--font-mono); font-size: 0.68rem; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; }
-  .hub-page .mode-tag { color: var(--ink-soft); background: var(--surface-2); }
-  .hub-page .card details { font-size: 0.86rem; }
-  .hub-page .card summary { cursor: pointer; color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.76rem; }
-  .hub-page .card ul { list-style: none; margin: 0.5rem 0 0; padding: 0; }
-  .hub-page .streams li, .hub-page .params li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.2rem 0.8rem; padding: 0.3rem 0; border-top: 1px dashed var(--line-soft); }
-  .hub-page .streams .mode, .hub-page .ptype { color: var(--ink-faint); font-family: var(--font-mono); font-size: 0.74rem; }
-  .hub-page .pdesc { flex-basis: 100%; color: var(--ink-faint); font-size: 0.78rem; }
-  .hub-page .card footer { margin-top: auto; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; font-size: 0.78rem; color: var(--ink-faint); align-items: baseline; }
-  .hub-page .card footer a { color: var(--teal-text); text-decoration: none; }
-  .hub-page .card footer a:hover { text-decoration: underline; }
-  .hub-page .compat { flex: 1 1 100%; }
-  .hub-page .compat b { color: var(--ink-soft); font-weight: 600; }
-
-  /* publish */
-  .hub-page .publish-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
-  .hub-page .pub-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem; }
-  .hub-page .pub-card h3 { margin: 0; font-size: 1rem; }
-  .hub-page .pub-card p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
-  .hub-page .pub-card .actions { margin-top: 0.2rem; }
-  .hub-page .publish pre, .hub-page .pub-card pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; }
-  .hub-page .publish .wrap > pre { margin-top: 0.8rem; }
-  .hub-page .publish-head { max-width: 46rem; }
-  .hub-page .mirror-h { margin: 2.4rem 0 0.5rem; font-size: 1.15rem; }
-  .hub-page .publish .wrap > p { color: var(--ink-soft); font-size: 0.95rem; max-width: 46rem; }
-  .hub-page .docs-link { margin-top: 1rem; }
-
-  @media (max-width: 720px) {
-    .hub-page .compose-row label { flex-basis: 100%; }
-    .hub-page .times { display: none; }
-    .hub-page .filter { min-width: 0; width: 100%; }
-    .hub-page .cmd pre { padding: 2.6rem 1rem 0.9rem; }
-    .hub-page .catalog-tools { width: 100%; }
-    .hub-page .catalog-tools .filter { flex: 1 1 12rem; }
-  }
-</style>
