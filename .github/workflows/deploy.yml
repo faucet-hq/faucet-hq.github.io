@@ -9,9 +9,13 @@ on:
   push:
     branches: [main, dev]
   workflow_dispatch:
-  # Hourly rebuild so /changelog shows a new release within the hour, without a site push.
+  # faucet-stream's notify-site workflow sends this the moment a release is
+  # published, so /changelog updates without a site push.
+  repository_dispatch:
+    types: [faucet-release]
+  # Fallback in case a dispatch is missed.
   schedule:
-    - cron: "17 * * * *"
+    - cron: "17 */6 * * *"
 
 permissions:
   contents: read
