@@ -300,20 +300,11 @@
   /* Version rows wrap instead of squeezing into columns. */
   .hub-page .tpl-versions li { display: flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; }
 }
-/* Source and sink: two tints of equal weight (data flows from teal to blue), so neither reads as selected. */
-.hub-page { --tint-source: #0f766e; --tint-sink: #0369a1; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hub-page { --tint-source: #5eead4; --tint-sink: #7dd3fc; } }
-:root[data-theme="dark"] .hub-page { --tint-source: #5eead4; --tint-sink: #7dd3fc; }
-.hub-page .pub-choice {
-  --_t: var(--tint-source);
-  --_bg: color-mix(in srgb, var(--_t) 11%, var(--surface));
-  --_fg: var(--_t);
-  background: var(--_bg); color: var(--_t);
-  border: 1px solid color-mix(in srgb, var(--_t) 32%, transparent); box-shadow: none; font-weight: 600;
-}
-.hub-page .pub-choice--sink { --_t: var(--tint-sink); }
-.hub-page .pub-choice:hover { --_bg: color-mix(in srgb, var(--_t) 18%, var(--surface)); background: var(--_bg); color: var(--_t); border-color: color-mix(in srgb, var(--_t) 55%, transparent); box-shadow: var(--shadow-sm); }
-.hub-page .pub-choice:focus-visible { outline: 2px solid var(--_t); outline-offset: 2px; }
+/* Source and sink: two solid shades of the brand teal, equal weight, so neither reads as selected. */
+.hub-page .pub-choice { --_bg: var(--teal); --_hover: var(--teal-deep); --_fg: #fff; background: var(--_bg); color: var(--_fg); border-color: transparent; font-weight: 600; }
+.hub-page .pub-choice--sink { --_bg: #0d9488; --_hover: #0f766e; }
+.hub-page .pub-choice:hover { background: var(--_hover); color: var(--_fg); }
+.hub-page .pub-choice:focus-visible { outline: 2px solid var(--_bg); outline-offset: 3px; }
 /* Topic tags are links to a search, set as text rather than as badges. */
 .hub-page .topics { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; margin-top: 0.9rem; }
 .hub-page .topic { font-size: 0.9rem; color: var(--ink-soft); text-decoration: none; }
