@@ -142,9 +142,9 @@ origins:
             <p>One file per system: auth, pagination, incremental cursors and the streams it produces. Written once, it runs on every sink below.</p>
           </div>
           <div class="catalog-tools">
-            <input id="q" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter source and sink templates" />
+            <input id="q-sources" class="filter" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter source templates" />
             <label class="sort">Sort
-              <select id="sort" aria-label="Sort templates">
+              <select id="sort-sources" aria-label="Sort source templates">
                 <option value="rank">Recommended</option>
                 <option value="stars">Most starred</option>
                 <option value="updated">Recently updated</option>
@@ -161,10 +161,23 @@ origins:
 
     <section class="section band catalog" id="sinks">
       <div class="wrap">
-        <div class="section-head" data-reveal>
-          <span class="eyebrow">Destinations</span>
-          <h2>Sink templates</h2>
-          <p>Where rows land. Each sink lists the write modes it supports natively; a source asks for a mode per stream.</p>
+        <div class="catalog-head">
+          <div class="section-head" data-reveal>
+            <span class="eyebrow">Destinations</span>
+            <h2>Sink templates</h2>
+            <p>Where rows land. Each sink lists the write modes it supports natively; a source asks for a mode per stream.</p>
+          </div>
+          <div class="catalog-tools">
+            <input id="q-sinks" class="filter" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter sink templates" />
+            <label class="sort">Sort
+              <select id="sort-sinks" aria-label="Sort sink templates">
+                <option value="rank">Recommended</option>
+                <option value="stars">Most starred</option>
+                <option value="updated">Recently updated</option>
+                <option value="name">Name</option>
+              </select>
+            </label>
+          </div>
         </div>
         <div class="grid" id="sink-grid"></div>
       </div>
@@ -369,29 +382,49 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
         <footer><a href="${HUB_REPO}/blob/main/${esc(k.file || `sink-templates/${k.name}.yaml`)}" target="_blank" rel="noopener noreferrer">source ↗</a>
           ${k.docs ? `<a href="${esc(k.docs)}" target="_blank" rel="noopener noreferrer">docs ↗</a>` : ''}</footer>
       </article>`;
-    const applyFilter = () => {
-      const q = $('q').value.trim().toLowerCase();
-      document.querySelectorAll('.hub-page .catalog .card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); });
+    // Each catalog section filters and sorts its own grid. `?sort=` / `?sink_sort=` share a view.
+    const SECTIONS = {
+      sources: { list: sources, card: sourceCard, grid: 'source-grid', param: 'sort', noun: 'source templates',
+        none: '<div class="empty">No source templates yet — be the first to publish one.</div>' },
+      sinks: { list: sinks, card: sinkCard, grid: 'sink-grid', param: 'sink_sort', noun: 'sink templates',
+        none: '<div class="empty">No sink templates yet.</div>' },
     };
-    const renderGrids = () => {
-      const cmp = SORTS[$('sort').value] || SORTS.rank;
-      $('source-grid').innerHTML = sources.length ? [...sources].sort(cmp).map(sourceCard).join('') : '<div class="empty">No source templates yet — be the first to publish one.</div>';
-      $('sink-grid').innerHTML = [...sinks].sort(cmp).map(sinkCard).join('');
-      applyFilter();
+    const applyFilter = (key) => {
+      const sec = SECTIONS[key];
+      const q = $('q-' + key).value.trim().toLowerCase();
+      const grid = $(sec.grid);
+      let shown = 0;
+      grid.querySelectorAll('.card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); if (!c.hidden) shown++; });
+      let miss = grid.querySelector('.no-match');
+      if (q && !shown && sec.list.length) {
+        if (!miss) { miss = document.createElement('div'); miss.className = 'empty no-match'; grid.append(miss); }
+        miss.textContent = `No ${sec.noun} match “${$('q-' + key).value.trim()}”.`;
+        miss.hidden = false;
+      } else if (miss) {
+        miss.hidden = true;
+      }
     };
-    const wanted = new URLSearchParams(location.search).get('sort');
-    if (wanted && SORTS[wanted]) $('sort').value = wanted;
-    renderGrids();
+    const renderGrid = (key) => {
+      const sec = SECTIONS[key];
+      const cmp = SORTS[$('sort-' + key).value] || SORTS.rank;
+      $(sec.grid).innerHTML = sec.list.length ? [...sec.list].sort(cmp).map(sec.card).join('') : sec.none;
+      applyFilter(key);
+    };
+    const params = new URLSearchParams(location.search);
+    for (const [key, sec] of Object.entries(SECTIONS)) {
+      const wanted = params.get(sec.param);
+      if (wanted && SORTS[wanted]) $('sort-' + key).value = wanted;
+      renderGrid(key);
+      $('q-' + key).oninput = () => applyFilter(key);
+      $('sort-' + key).onchange = () => {
+        const u = new URL(location.href);
+        const v = $('sort-' + key).value;
+        if (v === 'rank') u.searchParams.delete(sec.param); else u.searchParams.set(sec.param, v);
+        history.replaceState(null, '', u);
+        renderGrid(key);
+      };
+    }
     $('source-grid').setAttribute('aria-busy', 'false');
-
-    // ── filter + sort ───────────────────────────────────────────────────
-    $('q').oninput = applyFilter;
-    $('sort').onchange = () => {
-      const u = new URL(location.href);
-      if ($('sort').value === 'rank') u.searchParams.delete('sort'); else u.searchParams.set('sort', $('sort').value);
-      history.replaceState(null, '', u);
-      renderGrids();
-    };
 
     // ── matrix ──────────────────────────────────────────────────────────
     const t = $('matrix-table');
@@ -453,7 +486,7 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   /* catalog */
   .hub-page .catalog-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0 1.5rem; }
   .hub-page .catalog-head .section-head { flex: 1 1 26rem; }
-  .hub-page #q { font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.5rem 1rem; min-width: 18rem; margin-bottom: 0.9rem; }
+  .hub-page .filter { font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.5rem 1rem; min-width: 18rem; margin-bottom: 0.9rem; }
   .hub-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 1rem; }
   .hub-page .empty { grid-column: 1 / -1; color: var(--ink-faint); padding: 1.5rem 0; }
   .hub-page .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: var(--shadow-sm); }
@@ -469,8 +502,10 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   .hub-page .owner:hover { color: var(--teal-text); border-color: var(--teal-deep); }
   .hub-page .official { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--teal-text); background: var(--teal-wash); border-radius: 999px; padding: 0.15rem 0.55rem; text-decoration: none; }
   .hub-page .official:hover { text-decoration: underline; }
+  /* `display` on cards/empties would otherwise beat the hidden attribute the filters set. */
+  .hub-page [hidden] { display: none !important; }
   .hub-page .catalog-tools { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: clamp(1.5rem, 3vw, 2.1rem); }
-  .hub-page .catalog-tools #q { margin-bottom: 0; }
+  .hub-page .catalog-tools .filter { margin-bottom: 0; }
   .hub-page .sort { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--ink-faint); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; }
   .hub-page .sort select { font: inherit; text-transform: none; letter-spacing: 0; font-size: 0.85rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
   .hub-page .trust { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; font-size: 0.8rem; }
@@ -526,9 +561,9 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
   @media (max-width: 720px) {
     .hub-page .compose-row label { flex-basis: 100%; }
     .hub-page .times { display: none; }
-    .hub-page #q { min-width: 0; width: 100%; }
+    .hub-page .filter { min-width: 0; width: 100%; }
     .hub-page .cmd pre { padding: 2.6rem 1rem 0.9rem; }
     .hub-page .catalog-tools { width: 100%; }
-    .hub-page .catalog-tools #q { flex: 1 1 12rem; }
+    .hub-page .catalog-tools .filter { flex: 1 1 12rem; }
   }
 </style>
