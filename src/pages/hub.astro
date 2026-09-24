@@ -113,9 +113,8 @@ origins:
         <div class="compose-card">
           <div id="pairing"></div>
           <p class="hint">
-            Runs against the public hub with no checkout — the CLI caches the catalog under
-            <code>~/.cache/faucet/hub</code>. Install with
-            <code>curl -LsSf https://github.com/faucet-hq/faucet-stream/releases/latest/download/faucet-cli-installer.sh | sh</code>.
+            Runs against the public hub with no checkout; the CLI caches the catalog under <code>~/.cache/faucet/hub</code>.
+            <a href="https://faucet-hq.github.io/faucet-stream/getting-started/installation.html">Install the CLI →</a>
           </p>
         </div>
       </div>
@@ -131,19 +130,20 @@ origins:
           </div>
           <div class="catalog-tools">
             <input id="q-sources" class="filter" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter source templates" />
-            <label class="sort">Sort
-              <select id="sort-sources" aria-label="Sort source templates">
-                <option value="rank">Recommended</option>
-                <option value="stars">Most starred</option>
-                <option value="updated">Recently updated</option>
-                <option value="name">Name</option>
-              </select>
-            </label>
+            <div class="facets" id="facets-sources"></div>
+            <select id="sort-sources" class="sort-select" aria-label="Sort source templates">
+              <option value="rank">Sort: Recommended</option>
+              <option value="stars">Sort: Most starred</option>
+              <option value="updated">Sort: Recently updated</option>
+              <option value="name">Sort: Name</option>
+            </select>
           </div>
         </div>
+        <div class="active-filters" id="active-sources" hidden></div>
         <div class="grid" id="source-grid" aria-busy="true">
           <div class="empty" id="loading">Loading the catalog…</div>
         </div>
+        <div class="grid-more" id="more-sources" hidden><button type="button" class="btn btn--ghost"></button></div>
       </div>
     </section>
 
@@ -157,17 +157,18 @@ origins:
           </div>
           <div class="catalog-tools">
             <input id="q-sinks" class="filter" type="search" placeholder="filter by name, tag, or system…" autocomplete="off" aria-label="Filter sink templates" />
-            <label class="sort">Sort
-              <select id="sort-sinks" aria-label="Sort sink templates">
-                <option value="rank">Recommended</option>
-                <option value="stars">Most starred</option>
-                <option value="updated">Recently updated</option>
-                <option value="name">Name</option>
-              </select>
-            </label>
+            <div class="facets" id="facets-sinks"></div>
+            <select id="sort-sinks" class="sort-select" aria-label="Sort sink templates">
+              <option value="rank">Sort: Recommended</option>
+              <option value="stars">Sort: Most starred</option>
+              <option value="updated">Sort: Recently updated</option>
+              <option value="name">Sort: Name</option>
+            </select>
           </div>
         </div>
+        <div class="active-filters" id="active-sinks" hidden></div>
         <div class="grid" id="sink-grid"></div>
+        <div class="grid-more" id="more-sinks" hidden><button type="button" class="btn btn--ghost"></button></div>
       </div>
     </section>
 
@@ -263,17 +264,93 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       sinks: { kind: 'sink', list: sinks, grid: 'sink-grid', param: 'sink_sort', noun: 'sink templates',
         none: '<div class="empty">No sink templates yet.</div>' },
     };
+    // Owner and type facets: multi-select, combined with the text filter (AND
+    // across facets, OR within one). Their state lives in the URL so a view can be shared.
+    const FACETS = {
+      owner: { label: 'Owner', of: (kind, t) => H.ownerKey(t),
+        show: (v) => (v === H.OFFICIAL_OWNER ? `official · ${v}` : v ? '@' + v : 'unscoped'),
+        order: (a, b, n) => (b === H.OFFICIAL_OWNER) - (a === H.OFFICIAL_OWNER) || n[b] - n[a] || H.natural(a, b) },
+      type: { label: 'Type', of: (kind, t) => H.typeOf(kind, t), show: (v) => v || '—',
+        order: (a, b, n) => n[b] - n[a] || H.natural(a, b) },
+    };
+    const CARDS_SHOWN = 12;
+    const expanded = { sources: false, sinks: false };
+    const PARAM = { sources: { owner: 'owner', type: 'type' }, sinks: { owner: 'sink_owner', type: 'sink_type' } };
+    const selected = { sources: { owner: new Set(), type: new Set() }, sinks: { owner: new Set(), type: new Set() } };
+    for (const key of Object.keys(selected)) {
+      for (const f of Object.keys(FACETS)) {
+        (params.get(PARAM[key][f]) || '').split(',').filter(Boolean).forEach((v) => selected[key][f].add(v));
+      }
+    }
+
+    function syncUrl(key) {
+      const u = new URL(location.href);
+      for (const f of Object.keys(FACETS)) {
+        const v = [...selected[key][f]].join(',');
+        if (v) u.searchParams.set(PARAM[key][f], v); else u.searchParams.delete(PARAM[key][f]);
+      }
+      history.replaceState(null, '', u);
+    }
+
+    function renderFacets(key) {
+      const sec = SECTIONS[key];
+      const root = $('facets-' + key);
+      root.innerHTML = Object.entries(FACETS).map(([f, def]) => {
+        const counts = {};
+        sec.list.forEach((t) => { const v = def.of(sec.kind, t); counts[v] = (counts[v] || 0) + 1; });
+        const values = Object.keys(counts).sort((a, b) => def.order(a, b, counts));
+        const sel = selected[key][f];
+        const n = sel.size;
+        return `<div class="facet" data-facet="${f}">
+          <button type="button" class="facet-btn${n ? ' is-active' : ''}" aria-haspopup="true" aria-expanded="false">${def.label}${n ? `<span class="facet-n">${n}</span>` : ''}</button>
+          <div class="facet-pop" role="group" aria-label="Filter ${sec.noun} by ${def.label.toLowerCase()}" hidden>
+            ${values.length > 10 ? `<input class="filter facet-q" type="search" placeholder="find ${f === 'owner' ? 'an owner' : 'a type'}…" aria-label="Find ${f === 'owner' ? 'an owner' : 'a type'}" />` : ''}
+            <div class="facet-opts">${values.map((v) => `<label class="facet-opt" data-v="${H.esc(v.toLowerCase())}"><input type="checkbox" value="${H.esc(v)}"${sel.has(v) ? ' checked' : ''} /><span class="facet-name">${H.esc(def.show(v))}</span><span class="facet-count">${counts[v]}</span></label>`).join('')}</div>
+            <div class="facet-foot"><button type="button" class="linkish facet-clear"${n ? '' : ' disabled'}>Clear</button></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderActive(key) {
+      const box = $('active-' + key);
+      const chips = [];
+      for (const [f, def] of Object.entries(FACETS)) {
+        for (const v of selected[key][f]) chips.push(`<button type="button" class="active-chip" data-facet="${f}" data-v="${H.esc(v)}" aria-label="Remove ${def.label.toLowerCase()} filter ${H.esc(def.show(v))}"><span class="dim">${def.label.toLowerCase()}:</span> ${H.esc(def.show(v))} <span aria-hidden="true">×</span></button>`);
+      }
+      box.innerHTML = chips.length ? chips.join('') + '<button type="button" class="linkish clear-all">Clear all</button>' : '';
+      box.hidden = !chips.length;
+    }
+
     const applyFilter = (key) => {
       const sec = SECTIONS[key];
       const raw = $('q-' + key).value.trim();
       const q = raw.toLowerCase();
+      const { owner, type } = selected[key];
       const grid = $(sec.grid);
       let shown = 0;
-      grid.querySelectorAll('.card').forEach((c) => { c.hidden = q && !c.dataset.search.includes(q); if (!c.hidden) shown++; });
+      grid.querySelectorAll('.card').forEach((c) => {
+        const ok = (!q || c.dataset.search.includes(q)) && (!owner.size || owner.has(c.dataset.owner)) && (!type.size || type.has(c.dataset.type));
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      // Unfiltered, a section shows its first CARDS_SHOWN cards; any filter searches them all.
+      const filtering = q || owner.size || type.size;
+      const more = $('more-' + key);
+      if (!filtering && !expanded[key] && shown > CARDS_SHOWN) {
+        let i = 0;
+        grid.querySelectorAll('.card:not([hidden])').forEach((c) => { if (++i > CARDS_SHOWN) c.hidden = true; });
+      }
+      if (!filtering && shown > CARDS_SHOWN) {
+        more.hidden = false;
+        more.firstElementChild.textContent = expanded[key] ? 'Show fewer' : `Show all ${shown} ${sec.noun}`;
+      } else {
+        more.hidden = true;
+      }
       let miss = grid.querySelector('.no-match');
-      if (q && !shown && sec.list.length) {
+      if (filtering && !shown && sec.list.length) {
         if (!miss) { miss = document.createElement('div'); miss.className = 'empty no-match'; grid.append(miss); }
-        miss.textContent = `No ${sec.noun} match “${raw}”.`;
+        miss.textContent = `No ${sec.noun} match these filters.`;
         miss.hidden = false;
       } else if (miss) {
         miss.hidden = true;
@@ -285,9 +362,29 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
       $(sec.grid).innerHTML = sec.list.length ? [...sec.list].sort(cmp).map((t) => H.card(sec.kind, t)).join('') : sec.none;
       applyFilter(key);
     };
+    const facetChanged = (key) => { renderFacetButtons(key); renderActive(key); applyFilter(key); syncUrl(key); };
+    // Update just the buttons' counts so an open popover keeps its focus and scroll.
+    function renderFacetButtons(key) {
+      for (const [f, def] of Object.entries(FACETS)) {
+        const btn = $('facets-' + key).querySelector(`[data-facet="${f}"] .facet-btn`);
+        const n = selected[key][f].size;
+        btn.classList.toggle('is-active', !!n);
+        btn.innerHTML = `${def.label}${n ? `<span class="facet-n">${n}</span>` : ''}`;
+        const clear = btn.parentElement.querySelector('.facet-clear');
+        if (clear) clear.disabled = !n;
+      }
+    }
+    const closeAll = (except) => document.querySelectorAll('.hub-page .facet-pop:not([hidden])').forEach((pop) => {
+      if (pop === except) return;
+      pop.hidden = true;
+      pop.previousElementSibling.setAttribute('aria-expanded', 'false');
+    });
+
     for (const [key, sec] of Object.entries(SECTIONS)) {
       const wanted = params.get(sec.param);
       if (wanted && H.SORTS[wanted]) $('sort-' + key).value = wanted;
+      renderFacets(key);
+      renderActive(key);
       renderGrid(key);
       $('q-' + key).oninput = () => applyFilter(key);
       $('sort-' + key).onchange = () => {
@@ -297,7 +394,62 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
         history.replaceState(null, '', u);
         renderGrid(key);
       };
+      const facets = $('facets-' + key);
+      facets.addEventListener('click', (e) => {
+        const btn = e.target.closest('.facet-btn');
+        if (btn) {
+          const pop = btn.nextElementSibling;
+          const open = pop.hidden;
+          closeAll(pop);
+          pop.hidden = !open;
+          btn.setAttribute('aria-expanded', String(open));
+          if (open) {
+            // Open towards whichever side has room, so the list never runs off-screen.
+            pop.classList.remove('is-right');
+            if (pop.getBoundingClientRect().right > document.documentElement.clientWidth - 12) pop.classList.add('is-right');
+          }
+          if (open) (pop.querySelector('.facet-q') || pop.querySelector('input'))?.focus();
+          return;
+        }
+        const clear = e.target.closest('.facet-clear');
+        if (clear) {
+          const f = clear.closest('.facet').dataset.facet;
+          selected[key][f].clear();
+          clear.closest('.facet').querySelectorAll('input[type=checkbox]').forEach((c) => { c.checked = false; });
+          facetChanged(key);
+        }
+      });
+      facets.addEventListener('change', (e) => {
+        if (e.target.type !== 'checkbox') return;
+        const f = e.target.closest('.facet').dataset.facet;
+        if (e.target.checked) selected[key][f].add(e.target.value); else selected[key][f].delete(e.target.value);
+        facetChanged(key);
+      });
+      facets.addEventListener('input', (e) => {
+        if (!e.target.classList.contains('facet-q')) return;
+        const q = e.target.value.trim().toLowerCase();
+        e.target.closest('.facet-pop').querySelectorAll('.facet-opt').forEach((o) => { o.hidden = q && !o.dataset.v.includes(q); });
+      });
+      $('more-' + key).addEventListener('click', () => {
+        expanded[key] = !expanded[key];
+        applyFilter(key);
+        if (!expanded[key]) $(key).scrollIntoView({ block: 'start' });
+      });
+      $('active-' + key).addEventListener('click', (e) => {
+        const chip = e.target.closest('.active-chip');
+        if (chip) selected[key][chip.dataset.facet].delete(chip.dataset.v);
+        else if (e.target.closest('.clear-all')) Object.values(selected[key]).forEach((set) => set.clear());
+        else return;
+        renderFacets(key);
+        facetChanged(key);
+      });
     }
+    document.addEventListener('click', (e) => { if (!e.target.closest('.hub-page .facet')) closeAll(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.hub-page .facet-pop:not([hidden])');
+      if (open) { closeAll(); open.previousElementSibling.focus(); }
+    });
     $('source-grid').setAttribute('aria-busy', 'false');
   })();
 </script>

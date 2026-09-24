@@ -41,7 +41,9 @@
   const trustOf = (t) => t.trust || {};
   const starsOf = (t) => trustOf(t).stars || 0;
   const updatedOf = (t) => trustOf(t).updated || '';
-  const byId = (a, b) => idOf(a).localeCompare(idOf(b));
+  // Natural order, so vendor2 sorts before vendor10.
+  const natural = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+  const byId = (a, b) => natural(idOf(a), idOf(b));
   // Recommended: official first, then stars, then freshness — same order as `faucet hub list`.
   const SORTS = {
     rank: (a, b) => (isOfficial(b) - isOfficial(a)) || (starsOf(b) - starsOf(a)) || updatedOf(b).localeCompare(updatedOf(a)) || byId(a, b),
@@ -50,6 +52,8 @@
     name: byId,
   };
 
+  // The facet value for a template's owner: faucet-hq for the official set, '' when unscoped.
+  const ownerKey = (t) => (isOfficial(t) ? OFFICIAL_OWNER : t.owner || '');
   const detailUrl = (kind, t) => `${BASE}hub/template/?kind=${kind}&id=${encodeURIComponent(idOf(t))}`;
   const titleOf = (t) => (t.owner ? `<span class="ns">${esc(t.owner)}/</span>${esc(t.name)}` : esc(t.name));
   const typeOf = (kind, t) => (kind === 'sink' ? t.sink_type : t.source_type) || '';
@@ -70,7 +74,7 @@
       tr.stars != null ? `<span class="star">★ ${starsOf(t)}</span>` : '',
       tr.updated ? `<span>updated ${esc(tr.updated)}</span>` : '',
     ].filter(Boolean).join('<span aria-hidden="true">·</span>');
-    return `<a class="card card--link" href="${detailUrl(kind, t)}" data-search="${esc([idOf(t), t.owner, t.description, typeOf(kind, t), ...(t.tags || [])].join(' ').toLowerCase())}">
+    return `<a class="card card--link" href="${detailUrl(kind, t)}" data-owner="${esc(ownerKey(t))}" data-type="${esc(typeOf(kind, t))}" data-search="${esc([idOf(t), t.owner, t.description, typeOf(kind, t), ...(t.tags || [])].join(' ').toLowerCase())}">
       <h3 class="mono">${titleOf(t)}</h3>
       <div class="badges">${ownerTag(t)}<span class="kind">${esc(typeOf(kind, t))}</span></div>
       ${t.description ? `<p class="desc">${esc(t.description)}</p>` : ''}
@@ -186,7 +190,7 @@
   }
 
   window.HubCore = {
-    HUB_REPO, OFFICIAL_OWNER, BASE, load, esc, plural, idOf, isOfficial, trustOf, starsOf, SORTS,
-    detailUrl, titleOf, typeOf, ownerTag, ownerBadge, card, pairing, fitOf, FIT_RANK,
+    HUB_REPO, OFFICIAL_OWNER, BASE, load, esc, plural, natural, idOf, isOfficial, trustOf, starsOf, SORTS,
+    detailUrl, titleOf, typeOf, ownerKey, ownerTag, ownerBadge, card, pairing, fitOf, FIT_RANK,
   };
 })();
