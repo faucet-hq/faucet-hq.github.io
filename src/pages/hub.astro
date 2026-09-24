@@ -239,6 +239,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
     const isOfficial = (t) => t.owner === OFFICIAL_OWNER || t.official === true;
     $('n-official').textContent = sources.filter(isOfficial).length;
     const idOf = (t) => t.id || t.name;
+    const titleOf = (t) => (t.owner ? `<span class="ns">${esc(t.owner)}/</span>${esc(t.name)}` : esc(t.name));
     const verOf = (t) => (t.newest ? ` <span class="ver" title="${t.versions ? esc(t.versions.map((v) => 'v' + v.version + ' · ' + (v.date || '').slice(0, 10)).join('\n')) : ''}">v${t.newest}${t.stable && t.stable !== t.newest ? ` · stable v${t.stable}` : ''}</span>` : '');
     const ownerBadge = (t) => (isOfficial(t)
       ? `<a class="official" href="https://github.com/${OFFICIAL_OWNER}" target="_blank" rel="noopener noreferrer" title="maintained by the faucet-hq org">official · @${OFFICIAL_OWNER}</a>`
@@ -274,7 +275,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       const compat = sinks.filter((k) => cell(idOf(s), idOf(k))?.compatible).map((k) => idOf(k));
       const variants = (grouped(sources).get(s.name) || []).filter((o) => idOf(o) !== idOf(s));
       return `<article class="card" data-search="${esc([idOf(s), s.owner, s.description, s.source_type, ...(s.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${esc(idOf(s))}</h3><span class="badges">${ownerBadge(s)}${verOf(s)}<span class="kind">${esc(s.source_type || '')}</span></span></header>
+        <header><h3 class="mono">${titleOf(s)}</h3><span class="badges">${ownerBadge(s)}${verOf(s)}<span class="kind">${esc(s.source_type || '')}</span></span></header>
         ${s.description ? `<p>${esc(s.description)}</p>` : ''}
         ${(s.tags || []).length ? `<div class="tags">${s.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
         <details><summary>${(s.streams || []).length} stream${(s.streams || []).length === 1 ? '' : 's'} · ${(s.params || []).length} param${(s.params || []).length === 1 ? '' : 's'}</summary>
@@ -288,7 +289,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       </article>`;
     };
     const sinkCard = (k) => `<article class="card" data-search="${esc([idOf(k), k.owner, k.description, k.sink_type, ...(k.tags || [])].join(' ').toLowerCase())}">
-        <header><h3 class="mono">${esc(idOf(k))}</h3><span class="badges">${ownerBadge(k)}${verOf(k)}<span class="kind">${esc(k.sink_type || '')}</span></span></header>
+        <header><h3 class="mono">${titleOf(k)}</h3><span class="badges">${ownerBadge(k)}${verOf(k)}<span class="kind">${esc(k.sink_type || '')}</span></span></header>
         ${k.description ? `<p>${esc(k.description)}</p>` : ''}
         <div class="tags">${(k.write_modes || []).map((m) => `<span class="tag mode-tag">${esc(m)}</span>`).join('')}</div>
         ${(k.params || []).length ? `<details><summary>${k.params.length} param${k.params.length === 1 ? '' : 's'}</summary><ul class="params">${paramList(k.params)}</ul></details>` : ''}
@@ -362,7 +363,11 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
   .hub-page .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); gap: 1rem; }
   .hub-page .empty { grid-column: 1 / -1; color: var(--ink-faint); padding: 1.5rem 0; }
   .hub-page .card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; box-shadow: var(--shadow-sm); }
-  .hub-page .card header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+  .hub-page .card header { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+  .hub-page .card header h3 { overflow-wrap: anywhere; line-height: 1.3; }
+  .hub-page .card header .ns { color: var(--ink-faint); font-weight: 500; }
+  .hub-page .card header .badges { justify-content: flex-start; }
+  .hub-page .badges > * { white-space: nowrap; }
   .hub-page .card h3 { font-size: 1rem; margin: 0; font-weight: 650; }
   .hub-page .mono { font-family: var(--font-mono); }
   .hub-page .badges { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; justify-content: flex-end; }
