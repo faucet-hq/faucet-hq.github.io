@@ -229,8 +229,9 @@
 .hub-page .tpl-after { margin-top: 0.7rem; }
 .hub-page .tpl-note code { white-space: nowrap; }
 @media (max-width: 520px) { .hub-page .tpl-versions li { grid-template-columns: 2.4rem 4.4rem 1fr; } }
-/* Commands in the narrow publish cards wrap rather than clip. */
-.hub-page .pub-card pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Commands in the publish cards keep one command per line and scroll sideways. */
+.hub-page .pub-card { min-width: 0; }
+.hub-page .pub-card pre { white-space: pre; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--term-fg) 35%, transparent) transparent; }
 .hub-page .publish a:not(.btn), .hub-page .tpl-page .tpl-note a { color: var(--teal-text); text-underline-offset: 2px; }
 .hub-page .grid-more { display: flex; justify-content: center; margin-top: 1.4rem; }
 .hub-page .hint a { color: var(--teal-text); white-space: nowrap; }
