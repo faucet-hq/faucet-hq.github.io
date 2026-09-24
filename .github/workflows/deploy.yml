@@ -9,9 +9,9 @@ on:
   push:
     branches: [main, dev]
   workflow_dispatch:
-  # Daily rebuild so /changelog picks up new releases without a site push.
+  # Hourly rebuild so /changelog shows a new release within the hour, without a site push.
   schedule:
-    - cron: "17 6 * * *"
+    - cron: "17 * * * *"
 
 permissions:
   contents: read

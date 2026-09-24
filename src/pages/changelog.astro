@@ -84,6 +84,9 @@ const crateGroups = [...GROUPS, ['Other', () => true] as [string, (c: string) =>
                 <a class="cl-headline" href={e.head.url} target="_blank" rel="noopener noreferrer">
                   {e.head.crate} <b>{e.head.version}</b>
                 </a>
+                {e.crates.length > 1 && (
+                  <span class="cl-more">and {e.crates.length - 1} more {e.crates.length === 2 ? 'crate' : 'crates'}</span>
+                )}
               </div>
               <div class="cl-card">
                 {e.sections.map((s) => (
@@ -169,6 +172,7 @@ const crateGroups = [...GROUPS, ['Other', () => true] as [string, (c: string) =>
   .changelog-page .cl-headline { font-size: 1rem; color: var(--ink); text-decoration: none; }
   .changelog-page .cl-headline b { font-family: var(--font-mono); color: var(--teal-text); }
   .changelog-page .cl-headline:hover { color: var(--teal-text); }
+  .changelog-page .cl-more { font-size: 0.85rem; color: var(--ink-faint); }
   .changelog-page .cl-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.2rem 1.4rem; display: grid; gap: 1.1rem; box-shadow: var(--shadow-sm); }
   .changelog-page .cl-section h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 0.5rem; }
   .changelog-page .cl-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ink-faint); }
