@@ -16,9 +16,28 @@ const md = (s: string) =>
     .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 const fmtDay = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const SECTION_LABEL: Record<string, string> = { 'Bug Fixes': 'Fixes' };
-const crateLabel = (c: string) => (c === 'faucet-cli' ? 'faucet CLI' : c);
-const allCrates = [...new Set(entries.flatMap((e) => e.crates.map((c) => c.crate)))].sort((a, b) =>
-  a === 'faucet-cli' ? -1 : b === 'faucet-cli' ? 1 : a.localeCompare(b));
+// Group the crate filter the way the workspace is laid out, so ~90 names scan by role.
+const GROUPS: [string, (c: string) => boolean][] = [
+  ['CLI and library', (c) => ['faucet-cli', 'faucet-stream', 'faucet-core', 'faucet-auth', 'faucet-lineage', 'faucet-conformance'].includes(c)],
+  ['Sources', (c) => c.startsWith('faucet-source-')],
+  ['Sinks', (c) => c.startsWith('faucet-sink-')],
+  ['Transforms', (c) => c.startsWith('faucet-transform-')],
+  ['State backends', (c) => c.startsWith('faucet-state-')],
+  ['Shared connector code', (c) => c.startsWith('faucet-common-') || c.endsWith('-common')],
+];
+const ORDER = ['faucet-cli', 'faucet-stream', 'faucet-core'];
+const crateNames = [...new Set(entries.flatMap((e) => e.crates.map((c) => c.crate)))];
+const byOrder = (a: string, b: string) => {
+  const ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+};
+const crateGroups = [...GROUPS, ['Other', () => true] as [string, (c: string) => boolean]]
+  .reduce<{ seen: Set<string>; out: { label: string; crates: string[] }[] }>((acc, [label, test]) => {
+    const crates = crateNames.filter((c) => !acc.seen.has(c) && test(c)).sort(byOrder);
+    crates.forEach((c) => acc.seen.add(c));
+    if (crates.length) acc.out.push({ label, crates });
+    return acc;
+  }, { seen: new Set(), out: [] }).out;
 ---
 
 <Base
@@ -40,7 +59,11 @@ const allCrates = [...new Set(entries.flatMap((e) => e.crates.map((c) => c.crate
             <label for="cl-crate">Show changes for</label>
             <select id="cl-crate" class="cl-select">
               <option value="">every crate</option>
-              {allCrates.map((c) => <option value={c}>{crateLabel(c)}</option>)}
+              {crateGroups.map((g) => (
+                <optgroup label={g.label}>
+                  {g.crates.map((c) => <option value={c}>{c}</option>)}
+                </optgroup>
+              ))}
             </select>
             <a class="cl-gh" href={RELEASES} target="_blank" rel="noopener noreferrer">All GitHub releases ↗</a>
           </div>
@@ -59,7 +82,7 @@ const allCrates = [...new Set(entries.flatMap((e) => e.crates.map((c) => c.crate
               <div class="cl-when">
                 <time datetime={e.day}>{fmtDay(e.day)}</time>
                 <a class="cl-headline" href={e.head.url} target="_blank" rel="noopener noreferrer">
-                  {crateLabel(e.head.crate)} <b>{e.head.version}</b>
+                  {e.head.crate} <b>{e.head.version}</b>
                 </a>
               </div>
               <div class="cl-card">
