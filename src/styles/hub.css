@@ -313,3 +313,9 @@
 .hub-page .pub-choice--sink { --_t: var(--tint-sink); }
 .hub-page .pub-choice:hover { --_bg: color-mix(in srgb, var(--_t) 18%, var(--surface)); background: var(--_bg); color: var(--_t); border-color: color-mix(in srgb, var(--_t) 55%, transparent); box-shadow: var(--shadow-sm); }
 .hub-page .pub-choice:focus-visible { outline: 2px solid var(--_t); outline-offset: 2px; }
+/* Topic tags are links to a search, set as text rather than as badges. */
+.hub-page .topics { display: flex; flex-wrap: wrap; gap: 0.2rem 0.9rem; margin-top: 0.9rem; }
+.hub-page .topic { font-size: 0.9rem; color: var(--ink-soft); text-decoration: none; }
+.hub-page .topic:hover { color: var(--teal-text); text-decoration: underline; text-underline-offset: 3px; }
+.hub-page .tpl-facts a { color: var(--teal-text); text-decoration: none; }
+.hub-page .tpl-facts a:hover { text-decoration: underline; text-underline-offset: 3px; }

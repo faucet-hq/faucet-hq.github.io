@@ -91,10 +91,9 @@ const base = import.meta.env.BASE_URL;
       const q = encodeURIComponent(`is:issue is:open label:"template:${idOf(t)}"`);
       facts.push(`<a class="fact" href="${H.HUB_REPO}/issues?q=${q}" target="_blank" rel="noopener noreferrer">${plural(tr.open_issues, 'open issue')}</a>`);
     }
-    if (tr.publisher && t.owner) {
-      const p = tr.publisher;
-      const age = p.account_age_days != null ? (p.account_age_days >= 365 ? `${Math.floor(p.account_age_days / 365)}y on GitHub` : `${p.account_age_days}d on GitHub`) : '';
-      facts.push(`<span class="fact">@${esc(t.owner)}${p.templates != null ? ` · ${plural(p.templates, 'template')}` : ''}${age ? ` · ${age}` : ''}</span>`);
+    if (t.owner) {
+      const n = tr.publisher?.templates;
+      facts.push(`<span class="fact">Published by <a href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer">@${esc(t.owner)}</a>${n > 1 ? ` · <a href="${H.BASE}hub/?owner=${encodeURIComponent(t.owner)}&sink_owner=${encodeURIComponent(t.owner)}#sources">all ${n} templates →</a>` : ''}</span>`);
     }
     const version = t.newest ? `<span class="ver" title="the version unpinned runs use">v${t.stable || t.newest} stable${t.stable && t.newest && t.stable !== t.newest ? ` · v${t.newest} newest` : ''}</span>` : '';
     const links = [
@@ -107,7 +106,7 @@ const base = import.meta.env.BASE_URL;
       <h1 class="mono tpl-title">${H.titleOf(t)}</h1>
       <div class="badges tpl-badges">${H.ownerBadge(t)}${typeLabel ? `<span class="kind">${esc(typeLabel)}</span>` : ''}${version}</div>
       ${t.description ? `<p class="lede">${esc(t.description)}</p>` : ''}
-      ${(t.tags || []).length ? `<div class="tags">${t.tags.map((g) => `<span class="tag">${esc(g)}</span>`).join('')}</div>` : ''}
+      ${(t.tags || []).length ? `<div class="topics" aria-label="Topics">${t.tags.map((g) => `<a class="topic" href="${H.BASE}hub/?${kind === 'sink' ? 'sink_q' : 'q'}=${encodeURIComponent(g)}#${kind === 'sink' ? 'sinks' : 'sources'}">#${esc(g)}</a>`).join('')}</div>` : ''}
       ${facts.length ? `<div class="tpl-facts">${facts.join('')}</div>` : ''}
       ${links ? `<div class="actions">${links}</div>` : ''}`;
     head.setAttribute('aria-busy', 'false');

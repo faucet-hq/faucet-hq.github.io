@@ -383,6 +383,8 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
     for (const [key, sec] of Object.entries(SECTIONS)) {
       const wanted = params.get(sec.param);
       if (wanted && H.SORTS[wanted]) $('sort-' + key).value = wanted;
+      const q0 = params.get(key === 'sources' ? 'q' : 'sink_q');
+      if (q0) $('q-' + key).value = q0;
       renderFacets(key);
       renderActive(key);
       renderGrid(key);
