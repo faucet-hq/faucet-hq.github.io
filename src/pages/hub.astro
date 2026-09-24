@@ -306,7 +306,7 @@ faucet hub check --hub . --source my-system --sink bigquery</code></pre>
       const tr = trustOf(t);
       const bits = [];
       if (tr.star_url) {
-        bits.push(`<a class="star" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer" title="👍 the discussion to star it — accounts under 30 days old and the template's own publishers don't count">★ ${starsOf(t)} <span>· star on GitHub</span></a>`);
+        bits.push(`<a class="star" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer" title="Upvote (↑) the template's discussion to star it">★ ${starsOf(t)} <span>· upvote on GitHub</span></a>`);
       } else if (tr.stars != null) {
         bits.push(`<span class="star">★ ${starsOf(t)}</span>`);
       }
