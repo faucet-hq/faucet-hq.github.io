@@ -184,8 +184,8 @@ const crateGroups = [...GROUPS, ['Other', () => true] as [string, (c: string) =>
   .changelog-page .cl-section li::before { content: ''; position: absolute; left: 0.2rem; top: 0.65em; width: 0.3rem; height: 1px; background: var(--ink-faint); }
   .changelog-page .cl-section li code { font-size: 0.85em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; }
   .changelog-page .cl-section li a { color: var(--teal-text); }
-  .changelog-page .cl-pr { margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint) !important; text-decoration: none; }
-  .changelog-page .cl-pr:hover { color: var(--teal-text) !important; }
+  .changelog-page .cl-pr { margin-left: 0.4rem; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500; color: var(--teal-text); text-decoration: none; white-space: nowrap; }
+  .changelog-page .cl-pr:hover { text-decoration: underline; text-underline-offset: 3px; }
   .changelog-page .cl-crates { border-top: 1px solid var(--line); padding-top: 0.8rem; font-size: 0.85rem; }
   .changelog-page .cl-crates summary { cursor: pointer; color: var(--ink-soft); }
   .changelog-page .cl-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.7rem; }
