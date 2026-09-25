@@ -49,6 +49,7 @@ const groups = [
       { n: 'Pub/Sub', src: true, sink: true },
       { n: 'SQS', src: true, sink: true },
       { n: 'NATS', src: true, sink: true },
+      { n: 'RabbitMQ', src: true, sink: true },
     ],
   },
   {
@@ -90,14 +91,14 @@ const groups = [
 
 <Base
   title="Connectors — faucet-stream"
-  description="Every faucet-stream connector: 37 sources and 29 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
+  description="Every faucet-stream connector: 38 sources and 30 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
 >
   <Header />
   <main id="main">
     <section class="section head">
       <div class="wrap">
         <span class="eyebrow" data-reveal>Connectors</span>
-        <h1 data-reveal style="--reveal-delay:.05s">37 sources. 29 sinks. One config grammar.</h1>
+        <h1 data-reveal style="--reveal-delay:.05s">38 sources. 30 sinks. One config grammar.</h1>
         <p class="lede" data-reveal style="--reveal-delay:.1s">
           Every connector shares the same auth, pagination, batching, and state model —
           learn one and you know them all. Arrow-native fast paths run columnar
