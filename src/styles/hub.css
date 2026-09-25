@@ -14,8 +14,8 @@
 /* compose widget */
 .hub-page .compose-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.3rem 1.4rem; box-shadow: var(--shadow-sm); }
 .hub-page .compose-row { display: flex; flex-wrap: wrap; align-items: end; gap: 0.9rem; }
-.hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; }
-.hub-page .compose-row select { font: inherit; font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 0; text-transform: none; color: var(--ink); background-color: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem; }
+.hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; min-width: 0; }
+.hub-page .compose-row select { width: 100%; min-width: 0; max-width: 100%; font: inherit; font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 0; text-transform: none; color: var(--ink); background-color: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem; }
 .hub-page .times { font-size: 1.4rem; color: var(--ink-faint); padding-bottom: 0.45rem; }
 .hub-page .plan { margin-top: 1rem; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.8rem 0.9rem 0.9rem; }
 .hub-page .plan-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.7rem; }
@@ -24,11 +24,11 @@
 .hub-page .plan-verdict { font-family: var(--font-mono); font-size: 0.8rem; }
 .hub-page .plan-verdict.is-ok { color: var(--teal-text); }
 .hub-page .plan-verdict.is-bad { color: #b91c1c; }
-.hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.5rem; }
-.hub-page .plan li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.5rem 0.7rem; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--surface-2); }
+.hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.hub-page .plan li { flex: 0 1 auto; min-width: min(14rem, 100%); max-width: 100%; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.5rem 0.7rem; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--surface-2); }
 .hub-page .plan li.bad { border-color: color-mix(in srgb, #b91c1c 35%, var(--line-soft)); }
 .hub-page .plan li.bad .mode { color: #b91c1c; }
-.hub-page .plan .mode { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
+.hub-page .plan .mode { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.8rem; text-align: right; overflow-wrap: anywhere; }
 .hub-page .plan .mode em { font-style: normal; color: var(--ink-faint); }
 .hub-page .cmd { position: relative; margin-top: 1rem; }
 .hub-page .cmd pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.9rem 5.5rem 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
