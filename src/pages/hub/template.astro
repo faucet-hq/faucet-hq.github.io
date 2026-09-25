@@ -97,7 +97,10 @@ const base = import.meta.env.BASE_URL;
       const n = tr.publisher?.templates;
       facts.push(`<span class="fact">Published by <a href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer">@${esc(t.owner)}</a>${n > 1 ? `<span class="sep" aria-hidden="true">·</span><a href="${H.BASE}hub/?owner=${encodeURIComponent(t.owner)}&sink_owner=${encodeURIComponent(t.owner)}#sources">all ${n} templates →</a>` : ''}</span>`);
     }
-    const version = t.newest ? `<span class="ver" title="the version unpinned runs use">v${t.stable || t.newest} stable${t.stable && t.newest && t.stable !== t.newest ? ` · v${t.newest} newest` : ''}</span>` : '';
+    // Only worth a badge when there is a choice to make: a newer version than
+    // the one unpinned runs use. A single version says nothing the page doesn't.
+    const version = t.stable && t.newest && t.stable !== t.newest
+      ? `<a class="kind ver" href="#versions" title="Unpinned runs use v${t.stable}; v${t.newest} is newer">v${t.stable} stable · v${t.newest} newest</a>` : '';
     const links = [
       tr.star_url ? `<a class="btn" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer">★ Upvote on GitHub</a>` : '',
       t.file ? `<a class="btn btn--ghost" href="${H.HUB_REPO}/blob/main/${esc(t.file)}" target="_blank" rel="noopener noreferrer">View the file ↗</a>` : '',
@@ -106,7 +109,7 @@ const base = import.meta.env.BASE_URL;
     head.innerHTML = `
       <span class="eyebrow">${kind === 'source' ? 'Source template' : 'Sink template'}</span>
       <h1 class="mono tpl-title">${H.titleOf(t)}</h1>
-      <div class="badges tpl-badges">${H.ownerBadge(t)}${typeLabel ? `<span class="kind">${esc(typeLabel)}</span>` : ''}${version}</div>
+      <div class="badges tpl-badges">${H.ownerBadge(t)}${typeLabel ? `<a class="kind" href="${H.BASE}hub/?${kind === 'sink' ? 'sink_type' : 'type'}=${encodeURIComponent(typeLabel)}#${kind === 'sink' ? 'sinks' : 'sources'}" title="All ${kind} templates of type ${esc(typeLabel)}">${esc(typeLabel)}</a>` : ''}${version}</div>
       ${t.description ? `<p class="lede">${esc(t.description)}</p>` : ''}
       ${(t.tags || []).length ? `<div class="topics" aria-label="Topics">${t.tags.map((g) => `<a class="topic" href="${H.BASE}hub/?${kind === 'sink' ? 'sink_q' : 'q'}=${encodeURIComponent(g)}#${kind === 'sink' ? 'sinks' : 'sources'}">#${esc(g)}</a>`).join('')}</div>` : ''}
       ${facts.length ? `<div class="tpl-facts">${facts.join('')}</div>` : ''}
