@@ -98,7 +98,6 @@ origins:
         <p class="hub-live" data-reveal style="--reveal-delay:.16s"><span class="live-dot" aria-hidden="true"></span><span id="hub-meta"></span></p>
         <div class="actions" data-reveal style="--reveal-delay:.18s">
           <a class="btn" href="#publish">Publish a template</a>
-          <a class="btn btn--ghost" href={HUB_REPO} target="_blank" rel="noopener noreferrer">Catalog on GitHub →</a>
         </div>
       </div>
     </section>
@@ -254,7 +253,7 @@ faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code><
     $('n-sinks').textContent = sinks.length;
     $('n-pairs').textContent = cat.compatiblePairs;
     $('n-official').textContent = sources.filter(H.isOfficial).length;
-    $('hub-meta').textContent = 'Live from faucet-hq/template-hub';
+    $('hub-meta').innerHTML = `Live from <a href="${H.HUB_REPO}" target="_blank" rel="noopener noreferrer">faucet-hq/template-hub</a>`;
 
     // ── try a pairing ────────────────────────────────────────────────────
     const params = new URLSearchParams(location.search);
