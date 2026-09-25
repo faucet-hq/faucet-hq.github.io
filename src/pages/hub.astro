@@ -114,7 +114,7 @@ origins:
           <div id="pairing"></div>
           <p class="hint">
             Runs against the public hub with no checkout; the CLI caches the catalog under <code>~/.cache/faucet/hub</code>.
-            <a href="https://faucet-hq.github.io/faucet-stream/getting-started/installation.html">Install the CLI →</a>
+            <a href="#install">Install the CLI ↓</a>
           </p>
         </div>
       </div>
@@ -202,7 +202,8 @@ origins:
         </div>
         <div class="pub-card">
           <h3>2 · Check it locally</h3>
-          <pre><code>faucet hub lint  --hub .
+          <pre><code><span class="cmd-note"># Install the CLI first (see below)</span>
+faucet hub lint  --hub .
 faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/jsonl
 faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/bigquery</code></pre>
           <p>Every source must compose with at least two sinks. See <a href={CONTRIBUTING}>CONTRIBUTING</a> for the rules the lint enforces.</p>
@@ -210,7 +211,8 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
         <div class="pub-card">
           <h3>3 · Or keep it private</h3>
           <p>Your organisation's templates can live in any repository with the same layout:</p>
-          <pre><code>faucet run --hub github:acme/catalog --source acme/erp --sink acme/snowflake …</code></pre>
+          <pre><code><span class="cmd-note"># Install the CLI first (see below)</span>
+faucet run --hub github:acme/catalog --source acme/erp --sink acme/snowflake …</code></pre>
           <p>Set <code>GITHUB_TOKEN</code> for a private repo.</p>
         </div>
       </div>
@@ -222,7 +224,8 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
         shows which sinks each registered source runs on.
       </p>
       <pre><code>{SYNC_YAML}</code></pre>
-      <pre><code>faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code></pre>
+      <pre><code><span class="cmd-note"># Install the CLI first (see below)</span>
+faucet serve --history sqlite:./faucet.db --templates-sync hub-sync.yaml</code></pre>
       <p class="docs-link">Full reference: <a href={DOCS}>Template Hub cookbook</a>.</p>
       </div>
     </section>

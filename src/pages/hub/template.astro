@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
 import '../../styles/hub.css';
 
 const base = import.meta.env.BASE_URL;
@@ -31,7 +32,7 @@ const base = import.meta.env.BASE_URL;
           <div id="pairing"></div>
           <p class="hint">
             Runs against the public hub with no checkout; the CLI caches the catalog under <code>~/.cache/faucet/hub</code>.
-            <a href="https://faucet-hq.github.io/faucet-stream/getting-started/installation.html">Install the CLI →</a>
+            <a href="#install">Install the CLI ↓</a>
           </p>
         </div>
       </div>
@@ -44,6 +45,7 @@ const base = import.meta.env.BASE_URL;
     <section class="section band" id="more" hidden>
       <div class="wrap" id="tpl-more"></div>
     </section>
+    <CTA />
   </main>
   <Footer />
 </Base>

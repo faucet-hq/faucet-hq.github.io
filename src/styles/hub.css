@@ -17,12 +17,16 @@
 .hub-page .compose-row label { display: flex; flex-direction: column; gap: 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); flex: 1 1 14rem; }
 .hub-page .compose-row select { font: inherit; font-family: var(--font-mono); font-size: 0.95rem; letter-spacing: 0; text-transform: none; color: var(--ink); background-color: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem; }
 .hub-page .times { font-size: 1.4rem; color: var(--ink-faint); padding-bottom: 0.45rem; }
-.hub-page .plan { margin-top: 1rem; }
-.hub-page .plan-head { font-family: var(--font-mono); font-size: 0.82rem; margin-bottom: 0.5rem; }
-.hub-page .plan-head.is-ok { color: var(--teal-text); }
-.hub-page .plan-head.is-bad { color: #b91c1c; }
-.hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.35rem 1.2rem; }
-.hub-page .plan li { display: flex; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--line-soft); }
+.hub-page .plan { margin-top: 1rem; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 0.8rem 0.9rem 0.9rem; }
+.hub-page .plan-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.7rem; }
+.hub-page .plan-title { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+.hub-page .plan-count { display: inline-block; min-width: 1.4em; margin-left: 0.3rem; padding: 0 0.35rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); text-align: center; letter-spacing: 0; }
+.hub-page .plan-verdict { font-family: var(--font-mono); font-size: 0.8rem; }
+.hub-page .plan-verdict.is-ok { color: var(--teal-text); }
+.hub-page .plan-verdict.is-bad { color: #b91c1c; }
+.hub-page .plan ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.5rem; }
+.hub-page .plan li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; font-size: 0.88rem; padding: 0.5rem 0.7rem; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); background: var(--surface-2); }
+.hub-page .plan li.bad { border-color: color-mix(in srgb, #b91c1c 35%, var(--line-soft)); }
 .hub-page .plan li.bad .mode { color: #b91c1c; }
 .hub-page .plan .mode { color: var(--ink-soft); font-family: var(--font-mono); font-size: 0.8rem; white-space: nowrap; }
 .hub-page .plan .mode em { font-style: normal; color: var(--ink-faint); }
@@ -30,6 +34,7 @@
 .hub-page .cmd pre { margin: 0; background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius-sm); padding: 0.9rem 5.5rem 0.9rem 1rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
 .hub-page .cmd .copy { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-family: var(--font-mono); font-size: 0.72rem; background: rgba(255,255,255,0.08); color: var(--term-fg); border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; padding: 0.25rem 0.7rem; cursor: pointer; }
 .hub-page .cmd .copy:hover { background: rgba(255,255,255,0.16); }
+.hub-page .cmd-note { color: color-mix(in srgb, var(--term-fg) 55%, transparent); }
 .hub-page .hint { margin-top: 0.9rem; font-size: 0.82rem; color: var(--ink-faint); }
 .hub-page .hint code { font-size: 0.78rem; overflow-wrap: anywhere; }
 
@@ -62,6 +67,8 @@
 /* `display` on cards/empties would otherwise beat the hidden attribute the filters set. */
 .hub-page [hidden] { display: none !important; }
 .hub-page .fit { margin-top: 1rem; display: grid; gap: 0.6rem; }
+.hub-page .fit:first-child .fit-label { margin-top: 0; }
+.hub-page .fit-label { display: block; margin: 1rem 0 0.35rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
 .hub-page .fit-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.88rem; color: var(--ink-soft); }
 .hub-page .fit-head b { color: var(--teal-text); font-variant-numeric: tabular-nums; }
 .hub-page .fit-filter { min-width: 0; width: 14rem; margin: 0; padding: 0.35rem 0.8rem; font-size: 0.82rem; }

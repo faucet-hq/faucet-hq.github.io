@@ -93,7 +93,8 @@
     const rows = (c.streams || []).map((p) =>
       `<li class="ok"><span class="mono">${esc(p.stream)}</span><span class="mode">${esc(p.write_mode)}${p.satisfies ? ` <em>for ${esc(p.satisfies)}</em>` : ''}</span></li>`)
       .concat((c.incompatible || []).map((i) => `<li class="bad"><span class="mono">${esc(i.stream)}</span><span class="mode">✗ ${esc(i.reason)}</span></li>`));
-    return `<div class="plan-head ${c.compatible ? 'is-ok' : 'is-bad'}">${c.compatible ? '✓ compatible' : `✗ ${(c.incompatible || []).length} stream(s) have no viable write mode`}</div><ul>${rows.join('')}</ul>`;
+    const n = (c.streams || []).length + (c.incompatible || []).length;
+    return `<div class="plan-head"><span class="plan-title">Streams <span class="plan-count">${n}</span></span><span class="plan-verdict ${c.compatible ? 'is-ok' : 'is-bad'}">${c.compatible ? '✓ compatible' : `✗ ${(c.incompatible || []).length} stream(s) have no viable write mode`}</span></div><ul>${rows.join('')}</ul>`;
   }
 
   /* The pairing widget. `fixed` pins one side: { source: id } on a source's
@@ -148,14 +149,10 @@
     function render(focusFilter) {
       const c = cat.cell(state.source, state.sink);
       root.innerHTML = `
-        <div class="compose-row">
-          ${fixed.source ? '' : select('source')}
-          ${fixed.source || fixed.sink ? '' : '<span class="times" aria-hidden="true">×</span>'}
-          ${fixed.sink ? '' : select('sink')}
-        </div>
-        <div class="fit">${chips()}</div>
+        ${fixed.source || fixed.sink ? '' : `<div class="compose-row">${select('source')}</div>`}
+        <div class="fit"><span class="fit-label">${axis === 'sinks' ? 'sink' : 'source'}</span>${chips()}</div>
         <div class="plan" aria-live="polite">${planHtml(c)}</div>
-        ${c?.compatible && c.command ? `<div class="cmd"><pre><code>${esc(c.command)}</code></pre><button class="copy" type="button" aria-label="Copy command">copy</button></div>` : ''}`;
+        ${c?.compatible && c.command ? `<div class="cmd"><pre><code><span class="cmd-note"># Install the CLI first (see below)</span>\n${esc(c.command)}</code></pre><button class="copy" type="button" aria-label="Copy command">copy</button></div>` : ''}`;
       if (focusFilter) {
         const f = root.querySelector('.fit-filter');
         if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
