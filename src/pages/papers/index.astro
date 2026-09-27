@@ -108,7 +108,7 @@ const allTags = [...counts.keys()].sort(
           {p.href
             ? <div class="pactions">
                 <a class="pread" href={p.href}>Read the paper →</a>
-                <a class="ppdf" href={`${p.href}.pdf`} download>PDF</a>
+                <a class="ppdf" href={`${p.href}.pdf`} download>Download PDF</a>
               </div>
             : <span class="psoon">Coming soon</span>}
         </article>
@@ -224,9 +224,10 @@ const allTags = [...counts.keys()].sort(
   .pstatus.is-planned { color: var(--ink-faint); border-color: var(--line); background: transparent; }
   .pcard h2 { font-size: 1.25rem; }
   .pcard p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }
-  .pactions { margin-top: auto; padding-top: 1rem; display: flex; align-items: baseline; gap: 1.1rem; }
-  .pactions .pread { margin-top: 0; }
-  .ppdf { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
+  .pactions { margin-top: auto; padding-top: 1rem; display: flex; align-items: center; gap: 1.25rem; }
+  .pactions a { line-height: 1.4; }
+  .pactions .pread { margin-top: 0; align-self: auto; }
+  .ppdf { font-weight: 500; font-size: 0.92rem; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
   .ppdf:hover { color: var(--teal-deep); border-bottom-color: color-mix(in srgb, var(--teal-deep) 35%, transparent); }
   .pread { margin-top: 1rem; color: var(--teal-deep); font-weight: 600; font-size: 0.92rem; border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); align-self: flex-start; }
   .psoon { margin-top: 1rem; color: var(--ink-faint); font-size: 0.88rem; font-family: var(--font-mono); }
