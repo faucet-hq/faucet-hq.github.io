@@ -7,36 +7,65 @@ import CTA from '../../components/CTA.astro';
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const base = import.meta.env.BASE_URL;
 
-// One real pipeline exercising all six guardrails, in order.
-const configExample = `pipeline:
-  source: { type: postgres, config: { query: "select * from orders" } }
+// One real pipeline exercising all six guardrails; passes `faucet validate` on main.
+const configExample = `version: 1
+name: orders_governed
 
-  # Governance runs in the pipe, per page, before the sink — in this order.
+lineage:                                 # schema + column-level lineage, no values
+  namespace: prod.warehouse
+  include_column_lineage: true
+  transport: { type: http, config: { url: "\${env:OPENLINEAGE_URL}" } }
+
+sla:                                     # checked after every run
+  max_staleness_secs: 86400
+  min_rows_per_run: 1
+
+pipeline:
+  source:
+    type: postgres
+    config:
+      connection_url: "\${env:PG_URL}"
+      query: "SELECT id, email, ssn, amount, status FROM orders"
+
+  # Governance runs in the pipe, per page, before the sink, in this order.
   masking:
+    key: "\${env:MASKING_KEY}"            # keyed HMAC-SHA256: deterministic and joinable
     rules:
-      - { field: email, action: hash }     # HMAC-SHA256, deterministic, joinable
-      - { field: ssn,   action: redact }   # -> "***"
-  quality:
-    checks:
-      - { field: email,  rule: not_null, on_failure: quarantine }
-      - { field: amount, rule: { gte: 0 }, on_failure: abort }
-  contract:
-    version: 1
-    fields:
-      - { name: id,     type: integer, required: true }
-      - { name: status, type: string, enum: [active, churned] }
-    on_breach: quarantine
-  drift:
-    on_drift: quarantine        # warn | evolve | ignore | quarantine | fail
-  lineage:
-    namespace: prod.warehouse
-    include_column_lineage: true
-  sla:
-    max_staleness_secs: 86400
-    min_rows_per_run: 1
+      - { name: hash-email, match: { fields: [email] }, action: { type: hash } }
+      - { name: redact-ssn, match: { fields: [ssn] },   action: { type: redact } }
 
-  sink: { type: bigquery, config: { dataset: raw, table: orders, write_mode: merge } }
-  dlq:  { type: jsonl, config: { path: ./dlq/orders.jsonl } }`;
+  quality:
+    record:
+      - { type: not_null, field: email,  on_failure: quarantine }
+      - { type: compare,  field: amount, op: gte, value: 0, on_failure: abort }
+
+  contract:
+    version: "1"
+    on_breach: quarantine
+    allow_extra_fields: true
+    fields:
+      - { name: id,     type: integer }
+      - { name: status, type: string, enum: [active, churned] }
+
+  schema:
+    on_drift: quarantine                 # warn | evolve | ignore | quarantine | fail
+
+  dlq:                                   # quarantined rows land here, already masked
+    sink: { type: jsonl, config: { path: ./dlq/orders.jsonl } }
+
+  sink:
+    type: bigquery
+    config:
+      project_id: my-project
+      dataset_id: raw
+      table_id: orders
+      write_mode: upsert
+      key: [id]
+      auth: { type: service_account_key, config: { json: "\${env:GCP_KEY_JSON}" } }
+
+  state:                                 # bookmarks + run history (the freshness SLA reads it)
+    type: file
+    config: { path: ./.faucet-state }`;
 
 const compare = [
   ['PII masked before it lands', 'Yes — before sink, DLQ, and lineage', 'No — masked (if at all) after load', 'No'],
@@ -68,7 +97,9 @@ const compare = [
         <div class="meta">
           <span>faucet-stream</span><span>·</span><span>~12 min read</span><span>·</span>
           <span>Benchmark run pending</span>
+          <span class="no-print">·</span><a class="pdf no-print" href={`${base}papers/governance-in-the-movement-path.pdf`} download>Download PDF</a>
         </div>
+        <p class="print-only online">Online version: https://faucet-hq.github.io/papers/governance-in-the-movement-path</p>
       </header>
 
       <section class="abstract">
@@ -214,7 +245,7 @@ const compare = [
           Every guardrail is invoked once, at the framework level, inside the shared run loop —
           no source or sink implements masking, quality, contracts, or drift. A connector cannot
           forget a guardrail, and it cannot bypass one: when masking is configured, faucet-stream
-          disables its <a href="/papers/columnar-fast-path">columnar (Arrow) fast path</a> for that
+          disables its <a href={`${base}papers/columnar-fast-path`}>columnar (Arrow) fast path</a> for that
           pipeline, so the data is always routed through the governed row loop rather than an
           ungoverned columnar shortcut. Governance is a property of the engine, not of any connector.
         </p>
@@ -222,7 +253,7 @@ const compare = [
 
       <section>
         <h2>6. Configuration</h2>
-        <p>All six guardrails on one pipeline — the order in the file is illustrative; the engine fixes the runtime order described in §4:</p>
+        <p>All six guardrails on one pipeline. The order of blocks in the file doesn't matter: the engine fixes the runtime order described in §4. This config passes <code>faucet validate</code>, and the validator itself enforces two of the rules in §9: a <code>quarantine</code> action needs the <code>dlq:</code> sink, and the freshness SLA needs the <code>state:</code> block that holds run history.</p>
         <pre class="code"><code>{configExample}</code></pre>
       </section>
 
@@ -295,7 +326,7 @@ const compare = [
       </section>
 
       <p class="cta-inline">
-        Explore the guardrails in the <a href="/governance">governance overview</a> or the
+        Explore the guardrails in the <a href={`${base}governance`}>governance overview</a> or the
         <a href={DOCS}>full documentation</a>.
       </p>
     </article>
@@ -313,6 +344,7 @@ const compare = [
   .paper h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; line-height: 1.1; }
   .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
   .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+  .meta .pdf { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
 
   .paper section { margin-top: 2.4rem; }
   .paper h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
