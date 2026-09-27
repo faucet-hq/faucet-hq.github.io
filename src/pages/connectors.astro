@@ -15,9 +15,11 @@ const groups = [
       { n: 'Postgres', src: true, sink: true },
       { n: 'MySQL', src: true, sink: true },
       { n: 'SQL Server', src: true, sink: true },
+      { n: 'Oracle', src: true, sink: true },
       { n: 'SQLite', src: true, sink: true },
       { n: 'DuckDB', src: true, sink: true },
       { n: 'MongoDB', src: true, sink: true },
+      { n: 'DynamoDB', src: true, sink: true, badges: ['cdc'] },
       { n: 'Redis', src: true, sink: true },
     ],
   },
@@ -27,6 +29,7 @@ const groups = [
       { n: 'Postgres CDC', src: true, sink: false, badges: ['cdc'] },
       { n: 'MySQL CDC', src: true, sink: false, badges: ['cdc'] },
       { n: 'SQL Server CDC', src: true, sink: false, badges: ['cdc'] },
+      { n: 'Oracle CDC', src: true, sink: false, badges: ['cdc'] },
       { n: 'MongoDB CDC', src: true, sink: false, badges: ['cdc'] },
     ],
   },
@@ -35,7 +38,7 @@ const groups = [
     items: [
       { n: 'BigQuery', src: true, sink: true, badges: ['arrow'] },
       { n: 'Snowflake', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Databricks', src: true, sink: false, badges: ['arrow'] },
+      { n: 'Databricks', src: true, sink: true, badges: ['arrow'] },
       { n: 'Redshift', src: true, sink: true },
       { n: 'ClickHouse', src: true, sink: true },
       { n: 'Spanner', src: true, sink: true },
@@ -60,7 +63,7 @@ const groups = [
       { n: 'Azure Blob', src: true, sink: true },
       { n: 'Parquet', src: true, sink: true, badges: ['arrow'] },
       { n: 'Delta Lake', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Iceberg', src: false, sink: true },
+      { n: 'Iceberg', src: true, sink: true, badges: ['arrow'] },
       { n: 'SFTP', src: true, sink: true },
       { n: 'CSV', src: true, sink: true },
       { n: 'JSON Lines', src: false, sink: true },
@@ -91,14 +94,14 @@ const groups = [
 
 <Base
   title="Connectors — faucet-stream"
-  description="Every faucet-stream connector: 38 sources and 30 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
+  description="Every faucet-stream connector: 42 sources and 33 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
 >
   <Header />
   <main id="main">
     <section class="section head">
       <div class="wrap">
         <span class="eyebrow" data-reveal>Connectors</span>
-        <h1 data-reveal style="--reveal-delay:.05s">38 sources. 30 sinks. One config grammar.</h1>
+        <h1 data-reveal style="--reveal-delay:.05s">42 sources. 33 sinks. One config grammar.</h1>
         <p class="lede" data-reveal style="--reveal-delay:.1s">
           Every connector shares the same auth, pagination, batching, and state model —
           learn one and you know them all. Arrow-native fast paths run columnar
