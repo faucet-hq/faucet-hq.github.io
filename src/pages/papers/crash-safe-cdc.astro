@@ -39,7 +39,9 @@ const sources = [
         <div class="meta">
           <span>faucet-stream</span><span>·</span><span>~13 min read</span><span>·</span>
           <span>Grounded in code &amp; crash-resume tests</span>
+          <span class="no-print">·</span><a class="pdf no-print" href={`${base}papers/crash-safe-cdc.pdf`} download>Download PDF</a>
         </div>
+        <p class="print-only online">Online version: https://faucet-hq.github.io/papers/crash-safe-cdc</p>
       </header>
 
       <section class="abstract">
@@ -272,7 +274,7 @@ const sources = [
 
       <p class="cta-inline">
         See the CDC connectors in the <a href={DOCS}>documentation</a>, or read the companion paper on
-        <a href="/papers/governance-in-the-movement-path">governance in the movement path</a>.
+        <a href={`${base}papers/governance-in-the-movement-path`}>governance in the movement path</a>.
       </p>
     </article>
 
@@ -289,6 +291,7 @@ const sources = [
   .paper h1 { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; line-height: 1.1; }
   .dek { margin-top: 1.1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); }
   .meta { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.5rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink-faint); }
+  .meta .pdf { color: var(--teal-deep); border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent); }
 
   .paper section { margin-top: 2.4rem; }
   .paper h2 { font-size: 1.5rem; margin-bottom: 0.8rem; }
