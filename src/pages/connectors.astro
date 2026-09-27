@@ -31,6 +31,7 @@ const groups = [
       { n: 'SQL Server CDC', src: true, sink: false, badges: ['cdc'] },
       { n: 'Oracle CDC', src: true, sink: false, badges: ['cdc'] },
       { n: 'MongoDB CDC', src: true, sink: false, badges: ['cdc'] },
+      { n: 'DynamoDB Streams', src: true, sink: false, badges: ['cdc'] },
     ],
   },
   {
@@ -72,13 +73,12 @@ const groups = [
   {
     name: 'APIs & web',
     items: [
-      { n: 'REST', src: true, sink: false },
+      { n: 'REST / HTTP API', src: true, sink: true },
       { n: 'GraphQL', src: true, sink: false },
       { n: 'gRPC', src: true, sink: false },
       { n: 'XML / SOAP', src: true, sink: false },
       { n: 'WebSocket', src: true, sink: false },
       { n: 'Webhook', src: true, sink: false },
-      { n: 'HTTP', src: false, sink: true },
       { n: 'Elasticsearch', src: true, sink: true },
     ],
   },
