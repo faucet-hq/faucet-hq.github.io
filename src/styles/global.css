@@ -286,3 +286,21 @@ code, kbd, pre {
   border: 0;
 }
 
+
+/* ---- print: papers are also published as PDFs rendered from this ---- */
+.print-only { display: none; }
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  :root { color-scheme: light; }
+  html, body { background: #fff !important; }
+  .site-header, .footer, .cta-section, .skip-link, .crumb, .cta-inline, .no-print { display: none !important; }
+  .print-only { display: block; }
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+  main { padding: 0 !important; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3 { break-after: avoid; }
+  figure, table, dl, li { break-inside: avoid; }
+  pre, pre code { white-space: pre-wrap !important; overflow: visible !important; }
+  pre code { font-size: 0.64rem !important; line-height: 1.55 !important; }
+  .online { margin-top: 0.8rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); }
+}
