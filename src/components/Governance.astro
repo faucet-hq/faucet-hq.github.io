@@ -6,6 +6,9 @@ const guards = [
   { name: 'Schema-drift policy', desc: 'Detect drift and decide: pass, quarantine, or stop.' },
   { name: 'Column lineage', desc: 'OpenLineage events + a movement catalog, per column.' },
   { name: 'SLA monitors', desc: 'Freshness and volume checks with built-in metrics.' },
+  { name: 'Data-flow policies', desc: 'Say which sinks a label may reach, like PII only to EU; refused before any data moves.' },
+  { name: 'Change impact', desc: 'See which datasets, contracts and owners a schema change breaks, before it ships.' },
+  { name: 'Column profiling', desc: 'Learned per-column baselines flag real drift, with no thresholds to write.' },
 ];
 const GOV = `${import.meta.env.BASE_URL}governance`;
 ---

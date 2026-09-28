@@ -8,53 +8,72 @@ const D = 'https://faucet-hq.github.io/faucet-stream/cookbook';
 
 const guards = [
   {
+    name: 'PII masking',
+    desc: 'Redact, hash, tokenize or partially mask sensitive fields, matched by name, pattern or value detector. Runs first, before quality, contract, drift, the sink, the DLQ and lineage, so a masked field never leaves unmasked. Keyed hashing (HMAC-SHA256) stays deterministic and joinable.',
+    doc: `${D}/masking.html`,
+    code: `masking:
+  key: \${env:MASKING_KEY}      # keyed HMAC-SHA256
+  rules:
+    - name: emails
+      match: { fields: [email] }
+      action: { type: hash }
+    - name: ssn
+      match: { fields: [ssn] }
+      action: { type: redact }`,
+  },
+  {
     name: 'Data-quality checks',
-    desc: 'Assert invariants on every page — per-record or per-batch. Failures abort the run or quarantine to a dead-letter queue.',
+    desc: 'Assert invariants on every page, per record or per batch: not-null, regex, ranges, sets, uniqueness, row counts, JSON Schema. Failures abort the run or quarantine to a dead-letter queue.',
     doc: `${D}/quality.html`,
     code: `quality:
-  checks:
-    - field: email
-      rule: not_null
+  record:
+    - type: not_null
+      field: email
       on_failure: abort
-    - field: amount
-      rule: { gte: 0 }
+    - type: compare
+      field: amount
+      op: gte
+      value: 0
       on_failure: quarantine`,
   },
   {
     name: 'Data contracts',
-    desc: 'A versioned promise about the output shape — required fields, types, nullability, enums, patterns, bounds — enforced before the sink. Export to JSON Schema or OpenLineage.',
+    desc: 'A versioned promise about the output shape (types, nullability, enums, patterns, bounds) enforced before the sink. Export it as JSON Schema or OpenLineage with faucet contract.',
     doc: `${D}/contracts.html`,
     code: `contract:
-  version: 1
+  version: "1"
+  on_breach: quarantine
   fields:
-    - { name: id, type: integer, required: true }
+    - { name: id, type: integer }
     - { name: status, type: string,
-        enum: [active, churned] }
-  on_breach: quarantine`,
-  },
-  {
-    name: 'PII masking',
-    desc: 'Classify sensitive fields and redact or hash them. Runs FIRST — before quality, contract, drift, the sink, the DLQ, and lineage — so PII never leaves unmasked. Hashing is deterministic (stays joinable).',
-    doc: `${D}/masking.html`,
-    code: `masking:
-  rules:
-    - field: email
-      action: hash      # HMAC-SHA256, joinable
-    - field: ssn
-      action: redact    # → "***"`,
+        enum: [active, churned] }`,
   },
   {
     name: 'Schema-drift policy',
-    desc: 'Detect when the source shape changes and decide what happens — warn, evolve, ignore, quarantine, or fail — instead of silently corrupting downstream.',
+    desc: 'Detect when the source shape changes and decide what happens (warn, evolve, ignore, quarantine or fail) instead of silently corrupting downstream.',
     doc: `${D}/schema-drift.html`,
-    code: `drift:
+    code: `schema:
   on_drift: quarantine
   # warn | evolve | ignore
   #   | quarantine | fail`,
   },
   {
+    name: 'Data-flow policies',
+    desc: 'Classify columns and declare which sinks each label may reach, such as PII only to EU sinks. validate, plan and doctor report violations before any data moves, and run refuses them.',
+    doc: `${D}/policies.html`,
+    code: `policy:
+  version: 1
+  classifications:
+    - label: pii
+      fields: [email, phone]
+  rules:
+    - name: pii-stays-in-eu
+      when: { label: pii }
+      require: { residency: [eu] }`,
+  },
+  {
     name: 'Column-level lineage',
-    desc: 'Emit OpenLineage events with dataset schemas and column-level lineage derived from the transform chain — to Marquez or any OpenLineage endpoint — plus a movement catalog.',
+    desc: 'Emit OpenLineage events with dataset schemas and column-level lineage derived from the transform chain, to Marquez or any OpenLineage endpoint, plus a movement catalog.',
     doc: `${D}/lineage.html`,
     code: `lineage:
   namespace: prod.warehouse
@@ -62,24 +81,60 @@ const guards = [
   include_column_lineage: true
   transport:
     type: http
-    url: \${env:MARQUEZ_URL}`,
+    config:
+      url: \${env:MARQUEZ_URL}`,
+  },
+  {
+    name: 'Change impact analysis',
+    desc: 'Before a change ships, faucet plan --impact walks the catalog lineage graph and lists the datasets, contracts, owners and consumers a dropped or retyped column would break, with a severity for each.',
+    doc: `${D}/impact.html`,
+    code: `catalog:
+  url: sqlite:./faucet-catalog.db
+
+# then, before merging a change:
+#   faucet plan orders.yaml --impact`,
   },
   {
     name: 'Freshness & volume SLAs',
-    desc: 'Declare what "healthy" looks like — max staleness, minimum rows, or a learned volume baseline (±3σ). Violations emit a Prometheus counter you can alert on.',
+    desc: 'Declare what healthy looks like: max staleness, minimum rows, or a learned volume baseline (±3σ). Violations emit a Prometheus counter you can alert on.',
     doc: `${D}/sla.html`,
     code: `sla:
   max_staleness_secs: 86400
   min_rows_per_run: 1
   volume_anomaly:
-    sigma: 3`,
+    method: zscore
+    sensitivity: 3.0`,
+  },
+  {
+    name: 'Column profiling',
+    desc: 'Learn a per-column profile (null rate, type mix, distinct counts, distributions) every run and report statistically significant drift, with no thresholds to write.',
+    doc: `${D}/profiling.html`,
+    code: `profiling:
+  min_history: 5     # runs before detection starts
+  window: 20         # rolling baseline
+  on_drift: warn     # warn | notify | fail`,
+  },
+  {
+    name: 'Plan → approve → run',
+    desc: 'Make runs and template changes wait for named approvers. faucet re-plans before it executes, refuses a change whose plan moved underneath it, and audits every step.',
+    doc: `${D}/approvals.html`,
+    code: `# auth.yaml (faucet serve --auth-config)
+approvals:
+  rules:
+    - kinds: [run]
+      roles: [operator, admin]
+      min_approvers: 1
+      self_approve: false
+
+# faucet serve --auth-config auth.yaml \\
+#   --require-approval run`,
   },
 ];
 ---
 
 <Base
   title="Governance — faucet-stream"
-  description="Governance in the movement path: data-quality checks, versioned contracts, PII masking before any sink, schema-drift policy, column lineage, and freshness/volume SLAs — native and zero-config."
+  description="Governance in the movement path: PII masking before any sink, data-quality checks, versioned contracts, schema-drift policy, data-flow policies, column lineage, change impact analysis, SLAs, column profiling and change approvals — native and zero-config."
 >
   <Header />
   <main id="main">
