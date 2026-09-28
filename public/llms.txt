@@ -2,7 +2,7 @@
 
 > A fast, config-driven data-movement platform for Rust. Pluggable source and sink connectors plus a declarative CLI (and an HTTP API) let you move data from a YAML file — with streaming, change-data-capture, effectively-once delivery, dead-letter queues, in-flight governance, and built-in observability — shipped as a single binary.
 
-faucet-stream moves data between databases, warehouses, streaming systems, object stores, and APIs from one config file. Governance — PII masking, data-quality checks, versioned contracts, schema-drift policy, column-level lineage, and freshness/volume SLAs — runs inside the pipeline, per page, before any sink sees a row. Prometheus metrics and OpenTelemetry tracing are emitted automatically with zero per-connector code. On a reproducible 1M-row CSV→JSONL move it does ~712,000 rows/s (~96x faster than Meltano) with a fraction of the memory, as a single binary with no daemon.
+faucet-stream moves data between databases, warehouses, streaming systems, object stores, and APIs from one config file. Governance — PII masking, data-quality checks, versioned contracts, schema-drift policy, data-flow policies, column-level lineage, change impact analysis, column profiling, and freshness/volume SLAs — runs inside the pipeline, per page, before any sink sees a row. Prometheus metrics and OpenTelemetry tracing are emitted automatically with zero per-connector code, and `faucet status` / `faucet state` show and manage each pipeline's health and resume point. Existing Singer taps and targets run through the Singer bridges. On a reproducible 1M-row CSV→JSONL move it does ~712,000 rows/s (~96x faster than Meltano) with a fraction of the memory, as a single binary with no daemon.
 
 ## Site
 - [Home](https://faucet-hq.github.io/): what faucet-stream is — one engine for the whole data-movement path.
@@ -10,9 +10,10 @@ faucet-stream moves data between databases, warehouses, streaming systems, objec
 - [Connectors](https://faucet-hq.github.io/connectors): the full source/sink catalog (databases, CDC, warehouses, streaming, files, APIs) with change-data-capture and Arrow columnar badges.
 - [Template Hub](https://faucet-hq.github.io/hub): the shared catalog of source × sink templates (github.com/faucet-hq/template-hub) — pick a source and a destination, copy the `faucet run --source X --sink Y` command; publish a template with a pull request; mirror the hub into `faucet serve`.
 - [Benchmarks](https://faucet-hq.github.io/benchmarks): reproducible throughput and peak-memory numbers vs. Meltano, with methodology.
-- [Governance](https://faucet-hq.github.io/governance): masking, quality, contracts, drift policy, column lineage, and SLAs enforced in the pipe.
-- [Observability](https://faucet-hq.github.io/observability): Prometheus metrics and OpenTelemetry tracing for every source, sink, transform, and state op.
+- [Governance](https://faucet-hq.github.io/governance): masking, quality, contracts, drift policy, data-flow policies, column lineage, change impact analysis, SLAs, column profiling, and plan → approve → run, enforced in the pipe.
+- [Observability](https://faucet-hq.github.io/observability): Prometheus metrics (including source lag and API throttling) and OpenTelemetry tracing for every source, sink, transform, and state op, plus `faucet status` and state tooling.
 - [Compare](https://faucet-hq.github.io/compare): faucet-stream vs. Meltano / Airbyte / Fivetran.
+- [Roadmap](https://faucet-hq.github.io/roadmap): where the project is headed, mirrored from the public roadmap board (github.com/orgs/faucet-hq/projects/2).
 - [Papers](https://faucet-hq.github.io/papers): index of technical white papers (listed individually in the Papers section below).
 
 ## Papers

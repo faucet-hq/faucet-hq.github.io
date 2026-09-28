@@ -40,38 +40,49 @@ const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
         <input type="radio" name="ex" id="ex-api" />
         <label for="ex-api" role="tab">POST /v1/runs</label>
 
-        <pre class="pane pane-yaml"><code><span class="c"># orders → warehouse, incremental + upsert</span>
+        <pre class="pane pane-yaml"><code><span class="c"># orders → warehouse: CDC, masked, upserted</span>
 <span class="k">version:</span> <span class="n">1</span>
 <span class="k">name:</span> <span class="s">orders_to_warehouse</span>
 
 <span class="k">pipeline:</span>
   <span class="k">source:</span>
-    <span class="k">type:</span> <span class="s">postgres</span>
+    <span class="k">type:</span> <span class="s">postgres-cdc</span>
     <span class="k">config:</span>
       <span class="k">connection_url:</span> <span class="v">${'{'}env:PG_URL{'}'}</span>
-      <span class="k">query:</span> <span class="s">SELECT * FROM orders</span>
-      <span class="k">replication:</span>
-        <span class="k">method:</span> <span class="s">incremental</span>
-        <span class="k">cursor_field:</span> <span class="s">updated_at</span>
+      <span class="k">slot_name:</span> <span class="s">orders_slot</span>
+      <span class="k">publication_name:</span> <span class="s">orders_pub</span>
   <span class="k">transforms:</span>
-    - <span class="k">sql:</span> <span class="s">SELECT *, amount_cents/100.0 AS amount FROM batch</span>
-    - <span class="k">redact:</span> {'{'} <span class="k">fields:</span> [<span class="s">email</span>] {'}'}
+    - <span class="k">type:</span> <span class="s">cdc_unwrap</span>
+      <span class="k">config:</span> {'{'}{'}'}
+  <span class="k">masking:</span>
+    <span class="k">key:</span> <span class="v">${'{'}env:MASKING_KEY{'}'}</span>
+    <span class="k">rules:</span>
+      - <span class="k">name:</span> <span class="s">emails</span>
+        <span class="k">match:</span> {'{'} <span class="k">fields:</span> [email] {'}'}
+        <span class="k">action:</span> {'{'} <span class="k">type:</span> hash {'}'}
   <span class="k">sink:</span>
     <span class="k">type:</span> <span class="s">bigquery</span>
     <span class="k">config:</span>
-      <span class="k">dataset:</span> <span class="s">analytics</span>
-      <span class="k">table:</span> <span class="s">orders</span>
+      <span class="k">project_id:</span> <span class="s">my-project</span>
+      <span class="k">dataset_id:</span> <span class="s">analytics</span>
+      <span class="k">table_id:</span> <span class="s">orders</span>
       <span class="k">write_mode:</span> <span class="s">upsert</span>
-      <span class="k">primary_key:</span> [<span class="s">id</span>]
+      <span class="k">key:</span> [id]
+      <span class="k">delete_marker:</span> {'{'} <span class="k">field:</span> __op, <span class="k">values:</span> [d] {'}'}
+      <span class="k">auth:</span>
+        <span class="k">type:</span> <span class="s">service_account_key</span>
+        <span class="k">config:</span> {'{'} <span class="k">json:</span> <span class="v">"${'{'}env:GCP_KEY_JSON{'}'}"</span> {'}'}
   <span class="k">state:</span>
     <span class="k">type:</span> <span class="s">file</span>
-    <span class="k">path:</span> <span class="s">.faucet/state</span></code></pre>
+    <span class="k">config:</span> {'{'} <span class="k">path:</span> ./.faucet-state {'}'}</code></pre>
 
         <pre class="pane pane-rust"><code><span class="c">// same engine, embedded in your service</span>
-<span class="kw">use</span> faucet_stream::prelude::*;
+<span class="kw">use</span> faucet_stream::Pipeline;
+<span class="kw">use</span> faucet_stream::source::postgres_cdc::PostgresCdcSource;
+<span class="kw">use</span> faucet_stream::sink::bigquery::BigQuerySink;
 
-<span class="kw">let</span> source = PostgresSource::new(pg_cfg)?;
-<span class="kw">let</span> sink   = BigQuerySink::new(bq_cfg)?;
+<span class="kw">let</span> source = PostgresCdcSource::new(cdc_cfg).<span class="kw">await</span>?;
+<span class="kw">let</span> sink   = BigQuerySink::new(bq_cfg).<span class="kw">await</span>?;
 
 Pipeline::new(&source, &sink)
     .with_state_store(state)   <span class="c">// durable bookmarks</span>
