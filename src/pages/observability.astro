@@ -14,6 +14,10 @@ const groups = [
       ['faucet_source_errors_total', 'counter', 'Read errors, by kind'],
       ['faucet_source_page_duration_seconds', 'histogram', 'Time per page'],
       ['faucet_source_in_flight', 'gauge', 'Pages being read'],
+      ['faucet_source_lag_seconds', 'gauge', 'How far a CDC or streaming source is behind its head (also _bytes, _events)'],
+      ['faucet_source_throttled_total', 'counter', 'Rate-limit responses from the source API (429s)'],
+      ['faucet_source_throttle_wait_seconds', 'histogram', 'Time spent backing off after each one'],
+      ['faucet_source_retries_total', 'counter', 'Source-side retries, by class'],
     ],
   },
   {
@@ -156,8 +160,10 @@ const groups = [
           <span class="eyebrow">Wire it up</span>
           <h2>Scrape it in two minutes.</h2>
           <p>
-            <code>faucet serve</code> exposes a Prometheus <code>/metrics</code> endpoint;
-            point your scraper at it. Tracing spans export over OTLP to any collector.
+            <code>faucet serve</code> exposes a Prometheus <code>/metrics</code> endpoint on its
+            listener, and a one-shot <code>faucet run</code> serves one wherever the config's
+            <code>observability.prometheus.listen</code> says. The endpoint is unauthenticated,
+            so bind it locally. Tracing spans export over OTLP to any collector.
             <code>faucet_build_info</code> carries the running version — <code>group_left</code>
             it onto any metric to annotate dashboards.
           </p>
@@ -169,8 +175,13 @@ const groups = [
           <a class="btn btn--ghost" href={DOCS}>Observability reference →</a>
         </div>
         <div class="wire-code" data-reveal style="--reveal-delay:.08s">
-          <pre><code><span class="c"># expose /metrics</span>
-faucet serve --metrics-addr <span class="s">0.0.0.0:9090</span>
+          <pre><code><span class="c"># faucet serve: /metrics on its HTTP listener</span>
+faucet serve --listen <span class="s">127.0.0.1:8080</span>
+
+<span class="c"># faucet run / schedule: in the pipeline file</span>
+observability:
+  prometheus:
+    listen: <span class="s">"127.0.0.1:9090"</span>
 
 <span class="c"># prometheus.yml</span>
 scrape_configs:
@@ -181,6 +192,37 @@ scrape_configs:
 <span class="c"># annotate any panel with the running version</span>
 rate(faucet_sink_records_total[5m])
   * on() group_left(version) faucet_build_info</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wire">
+      <div class="wrap wire-grid">
+        <div class="wire-copy" data-reveal>
+          <span class="eyebrow">Status and state</span>
+          <h2>One screen per pipeline.</h2>
+          <p>
+            <code>faucet status</code> answers the questions an operator actually asks: when
+            did this last succeed, where does the next run resume, how far behind is the source,
+            what's waiting in the DLQ, and are the SLA and profiling checks passing. Its exit
+            code (0 healthy, 1 degraded, 2 failed) makes it a cron or Nagios check.
+          </p>
+          <ul class="ticks">
+            <li><code>faucet state show / set / reset / export / import</code> moves, resets or backs up a bookmark, and refuses while a run holds the row.</li>
+            <li>State is versioned: after an upgrade, faucet migrates an older bookmark or refuses one it can't read, never guesses.</li>
+            <li>Also served over HTTP at <code>/v1/status</code> and <code>/v1/state</code>.</li>
+          </ul>
+          <a class="btn btn--ghost" href="https://faucet-hq.github.io/faucet-stream/cookbook/state-and-status.html">State and status guide →</a>
+        </div>
+        <div class="wire-code" data-reveal style="--reveal-delay:.08s">
+          <pre><code><span class="c"># health check, for cron or Nagios</span>
+faucet status <span class="s">orders.yaml</span>
+faucet status <span class="s">orders.yaml</span> --json
+
+<span class="c"># back up, move or reset a bookmark</span>
+faucet state show <span class="s">orders.yaml</span>
+faucet state export <span class="s">orders.yaml</span> -o <span class="s">orders-state.json</span>
+faucet state reset <span class="s">orders.yaml</span> --row <span class="s">refunds</span> --yes</code></pre>
         </div>
       </div>
     </section>

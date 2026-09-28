@@ -141,6 +141,12 @@ const groups = [
 
     <section class="wrap docs-note" data-reveal>
       <p>
+        File formats: the local-file and object-store connectors read and write JSONL, JSON,
+        CSV, Excel, XML, Parquet and Avro, and read ORC, picked per file by extension or set
+        explicitly (<a href="https://faucet-hq.github.io/faucet-stream/cookbook/file-formats.html">file formats</a>).
+        The Singer bridges run any existing tap as a source and any Singer target as a sink.
+      </p>
+      <p>
         Full capability matrix — streaming, resumable, compression, delivery guarantees,
         and maturity tier per connector — lives in the <a href={DOCS}>connector reference</a>.
         Missing one? Connectors are just Cargo crates —
