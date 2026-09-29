@@ -1,7 +1,8 @@
-// Refresh src/data/crates.json from the crates.io API: first-party connector
-// stats plus community faucet-source-* / faucet-sink-* crates. The file is
-// only rewritten after a complete, successful fetch, so an outage keeps the
-// last good data and never fails the build.
+// Refresh the Connector Hub data: src/data/connectors.json from the newest CLI
+// release's export, and src/data/crates.json from the crates.io API
+// (first-party stats plus community faucet-source-* / faucet-sink-* crates).
+// Each file is only rewritten after a complete, successful fetch, so an
+// outage keeps the last good data and never fails the build.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const OUT = new URL('../src/data/crates.json', import.meta.url);
@@ -45,7 +46,36 @@ function entry(c) {
   };
 }
 
+// The engine attaches its `faucet conformance --export` feed to every CLI
+// release; take the newest one that has it, and keep the committed snapshot
+// unless it is complete.
+async function refreshSnapshot() {
+  const res = await fetch('https://api.github.com/repos/faucet-hq/faucet-stream/releases?per_page=50', {
+    headers: { 'User-Agent': UA, Accept: 'application/vnd.github+json' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`releases: HTTP ${res.status}`);
+  const release = (await res.json()).find(
+    (r) => r.tag_name?.startsWith('faucet-cli-v') && !r.draft && r.assets?.some((a) => a.name === 'connectors.json'),
+  );
+  if (!release) return console.log('connectors.json: no CLI release carries the export yet; keeping the snapshot');
+  const asset = release.assets.find((a) => a.name === 'connectors.json');
+  const feed = await (
+    await fetch(asset.browser_download_url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(TIMEOUT_MS) })
+  ).json();
+  const complete =
+    feed?.format === 'faucet-connector-export' &&
+    feed.version === 1 &&
+    Array.isArray(feed.connectors) &&
+    feed.connectors.length > 0 &&
+    feed.connectors.every((c) => c.id && c.crate && c.config_schema);
+  if (!complete) throw new Error(`${release.tag_name} connectors.json is incomplete; keeping the snapshot`);
+  writeFileSync(SNAPSHOT, JSON.stringify(feed, null, 2) + '\n');
+  console.log(`connectors.json: ${feed.connectors.length} connectors from ${release.tag_name}`);
+}
+
 async function main() {
+  await refreshSnapshot().catch((e) => console.warn(`connector export refresh failed (${e.message})`));
   const snapshot = JSON.parse(readFileSync(SNAPSHOT, 'utf8'));
   const firstParty = new Set(snapshot.connectors.map((c) => c.crate));
   const seen = new Map();
