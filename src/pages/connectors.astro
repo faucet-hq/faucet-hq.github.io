@@ -99,6 +99,19 @@ const haystack = (c) =>
       <p class="empty" id="none" hidden>No connector matches. Clear a filter, or search for the system’s name.</p>
     </section>
 
+    <section class="wrap hub-notes">
+      <p>
+        File formats: the local-file and object-store connectors read and write JSONL, JSON,
+        CSV, Excel, XML, Parquet and Avro, and read ORC, picked per file by extension or set
+        explicitly (<a href={`${DOCS}/cookbook/file-formats.html`}>file formats</a>).
+        The Singer bridges run any existing tap as a source and any Singer target as a sink.
+      </p>
+      <p>
+        The same capabilities side by side, for every connector at once, are in the
+        <a href={`${DOCS}/reference/connectors.html`}>capability matrix</a>.
+      </p>
+    </section>
+
     <section class="wrap community">
       <h2>Community connectors</h2>
       <p class="note">

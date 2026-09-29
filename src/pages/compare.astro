@@ -17,7 +17,7 @@ const rows = [
   { f: 'Config-driven (YAML/JSON)', v: ['yes', 'yes', 'via UI/API', 'via UI'] },
   { f: 'Embeddable as a library', v: ['yes (Rust)', 'no', 'no', 'no'] },
   { f: 'Connectors', v: ['78, growing', '600+ taps', '350+', '500+'] },
-  { f: 'Runs existing Singer taps', v: ['yes (bridge)', 'yes (native)', 'no', 'no'] },
+  { f: 'Runs existing Singer taps and targets', v: ['yes (bridges)', 'yes (native)', 'no', 'no'] },
   { f: 'Change data capture', v: ['yes', 'partial', 'yes', 'yes'] },
   { f: 'Incremental + resumable state', v: ['yes', 'yes', 'yes', 'yes'] },
   { f: 'Effectively-once delivery', v: ['yes', 'no', 'partial', 'yes'] },
@@ -96,7 +96,7 @@ function kind(s) {
           <h2>Reach for faucet-stream when you want speed you can deploy anywhere.</h2>
         </div>
         <ul class="pts">
-          <li><b>vs Meltano</b> — same config-driven ergonomics, ~2 orders of magnitude faster, no Python runtime. Bring your taps via the Singer bridge.</li>
+          <li><b>vs Meltano</b> — same config-driven ergonomics, ~2 orders of magnitude faster, no Python runtime. Bring your taps and targets through the Singer bridges, and move a Meltano pipeline one side at a time.</li>
           <li><b>vs Airbyte</b> — nothing external to stand up; the whole platform is one binary or a library, with governance native instead of paywalled.</li>
           <li><b>vs Fivetran</b> — self-hosted and open-source; your data never leaves your infra, and there's a typed library API.</li>
         </ul>

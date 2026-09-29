@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro';
 import CTA from '../components/CTA.astro';
 
 const EPIC = 'https://github.com/faucet-hq/faucet-stream/issues/38';
+const BOARD = 'https://github.com/orgs/faucet-hq/projects/2';
 const ISSUE = (n: number) => `https://github.com/faucet-hq/faucet-stream/issues/${n}`;
 
 // Curated view of the direction. The live, authoritative tracker is the GitHub
@@ -14,22 +15,22 @@ const horizons = [
     tag: 'Now',
     heading: 'What we’re building',
     blurb:
-      'The runtime and CLI are feature-complete; the active work is closing the one axis where a streaming data mover can still lose — memory — and going columnar end-to-end.',
+      'Finish the last production-reliability fixes, and broaden SaaS coverage through maintained templates on the REST and GraphQL engines instead of a native crate per API.',
     themes: [
       {
-        title: 'Constant memory at any scale',
-        body: 'Decouple peak memory from dataset size across every source and sink, so a large table never OOMs the runner.',
-        issues: [614, 623, 617, 618, 639],
+        title: 'Production reliability',
+        body: 'Status, lag, state tooling, versioned state and safe partial batches have shipped. What remains is making every file sink replace its output exactly as configured.',
+        issues: [753, 752],
       },
       {
-        title: 'Arrow end-to-end',
-        body: 'Vectorized, columnar-native transforms, quality, and masking — plus a byte-passthrough fast-load — so Arrow-to-Arrow moves never pay the row-conversion tax.',
-        issues: [636, 633, 635],
+        title: 'SaaS via Template Hub',
+        body: 'A maintained starter set of SaaS source templates (Salesforce, HubSpot, Stripe and more), backed by the REST and GraphQL engine work those APIs need.',
+        issues: [724, 751, 747, 756, 755],
       },
       {
-        title: 'Warehouse & lakehouse loads',
-        body: 'Bulk load jobs over per-page commits, and correctness fixes on the BigQuery and Delta paths.',
-        issues: [612, 611, 620],
+        title: 'REST engine correctness',
+        body: 'Relative next-page links, replication binds on paginated URLs, nested replication keys and CSV null handling.',
+        issues: [750, 749, 748, 754, 746],
       },
     ],
   },
@@ -37,22 +38,22 @@ const horizons = [
     tag: 'Next',
     heading: 'On deck',
     blurb:
-      'Scale the matrix runtime out further, and round out the serve control plane and operator DX.',
+      'Activate warehouse data back into operational tools, and make faucet easier to find and install.',
     themes: [
       {
-        title: 'Parallelism & scale',
-        body: 'Within-object partitioned extraction, discovery-driven fan-out, and cost-aware dispatch to cut makespan on wide tenants.',
-        issues: [649, 647, 644, 610],
+        title: 'Reverse ETL',
+        body: 'Salesforce, HubSpot and Google Sheets sinks with bulk upsert, rate limits, per-record failures and DLQ.',
+        issues: [723],
       },
       {
-        title: 'Serve control plane & RBAC',
-        body: 'A first-class read/write/admin token trio with a verified permission matrix, structured JSON logging, and per-matrix-row run timings.',
-        issues: [608, 634, 645],
+        title: 'Connector Hub',
+        body: 'An auto-generated, crates.io-backed catalog of first- and third-party connectors with conformance badges.',
+        issues: [572],
       },
       {
-        title: 'Incremental everywhere',
-        body: 'Bookmark-based incremental replication for the REST/Salesforce Bulk async-job path, and adaptive poll backoff.',
-        issues: [630, 628],
+        title: 'Windows',
+        body: 'Prebuilt Windows binaries and a PowerShell installer are built; they ship with the next CLI release.',
+        issues: [565],
       },
     ],
   },
@@ -60,17 +61,17 @@ const horizons = [
     tag: 'Exploring',
     heading: 'Further out',
     blurb:
-      'Ecosystem surface and adoption — the center of gravity now that the engine is done.',
+      'Pulled forward on concrete demand rather than built speculatively.',
     themes: [
       {
-        title: 'Connector & Template Hubs',
-        body: 'An auto-generated, crates.io-backed connector catalog with conformance badges, and a source/sink-split template hub with pull-based hosting.',
-        issues: [572, 571, 589],
+        title: 'More connectors',
+        body: 'Cassandra / ScyllaDB, Cosmos DB, Firestore and Bigtable, MQTT, Pulsar and Azure Service Bus, and vector stores.',
+        issues: [714, 715, 716, 717, 718, 721],
       },
       {
-        title: 'Reach',
-        body: 'New platforms — prebuilt Windows binaries.',
-        issues: [565],
+        title: 'Unstructured to structured',
+        body: 'Document extraction, chunking and embeddings as in-flight transforms.',
+        issues: [705],
       },
       {
         title: 'Adoption & DX',
@@ -84,7 +85,7 @@ const horizons = [
 
 <Base
   title="Roadmap — faucet-stream"
-  description="Where faucet-stream is headed: constant-memory streaming, Arrow-native columnar fast paths, matrix scale-out, and the connector/template ecosystem — tracked live on GitHub."
+  description="Where faucet-stream is headed: production reliability, SaaS coverage through the Template Hub, reverse ETL, and the connector ecosystem — tracked live on the GitHub roadmap board."
 >
   <Header />
   <main id="main">
@@ -93,14 +94,14 @@ const horizons = [
         <span class="eyebrow" data-reveal>Roadmap</span>
         <h1 data-reveal style="--reveal-delay:.05s">Where faucet-stream is headed</h1>
         <p class="lede" data-reveal style="--reveal-delay:.1s">
-          The runtime, CLI, and governance layer are feature-complete. What’s left is
-          making every connector as fast and memory-bounded as the engine already is —
-          and growing the ecosystem around it. This is the curated view; the live tracker
-          is the <a href={EPIC}>roadmap epic on GitHub</a>, where every issue is public
+          The runtime, CLI, governance layer and replication story are in place. The work
+          now is finishing production reliability, broadening SaaS coverage without a crate
+          per API, and growing the ecosystem around the engine. This is the curated view; the live tracker
+          is the <a href={BOARD}>roadmap board on GitHub</a>, where every issue is public
           and open to comment.
         </p>
-        <a class="epic-link" href={EPIC} data-reveal style="--reveal-delay:.15s">
-          Track it live on GitHub — epic #38 →
+        <a class="epic-link" href={BOARD} data-reveal style="--reveal-delay:.15s">
+          Track it live on the GitHub roadmap board →
         </a>
       </div>
     </section>
@@ -109,11 +110,17 @@ const horizons = [
       <h2>The foundation, shipped</h2>
       <p>
         Exactly-once and effectively-once delivery, unified write modes / upsert, CDC with
-        crash-safe bookmarks, a full in-flight governance layer (quality, contracts,
-        schema-drift, PII masking, SLAs), the <code>faucet serve</code> HTTP control plane
-        with triggers, clustering, RBAC, a web console, and a data-movement catalog —
-        plus multi-edge topology, cross-row joins, WASM transforms, and an MCP server.
-        The fleet ships <b>38 sources and 30 sinks</b> today.
+        crash-safe bookmarks, and a full in-flight governance layer: quality, contracts,
+        schema-drift, PII masking, data-flow policies, change impact analysis, column
+        profiling and SLAs. The <code>faucet serve</code> control plane adds triggers,
+        clustering, RBAC, plan → approve → run, budgets and cost accounting, multi-tenant
+        embedding, a web console and a data-movement catalog.
+      </p>
+      <p>
+        Recently landed: Oracle, DynamoDB, the Iceberg source and the Databricks sink,
+        multi-table <code>faucet mirror</code>, <code>faucet status</code> and state
+        tooling, versioned state, safe partial batches, local file connectors with Avro and
+        ORC, and the Singer target bridge. The fleet ships <b>43 sources and 35 sinks</b>.
       </p>
     </section>
 
@@ -144,7 +151,7 @@ const horizons = [
       <p>
         Priorities shift as the work and the community do. For the authoritative,
         always-current picture — and to weigh in — follow
-        <a href={EPIC}>the roadmap epic</a> and the
+        <a href={BOARD}>the roadmap board</a>, <a href={EPIC}>the roadmap epic</a> and the
         <a href="https://github.com/faucet-hq/faucet-stream/issues">open issues</a> on GitHub.
       </p>
     </section>

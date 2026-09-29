@@ -157,3 +157,7 @@
   white-space: nowrap;
   border: 0;
 }
+
+.hub-notes { display: grid; gap: 0.7rem; padding: 0.4rem 0 0.4rem; max-width: 52rem; }
+.hub-notes p { color: var(--ink-soft); font-size: 0.93rem; }
+.hub-notes a { color: var(--teal-text); }
