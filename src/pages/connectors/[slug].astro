@@ -120,7 +120,7 @@ const install = [
           <dl class="facts">
             <dt>Crate</dt>
             <dd>
-              <a href={pub ? c.crates_io_url : `${REPO}/tree/main/${c.repository_path}`}><code>{c.crate}</code></a>
+              <a href={c.crates_io_url}><code>{c.crate}</code></a>
             </dd>
             <dt>CLI feature</dt><dd><code>{c.feature}</code></dd>
             <dt>Latest</dt><dd>{pub?.version ? `v${pub.version}` : 'not yet on crates.io'}</dd>
