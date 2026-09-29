@@ -118,7 +118,10 @@ const install = [
 
           <h2>Package</h2>
           <dl class="facts">
-            <dt>Crate</dt><dd><code>{c.crate}</code></dd>
+            <dt>Crate</dt>
+            <dd>
+              <a href={pub ? c.crates_io_url : `${REPO}/tree/main/${c.repository_path}`}><code>{c.crate}</code></a>
+            </dd>
             <dt>CLI feature</dt><dd><code>{c.feature}</code></dd>
             <dt>Latest</dt><dd>{pub?.version ? `v${pub.version}` : 'not yet on crates.io'}</dd>
             {pub && <><dt>Downloads</dt><dd>{fmtInt(pub.downloads)}</dd></>}
@@ -127,7 +130,6 @@ const install = [
 
           <h2>Links</h2>
           <dl class="facts">
-            {pub && <><dt>crates.io</dt><dd><a href={c.crates_io_url}>{c.crate}</a></dd></>}
             {pub && <><dt>API docs</dt><dd><a href={c.docs_url}>docs.rs</a></dd></>}
             <dt>Source</dt><dd><a href={`${REPO}/tree/main/${c.repository_path}`}>{c.repository_path}</a></dd>
             <dt>Reference</dt><dd><a href={`${DOCS}/reference/connectors.html`}>capability matrix</a></dd>
