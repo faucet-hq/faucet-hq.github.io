@@ -7,7 +7,6 @@ import '../../styles/connectors.css';
 import {
   connectors,
   capabilityRows,
-  tierLabel,
   fmtInt,
   fmtDate,
   cleanDoc,
@@ -35,7 +34,7 @@ const install = [
 
 <Base
   title={`${c.title} ${c.kind} — faucet-stream connectors`}
-  description={`${c.description}. Capabilities, maturity tier, install line and config schema for the faucet-stream ${c.name} ${c.kind}.`}
+  description={`${c.description}. Capabilities, conformance score, install line and config schema for the faucet-stream ${c.name} ${c.kind}.`}
 >
   <Header />
   <main id="main">
@@ -45,7 +44,6 @@ const install = [
         <div class="detail-head">
           <h1>{c.title}</h1>
           <span class={`pill ${c.kind}`}>{c.kind}</span>
-          <span class={`pill tier-${c.tier}`}>{tierLabel(c.tier)}</span>
         </div>
         <p class="hub-lede">{c.description}</p>
       </div>
@@ -103,7 +101,7 @@ const install = [
 
         <aside>
           <h2>Maturity</h2>
-          <div class="score"><strong>{c.score}</strong><span>/ 100 · {tierLabel(c.tier)}</span></div>
+          <div class="score"><strong>{c.score}</strong><span>/ 100</span></div>
           <ul class="dims">
             {(c.conformance?.dimensions ?? []).map((d) => (
               <li title={d.note}>
@@ -114,8 +112,8 @@ const install = [
             ))}
           </ul>
           <p class="score-note">
-            Registry entry (40) and config schema (30) make up the 70 needed for Stable; the rest are
-            capability bonuses. <a href={`${DOCS}/reference/conformance.html#how-the-score-is-computed`}>How the score is computed</a>
+            A verified registry entry (40) and a config schema (30) are the core contract; the other
+            points are capability bonuses. <a href={`${DOCS}/reference/conformance.html#how-the-score-is-computed`}>How the score is computed</a>
           </p>
 
           <h2>Package</h2>

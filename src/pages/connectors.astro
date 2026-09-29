@@ -8,8 +8,6 @@ import {
   connectors,
   community,
   categories,
-  tiers,
-  tierLabel,
   fmtInt,
   fmtDate,
   fetchedAt,
@@ -22,7 +20,6 @@ const all = connectors();
 const sources = all.filter((c) => c.kind === 'source').length;
 const sinks = all.filter((c) => c.kind === 'sink').length;
 const usedCategories = categories.filter((cat) => all.some((c) => c.category === cat.id));
-const usedTiers = tiers.filter((t) => all.some((c) => c.tier === t.id));
 const others = community();
 const asOf = fmtDate(fetchedAt);
 const countBy = (field, id) => all.filter((c) => c[field] === id).length;
@@ -32,7 +29,7 @@ const haystack = (c) =>
 
 <Base
   title="Connectors — faucet-stream"
-  description={`Every faucet-stream connector: ${sources} sources and ${sinks} sinks, each with its capabilities, maturity tier, install line and config schema.`}
+  description={`Every faucet-stream connector: ${sources} sources and ${sinks} sinks, each with its capabilities, conformance score, install line and config schema.`}
 >
   <Header />
   <main id="main">
@@ -65,7 +62,6 @@ const haystack = (c) =>
         </div>
         {[
           { key: 'category', all: 'All categories', many: 'categories', options: usedCategories.map((c) => ({ id: c.id, label: c.label, n: countBy('category', c.id) })) },
-          { key: 'tier', all: 'All tiers', many: 'tiers', options: usedTiers.map((t) => ({ id: t.id, label: t.label, n: countBy('tier', t.id) })) },
         ].map((f) => (
           <div class="ms" data-filter={f.key} data-all={f.all} data-many={f.many}>
             <button type="button" class="ms-btn" aria-haspopup="true" aria-expanded="false" aria-controls={`ms-${f.key}`}>
@@ -93,7 +89,6 @@ const haystack = (c) =>
             href={`${base}connectors/${c.slug}/`}
             data-kind={c.kind}
             data-category={c.category}
-            data-tier={c.tier}
             data-text={haystack(c)}
           >
             <span class="card-top">
@@ -102,7 +97,7 @@ const haystack = (c) =>
             </span>
             <span class="card-desc">{c.description}</span>
             <span class="card-meta">
-              <span class={`pill tier-${c.tier}`}>{tierLabel(c.tier)} · {c.score}</span>
+              <span class="pill score-pill" title="Conformance score">{c.score}/100</span>
               <span class="pill">{c.categoryLabel}</span>
               {c.published?.version && <span class="pill">v{c.published.version}</span>}
             </span>
@@ -188,7 +183,6 @@ const haystack = (c) =>
     const apply = () => {
       const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
       const cats = picked('category');
-      const tiersOn = picked('tier');
       const shownKinds = new Set(
         kinds.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.kind),
       );
@@ -198,7 +192,6 @@ const haystack = (c) =>
         const ok =
           shownKinds.has(d.kind) &&
           (cats.size === 0 || cats.has(d.category)) &&
-          (tiersOn.size === 0 || tiersOn.has(d.tier)) &&
           words.every((w) => d.text.includes(w));
         card.hidden = !ok;
         if (ok) shown++;
