@@ -1,0 +1,137 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import CTA from '../../components/CTA.astro';
+import '../../styles/connectors.css';
+import {
+  connectors,
+  capabilityRows,
+  tierLabel,
+  fmtInt,
+  fmtDate,
+  cleanDoc,
+  docHtml,
+  REPO,
+  DOCS,
+} from '../../lib/connectors.js';
+
+export function getStaticPaths() {
+  return connectors().map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const pub = c.published;
+const caps = capabilityRows(c);
+const fields = c.config_fields ?? [];
+const shown = (v) => (v === null || v === undefined ? '—' : typeof v === 'string' ? v : JSON.stringify(v));
+const install = [
+  `cargo install faucet-cli --features ${c.feature}`,
+  `faucet init --${c.kind} ${c.name}`,
+].join('\n');
+---
+
+<Base
+  title={`${c.title} ${c.kind} — faucet-stream connectors`}
+  description={`${c.description}. Capabilities, maturity tier, install line and config schema for the faucet-stream ${c.name} ${c.kind}.`}
+>
+  <Header />
+  <main id="main">
+    <section class="section hub-head">
+      <div class="wrap">
+        <p class="crumbs"><a href={`${base}connectors/`}>Connectors</a> / {c.categoryLabel}</p>
+        <div class="detail-head">
+          <h1>{c.title}</h1>
+          <span class={`pill ${c.kind}`}>{c.kind}</span>
+          <span class={`pill tier-${c.tier}`}>{tierLabel(c.tier)}</span>
+        </div>
+        <p class="hub-lede">{c.description}</p>
+      </div>
+    </section>
+
+    <section class="wrap detail">
+      <div class="detail-grid">
+        <div>
+          <h2>Install</h2>
+          <pre class="code">{install}</pre>
+          <pre class="code">{`# Cargo.toml — use it as a library\ncargo add ${c.crate}`}</pre>
+
+          <h2>Starter config</h2>
+          <pre class="code">{cleanDoc(c.init_snippet)}</pre>
+
+          <h2>Capabilities</h2>
+          <div class="table-wrap">
+            <table class="data-table">
+              <tbody>
+                {caps.map(([k, v]) => (
+                  <tr>
+                    <th scope="row">{k}</th>
+                    <td class={v === 'Yes' ? 'yes' : v === 'No' ? 'no' : ''}>{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Config fields</h2>
+          {fields.length ? (
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Field</th><th>Type</th><th>Default</th><th>Description</th></tr>
+                </thead>
+                <tbody>
+                  {fields.map((f) => (
+                    <tr>
+                      <td class="nowrap"><code>{f.name}</code>{f.required && <><br /><span class="req">required</span></>}</td>
+                      <td class="nowrap"><code>{shown(f.type)}</code></td>
+                      <td class="default"><code>{f.required ? '—' : shown(f.default)}</code></td>
+                      <td class="desc" set:html={docHtml(f.description)} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p class="empty">This connector takes no configuration.</p>
+          )}
+        </div>
+
+        <aside>
+          <h2>Maturity</h2>
+          <div class="score"><strong>{c.score}</strong><span>/ 100 · {tierLabel(c.tier)}</span></div>
+          <ul class="dims">
+            {(c.conformance?.dimensions ?? []).map((d) => (
+              <li>
+                <span class={d.met ? 'yes' : 'no'} aria-label={d.met ? 'met' : 'not met'}>{d.met ? '✓' : '·'}</span>
+                <span>{d.name}</span>
+                <span class="pts">{d.met ? d.points : 0}/{d.points}</span>
+              </li>
+            ))}
+          </ul>
+
+          <h2>Package</h2>
+          <dl class="facts">
+            <dt>Crate</dt><dd><code>{c.crate}</code></dd>
+            <dt>CLI feature</dt><dd><code>{c.feature}</code></dd>
+            <dt>Latest</dt><dd>{pub?.version ? `v${pub.version}` : 'not yet on crates.io'}</dd>
+            {pub && <><dt>Downloads</dt><dd>{fmtInt(pub.downloads)}</dd></>}
+            {pub?.updated_at && <><dt>Released</dt><dd>{fmtDate(pub.updated_at)}</dd></>}
+          </dl>
+
+          <h2>Links</h2>
+          <dl class="facts">
+            {pub && <><dt>crates.io</dt><dd><a href={c.crates_io_url}>{c.crate}</a></dd></>}
+            {pub && <><dt>API docs</dt><dd><a href={c.docs_url}>docs.rs</a></dd></>}
+            <dt>Source</dt><dd><a href={`${REPO}/tree/main/${c.repository_path}`}>{c.repository_path}</a></dd>
+            <dt>Reference</dt><dd><a href={`${DOCS}/reference/connectors.html`}>capability matrix</a></dd>
+          </dl>
+        </aside>
+      </div>
+    </section>
+
+    <CTA />
+  </main>
+  <Footer />
+</Base>

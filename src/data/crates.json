@@ -1,0 +1,600 @@
+{
+  "fetched_at": "2026-09-29T02:45:33.427Z",
+  "crates": {
+    "faucet-sink-azure-blob": {
+      "name": "faucet-sink-azure-blob",
+      "version": "1.0.5",
+      "downloads": 493,
+      "recent_downloads": 493,
+      "updated_at": "2026-08-23T14:14:57.148576Z",
+      "description": "Azure Blob Storage / ADLS Gen2 sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-bigquery": {
+      "name": "faucet-sink-bigquery",
+      "version": "1.7.0",
+      "downloads": 845,
+      "recent_downloads": 709,
+      "updated_at": "2026-08-24T15:02:53.551956Z",
+      "description": "BigQuery sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-clickhouse": {
+      "name": "faucet-sink-clickhouse",
+      "version": "1.1.0",
+      "downloads": 490,
+      "recent_downloads": 490,
+      "updated_at": "2026-08-23T14:14:50.188796Z",
+      "description": "ClickHouse sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-csv": {
+      "name": "faucet-sink-csv",
+      "version": "1.2.1",
+      "downloads": 843,
+      "recent_downloads": 686,
+      "updated_at": "2026-08-23T14:11:01.947136Z",
+      "description": "CSV file sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-delta": {
+      "name": "faucet-sink-delta",
+      "version": "1.1.5",
+      "downloads": 485,
+      "recent_downloads": 485,
+      "updated_at": "2026-08-23T14:13:20.656849Z",
+      "description": "Apache Delta Lake sink for the faucet-stream ecosystem — append-only, local FS + S3/Azure/GCS",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-duckdb": {
+      "name": "faucet-sink-duckdb",
+      "version": "1.0.5",
+      "downloads": 456,
+      "recent_downloads": 456,
+      "updated_at": "2026-08-23T14:15:27.434574Z",
+      "description": "DuckDB sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-elasticsearch": {
+      "name": "faucet-sink-elasticsearch",
+      "version": "1.5.0",
+      "downloads": 840,
+      "recent_downloads": 689,
+      "updated_at": "2026-08-23T14:11:09.060459Z",
+      "description": "Elasticsearch sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-gcs": {
+      "name": "faucet-sink-gcs",
+      "version": "1.3.1",
+      "downloads": 878,
+      "recent_downloads": 724,
+      "updated_at": "2026-08-23T13:58:43.641509Z",
+      "description": "Google Cloud Storage sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-http": {
+      "name": "faucet-sink-http",
+      "version": "1.3.1",
+      "downloads": 908,
+      "recent_downloads": 703,
+      "updated_at": "2026-08-23T14:11:16.833844Z",
+      "description": "HTTP POST sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-iceberg": {
+      "name": "faucet-sink-iceberg",
+      "version": "1.4.0",
+      "downloads": 779,
+      "recent_downloads": 711,
+      "updated_at": "2026-08-23T14:13:11.919468Z",
+      "description": "Apache Iceberg sink for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-jsonl": {
+      "name": "faucet-sink-jsonl",
+      "version": "1.3.6",
+      "downloads": 830,
+      "recent_downloads": 694,
+      "updated_at": "2026-08-23T13:57:59.104104Z",
+      "description": "JSON Lines file sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-kafka": {
+      "name": "faucet-sink-kafka",
+      "version": "1.4.1",
+      "downloads": 842,
+      "recent_downloads": 692,
+      "updated_at": "2026-08-23T14:11:32.042121Z",
+      "description": "Apache Kafka producer sink for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-kinesis": {
+      "name": "faucet-sink-kinesis",
+      "version": "1.0.6",
+      "downloads": 548,
+      "recent_downloads": 548,
+      "updated_at": "2026-08-23T14:11:39.570883Z",
+      "description": "AWS Kinesis Data Streams sink connector for faucet-stream (batched PutRecords, partition-key routing, partial-failure retry)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-mongodb": {
+      "name": "faucet-sink-mongodb",
+      "version": "1.6.0",
+      "downloads": 844,
+      "recent_downloads": 686,
+      "updated_at": "2026-08-23T13:59:24.162923Z",
+      "description": "MongoDB sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-mssql": {
+      "name": "faucet-sink-mssql",
+      "version": "1.5.0",
+      "downloads": 842,
+      "recent_downloads": 690,
+      "updated_at": "2026-08-23T13:58:30.596850Z",
+      "description": "Microsoft SQL Server sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-mysql": {
+      "name": "faucet-sink-mysql",
+      "version": "1.7.0",
+      "downloads": 849,
+      "recent_downloads": 691,
+      "updated_at": "2026-08-23T13:58:14.089517Z",
+      "description": "MySQL sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-nats": {
+      "name": "faucet-sink-nats",
+      "version": "1.0.5",
+      "downloads": 455,
+      "recent_downloads": 455,
+      "updated_at": "2026-08-23T14:28:02.859951Z",
+      "description": "NATS sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-parquet": {
+      "name": "faucet-sink-parquet",
+      "version": "1.2.1",
+      "downloads": 838,
+      "recent_downloads": 685,
+      "updated_at": "2026-08-23T14:12:18.130814Z",
+      "description": "Apache Parquet file sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-postgres": {
+      "name": "faucet-sink-postgres",
+      "version": "1.7.0",
+      "downloads": 885,
+      "recent_downloads": 694,
+      "updated_at": "2026-08-23T13:57:51.719636Z",
+      "description": "PostgreSQL sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-pubsub": {
+      "name": "faucet-sink-pubsub",
+      "version": "1.0.5",
+      "downloads": 485,
+      "recent_downloads": 485,
+      "updated_at": "2026-08-23T14:14:42.967379Z",
+      "description": "Google Cloud Pub/Sub sink connector for faucet-stream (batched publish, ordering keys, bounded concurrency, partial-failure DLQ)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-redis": {
+      "name": "faucet-sink-redis",
+      "version": "1.3.1",
+      "downloads": 850,
+      "recent_downloads": 692,
+      "updated_at": "2026-08-23T13:59:31.196896Z",
+      "description": "Redis sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-redshift": {
+      "name": "faucet-sink-redshift",
+      "version": "1.1.0",
+      "downloads": 486,
+      "recent_downloads": 486,
+      "updated_at": "2026-08-23T14:14:35.109098Z",
+      "description": "Amazon Redshift sink connector (COPY-from-S3 and multi-row INSERT) for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-s3": {
+      "name": "faucet-sink-s3",
+      "version": "1.4.1",
+      "downloads": 932,
+      "recent_downloads": 722,
+      "updated_at": "2026-08-23T13:59:15.970306Z",
+      "description": "AWS S3 sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-sftp": {
+      "name": "faucet-sink-sftp",
+      "version": "1.0.5",
+      "downloads": 451,
+      "recent_downloads": 451,
+      "updated_at": "2026-08-23T14:29:08.808331Z",
+      "description": "SFTP sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-snowflake": {
+      "name": "faucet-sink-snowflake",
+      "version": "1.5.0",
+      "downloads": 822,
+      "recent_downloads": 686,
+      "updated_at": "2026-08-23T13:58:06.251160Z",
+      "description": "Snowflake sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-spanner": {
+      "name": "faucet-sink-spanner",
+      "version": "1.1.2",
+      "downloads": 543,
+      "recent_downloads": 543,
+      "updated_at": "2026-08-23T14:13:32.455370Z",
+      "description": "Google Cloud Spanner sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-sqlite": {
+      "name": "faucet-sink-sqlite",
+      "version": "1.7.0",
+      "downloads": 843,
+      "recent_downloads": 689,
+      "updated_at": "2026-08-23T13:58:21.881063Z",
+      "description": "SQLite sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-sqs": {
+      "name": "faucet-sink-sqs",
+      "version": "1.0.5",
+      "downloads": 453,
+      "recent_downloads": 453,
+      "updated_at": "2026-08-23T14:27:18.028343Z",
+      "description": "AWS SQS sink connector for faucet-stream (batched SendMessageBatch, per-entry partial-failure retry, FIFO support)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-stdout": {
+      "name": "faucet-sink-stdout",
+      "version": "1.3.1",
+      "downloads": 880,
+      "recent_downloads": 718,
+      "updated_at": "2026-08-23T14:11:56.271277Z",
+      "description": "Stdout/stderr sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-azure-blob": {
+      "name": "faucet-source-azure-blob",
+      "version": "1.0.5",
+      "downloads": 488,
+      "recent_downloads": 488,
+      "updated_at": "2026-08-23T13:43:22.932327Z",
+      "description": "Azure Blob Storage / ADLS Gen2 source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-bigquery": {
+      "name": "faucet-source-bigquery",
+      "version": "1.4.3",
+      "downloads": 833,
+      "recent_downloads": 696,
+      "updated_at": "2026-08-23T13:45:43.560810Z",
+      "description": "BigQuery query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-clickhouse": {
+      "name": "faucet-source-clickhouse",
+      "version": "1.0.5",
+      "downloads": 482,
+      "recent_downloads": 482,
+      "updated_at": "2026-08-23T13:43:16.011663Z",
+      "description": "ClickHouse query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-csv": {
+      "name": "faucet-source-csv",
+      "version": "1.4.1",
+      "downloads": 830,
+      "recent_downloads": 690,
+      "updated_at": "2026-08-23T13:44:23.799974Z",
+      "description": "CSV file source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-databricks": {
+      "name": "faucet-source-databricks",
+      "version": "1.1.5",
+      "downloads": 545,
+      "recent_downloads": 545,
+      "updated_at": "2026-08-23T13:57:32.992193Z",
+      "description": "Databricks SQL query source (Statement Execution API) for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-delta": {
+      "name": "faucet-source-delta",
+      "version": "1.1.5",
+      "downloads": 515,
+      "recent_downloads": 515,
+      "updated_at": "2026-08-23T13:57:26.096482Z",
+      "description": "Apache Delta Lake source for the faucet-stream ecosystem — local FS + S3/Azure/GCS, time travel",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-duckdb": {
+      "name": "faucet-source-duckdb",
+      "version": "1.1.1",
+      "downloads": 465,
+      "recent_downloads": 465,
+      "updated_at": "2026-08-23T14:15:20.695571Z",
+      "description": "DuckDB query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-elasticsearch": {
+      "name": "faucet-source-elasticsearch",
+      "version": "1.4.1",
+      "downloads": 881,
+      "recent_downloads": 725,
+      "updated_at": "2026-08-23T13:44:30.392578Z",
+      "description": "Elasticsearch source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-gcs": {
+      "name": "faucet-source-gcs",
+      "version": "1.6.1",
+      "downloads": 908,
+      "recent_downloads": 747,
+      "updated_at": "2026-08-23T13:40:31.535209Z",
+      "description": "Google Cloud Storage source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-graphql": {
+      "name": "faucet-source-graphql",
+      "version": "1.5.0",
+      "downloads": 906,
+      "recent_downloads": 703,
+      "updated_at": "2026-08-24T15:02:01.516982Z",
+      "description": "GraphQL API source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-grpc": {
+      "name": "faucet-source-grpc",
+      "version": "1.3.1",
+      "downloads": 885,
+      "recent_downloads": 687,
+      "updated_at": "2026-08-23T13:38:49.401357Z",
+      "description": "gRPC API source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-kafka": {
+      "name": "faucet-source-kafka",
+      "version": "1.3.7",
+      "downloads": 848,
+      "recent_downloads": 690,
+      "updated_at": "2026-08-23T13:39:15.582324Z",
+      "description": "Apache Kafka consumer source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-kinesis": {
+      "name": "faucet-source-kinesis",
+      "version": "1.0.6",
+      "downloads": 558,
+      "recent_downloads": 558,
+      "updated_at": "2026-08-23T13:39:23.324193Z",
+      "description": "AWS Kinesis Data Streams source connector for faucet-stream (sharded consumer, resumable checkpoints)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mongodb": {
+      "name": "faucet-source-mongodb",
+      "version": "1.5.1",
+      "downloads": 847,
+      "recent_downloads": 707,
+      "updated_at": "2026-08-23T13:41:57.440080Z",
+      "description": "MongoDB source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mongodb-cdc": {
+      "name": "faucet-source-mongodb-cdc",
+      "version": "1.2.7",
+      "downloads": 754,
+      "recent_downloads": 681,
+      "updated_at": "2026-08-23T13:42:05.986789Z",
+      "description": "MongoDB Change Streams (CDC) source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mssql": {
+      "name": "faucet-source-mssql",
+      "version": "1.4.3",
+      "downloads": 857,
+      "recent_downloads": 705,
+      "updated_at": "2026-08-23T13:40:11.270352Z",
+      "description": "Microsoft SQL Server query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mssql-cdc": {
+      "name": "faucet-source-mssql-cdc",
+      "version": "1.0.5",
+      "downloads": 480,
+      "recent_downloads": 480,
+      "updated_at": "2026-08-23T13:42:50.252352Z",
+      "description": "Microsoft SQL Server CDC (change data capture) source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mysql": {
+      "name": "faucet-source-mysql",
+      "version": "1.6.1",
+      "downloads": 839,
+      "recent_downloads": 702,
+      "updated_at": "2026-08-23T13:40:03.312202Z",
+      "description": "MySQL query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-mysql-cdc": {
+      "name": "faucet-source-mysql-cdc",
+      "version": "1.2.7",
+      "downloads": 865,
+      "recent_downloads": 791,
+      "updated_at": "2026-08-23T13:42:30.605051Z",
+      "description": "MySQL binlog (CDC) source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-nats": {
+      "name": "faucet-source-nats",
+      "version": "1.0.5",
+      "downloads": 449,
+      "recent_downloads": 449,
+      "updated_at": "2026-08-23T14:27:55.724424Z",
+      "description": "NATS source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-parquet": {
+      "name": "faucet-source-parquet",
+      "version": "1.3.1",
+      "downloads": 820,
+      "recent_downloads": 681,
+      "updated_at": "2026-08-23T13:45:07.667366Z",
+      "description": "Apache Parquet file source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-postgres": {
+      "name": "faucet-source-postgres",
+      "version": "1.7.1",
+      "downloads": 913,
+      "recent_downloads": 714,
+      "updated_at": "2026-08-23T13:39:44.536221Z",
+      "description": "PostgreSQL query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-postgres-cdc": {
+      "name": "faucet-source-postgres-cdc",
+      "version": "1.3.7",
+      "downloads": 830,
+      "recent_downloads": 689,
+      "updated_at": "2026-08-23T13:45:35.232969Z",
+      "description": "PostgreSQL logical replication (CDC) source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-pubsub": {
+      "name": "faucet-source-pubsub",
+      "version": "1.0.5",
+      "downloads": 478,
+      "recent_downloads": 478,
+      "updated_at": "2026-08-23T13:43:05.379700Z",
+      "description": "Google Cloud Pub/Sub source connector for faucet-stream (streaming pull, ack at durable page boundaries, resumable termination)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-redis": {
+      "name": "faucet-source-redis",
+      "version": "1.3.1",
+      "downloads": 889,
+      "recent_downloads": 686,
+      "updated_at": "2026-08-23T13:43:37.025729Z",
+      "description": "Redis source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-redshift": {
+      "name": "faucet-source-redshift",
+      "version": "1.0.5",
+      "downloads": 472,
+      "recent_downloads": 472,
+      "updated_at": "2026-08-23T13:42:57.709980Z",
+      "description": "Amazon Redshift query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-rest": {
+      "name": "faucet-source-rest",
+      "version": "1.6.0",
+      "downloads": 1000,
+      "recent_downloads": 797,
+      "updated_at": "2026-08-24T15:01:53.111536Z",
+      "description": "REST API source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-s3": {
+      "name": "faucet-source-s3",
+      "version": "1.8.1",
+      "downloads": 870,
+      "recent_downloads": 731,
+      "updated_at": "2026-08-23T13:41:15.321618Z",
+      "description": "AWS S3 source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-sftp": {
+      "name": "faucet-source-sftp",
+      "version": "1.1.1",
+      "downloads": 441,
+      "recent_downloads": 441,
+      "updated_at": "2026-08-23T14:29:01.461935Z",
+      "description": "SFTP source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-singer": {
+      "name": "faucet-source-singer",
+      "version": "1.1.6",
+      "downloads": 594,
+      "recent_downloads": 594,
+      "updated_at": "2026-08-23T13:38:14.775808Z",
+      "description": "Singer tap bridge source for the faucet-stream ecosystem (single-stream v0)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-snowflake": {
+      "name": "faucet-source-snowflake",
+      "version": "1.3.3",
+      "downloads": 830,
+      "recent_downloads": 694,
+      "updated_at": "2026-08-23T13:45:50.626026Z",
+      "description": "Snowflake query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-spanner": {
+      "name": "faucet-source-spanner",
+      "version": "1.1.3",
+      "downloads": 567,
+      "recent_downloads": 567,
+      "updated_at": "2026-08-23T13:45:58.310099Z",
+      "description": "Google Cloud Spanner query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-sqlite": {
+      "name": "faucet-source-sqlite",
+      "version": "1.6.1",
+      "downloads": 834,
+      "recent_downloads": 693,
+      "updated_at": "2026-08-23T13:44:17.603088Z",
+      "description": "SQLite query source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-sqs": {
+      "name": "faucet-source-sqs",
+      "version": "1.0.5",
+      "downloads": 441,
+      "recent_downloads": 441,
+      "updated_at": "2026-08-23T14:27:11.025001Z",
+      "description": "AWS SQS source connector for faucet-stream (long-poll receive, at-least-once drain, delete-on-emit)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-webhook": {
+      "name": "faucet-source-webhook",
+      "version": "1.1.10",
+      "downloads": 805,
+      "recent_downloads": 662,
+      "updated_at": "2026-08-23T13:43:53.413688Z",
+      "description": "Webhook receiver source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-websocket": {
+      "name": "faucet-source-websocket",
+      "version": "1.1.10",
+      "downloads": 810,
+      "recent_downloads": 667,
+      "updated_at": "2026-08-23T13:44:10.719863Z",
+      "description": "WebSocket streaming source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-xml": {
+      "name": "faucet-source-xml",
+      "version": "1.6.0",
+      "downloads": 891,
+      "recent_downloads": 690,
+      "updated_at": "2026-08-24T15:02:10.278961Z",
+      "description": "XML API source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    }
+  },
+  "community": []
+}

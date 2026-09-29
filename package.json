@@ -3,13 +3,14 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "Marketing site for faucet-stream — the fast, config-driven way to move data in Rust.",
+  "description": "Marketing site for faucet-stream \u2014 the fast, config-driven way to move data in Rust.",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build && node scripts/papers-pdf.mjs",
+    "build": "node scripts/refresh-crates.mjs && astro build && node scripts/papers-pdf.mjs",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "refresh:crates": "node scripts/refresh-crates.mjs"
   },
   "devDependencies": {
     "astro": "^5.13.0"
