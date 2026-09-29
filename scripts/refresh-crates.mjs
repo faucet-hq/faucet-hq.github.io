@@ -10,9 +10,11 @@ const SNAPSHOT = new URL('../src/data/connectors.json', import.meta.url);
 const UA = 'faucet-hq.github.io connector hub (https://github.com/faucet-hq/faucet-hq.github.io)';
 const TIMEOUT_MS = 10_000;
 const NAME_RE = /^faucet-(source|sink)-[a-z0-9][a-z0-9_-]*$/;
+const TEAM = 'github:faucet-hq:owners';
 
-async function page(query, n) {
-  const url = `https://crates.io/api/v1/crates?q=${encodeURIComponent(query)}&per_page=100&page=${n}`;
+async function page(query, n, teamId) {
+  const scope = teamId ? `team_id=${teamId}` : `q=${encodeURIComponent(query)}`;
+  const url = `https://crates.io/api/v1/crates?${scope}&per_page=100&page=${n}`;
   const res = await fetch(url, {
     headers: { 'User-Agent': UA, Accept: 'application/json' },
     signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -21,10 +23,19 @@ async function page(query, n) {
   return res.json();
 }
 
-async function search(query) {
+async function teamCrates() {
+  const res = await fetch(`https://crates.io/api/v1/teams/${TEAM}`, {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`team ${TEAM}: HTTP ${res.status}`);
+  return search('', (await res.json()).team.id);
+}
+
+async function search(query, teamId) {
   const found = [];
   for (let n = 1; n <= 10; n++) {
-    const body = await page(query, n);
+    const body = await page(query, n, teamId);
     found.push(...(body.crates ?? []));
     if ((body.crates ?? []).length < 100) break;
     await new Promise((r) => setTimeout(r, 1100));
@@ -51,7 +62,11 @@ function entry(c) {
 // unless it is complete.
 async function refreshSnapshot() {
   const res = await fetch('https://api.github.com/repos/faucet-hq/faucet-stream/releases?per_page=50', {
-    headers: { 'User-Agent': UA, Accept: 'application/vnd.github+json' },
+    headers: {
+      'User-Agent': UA,
+      Accept: 'application/vnd.github+json',
+      ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+    },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`releases: HTTP ${res.status}`);
@@ -78,15 +93,16 @@ async function main() {
   await refreshSnapshot().catch((e) => console.warn(`connector export refresh failed (${e.message})`));
   const snapshot = JSON.parse(readFileSync(SNAPSHOT, 'utf8'));
   const firstParty = new Set(snapshot.connectors.map((c) => c.crate));
+  const owned = new Map((await teamCrates()).map((c) => [c.name, c]));
+  const crates = {};
+  for (const name of [...firstParty].sort()) if (owned.has(name)) crates[name] = entry(owned.get(name));
   const seen = new Map();
   for (const q of ['faucet-source', 'faucet-sink']) {
     for (const c of await search(q)) seen.set(c.name, c);
   }
-  const crates = {};
   const community = [];
   for (const [name, c] of [...seen].sort(([a], [b]) => a.localeCompare(b))) {
-    if (firstParty.has(name)) crates[name] = entry(c);
-    else if (NAME_RE.test(name)) community.push(entry(c));
+    if (!owned.has(name) && !firstParty.has(name) && NAME_RE.test(name)) community.push(entry(c));
   }
   if (Object.keys(crates).length === 0) throw new Error('no first-party crates found; refusing to overwrite the cache');
   const data = { fetched_at: new Date().toISOString(), crates, community };
