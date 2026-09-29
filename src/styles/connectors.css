@@ -306,3 +306,5 @@
 .score-note { margin-top: 0.8rem; font-size: 0.82rem; line-height: 1.5; color: var(--ink-faint); }
 .score-note a { color: var(--teal-text); }
 
+
+.score-pill { color: var(--teal-text); border-color: color-mix(in srgb, var(--teal) 45%, transparent); font-variant-numeric: tabular-nums; }
