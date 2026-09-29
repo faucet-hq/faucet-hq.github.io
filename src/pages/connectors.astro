@@ -25,6 +25,7 @@ const usedCategories = categories.filter((cat) => all.some((c) => c.category ===
 const usedTiers = tiers.filter((t) => all.some((c) => c.tier === t.id));
 const others = community();
 const asOf = fmtDate(fetchedAt);
+const countBy = (field, id) => all.filter((c) => c[field] === id).length;
 const haystack = (c) =>
   [c.title, c.name, c.crate, c.description, c.categoryLabel, ...(c.keywords ?? [])].join(' ').toLowerCase();
 ---
@@ -54,22 +55,34 @@ const haystack = (c) =>
       <form class="filters" role="search" onsubmit="return false">
         <label class="sr-only" for="q">Search connectors</label>
         <input id="q" type="search" placeholder="Search by name, system or crate" autocomplete="off" />
-        <label class="sr-only" for="kind">Kind</label>
-        <select id="kind">
-          <option value="">Sources and sinks</option>
-          <option value="source">Sources</option>
-          <option value="sink">Sinks</option>
-        </select>
-        <label class="sr-only" for="category">Category</label>
-        <select id="category">
-          <option value="">All categories</option>
-          {usedCategories.map((c) => <option value={c.id}>{c.label}</option>)}
-        </select>
-        <label class="sr-only" for="tier">Tier</label>
-        <select id="tier">
-          <option value="">All tiers</option>
-          {usedTiers.map((t) => <option value={t.id}>{t.label}</option>)}
-        </select>
+        <div class="kind-toggle" role="group" aria-label="Show sources and sinks">
+          <button type="button" class="kind-btn" data-kind="source" aria-pressed="true">
+            Sources <span class="kind-count">{sources}</span>
+          </button>
+          <button type="button" class="kind-btn" data-kind="sink" aria-pressed="true">
+            Sinks <span class="kind-count">{sinks}</span>
+          </button>
+        </div>
+        {[
+          { key: 'category', all: 'All categories', many: 'categories', options: usedCategories.map((c) => ({ id: c.id, label: c.label, n: countBy('category', c.id) })) },
+          { key: 'tier', all: 'All tiers', many: 'tiers', options: usedTiers.map((t) => ({ id: t.id, label: t.label, n: countBy('tier', t.id) })) },
+        ].map((f) => (
+          <div class="ms" data-filter={f.key} data-all={f.all} data-many={f.many}>
+            <button type="button" class="ms-btn" aria-haspopup="true" aria-expanded="false" aria-controls={`ms-${f.key}`}>
+              <span class="ms-label">{f.all}</span>
+            </button>
+            <div class="ms-menu" id={`ms-${f.key}`} role="group" aria-label={f.all} hidden>
+              {f.options.map((o) => (
+                <label class="ms-opt">
+                  <input type="checkbox" value={o.id} data-label={o.label} />
+                  <span class="ms-name">{o.label}</span>
+                  <span class="ms-n">{o.n}</span>
+                </label>
+              ))}
+              <button type="button" class="ms-clear">Clear</button>
+            </div>
+          </div>
+        ))}
         <span class="result-count" id="count" aria-live="polite">{all.length} connectors</span>
       </form>
 
@@ -153,21 +166,39 @@ const haystack = (c) =>
 <script is:inline>
   (() => {
     const q = document.getElementById('q');
-    const kind = document.getElementById('kind');
-    const category = document.getElementById('category');
-    const tier = document.getElementById('tier');
+    const kinds = [...document.querySelectorAll('.kind-btn')];
+    const menus = [...document.querySelectorAll('.ms')];
+    const picked = (key) => {
+      const ms = menus.find((m) => m.dataset.filter === key);
+      return new Set([...ms.querySelectorAll('input:checked')].map((i) => i.value));
+    };
+    const relabel = (ms) => {
+      const on = [...ms.querySelectorAll('input:checked')];
+      ms.querySelector('.ms-label').textContent =
+        on.length === 0 ? ms.dataset.all : on.length === 1 ? on[0].dataset.label : `${on.length} ${ms.dataset.many}`;
+      ms.classList.toggle('active', on.length > 0);
+    };
+    const close = (ms) => {
+      ms.querySelector('.ms-menu').hidden = true;
+      ms.querySelector('.ms-btn').setAttribute('aria-expanded', 'false');
+    };
     const count = document.getElementById('count');
     const none = document.getElementById('none');
     const cards = [...document.querySelectorAll('#grid .conn-card')];
     const apply = () => {
       const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+      const cats = picked('category');
+      const tiersOn = picked('tier');
+      const shownKinds = new Set(
+        kinds.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.kind),
+      );
       let shown = 0;
       for (const card of cards) {
         const d = card.dataset;
         const ok =
-          (!kind.value || d.kind === kind.value) &&
-          (!category.value || d.category === category.value) &&
-          (!tier.value || d.tier === tier.value) &&
+          shownKinds.has(d.kind) &&
+          (cats.size === 0 || cats.has(d.category)) &&
+          (tiersOn.size === 0 || tiersOn.has(d.tier)) &&
           words.every((w) => d.text.includes(w));
         card.hidden = !ok;
         if (ok) shown++;
@@ -175,10 +206,56 @@ const haystack = (c) =>
       count.textContent = `${shown} connector${shown === 1 ? '' : 's'}`;
       none.hidden = shown !== 0;
     };
-    for (const el of [q, kind, category, tier]) el.addEventListener('input', apply);
+    q.addEventListener('input', apply);
+    for (const ms of menus) {
+      const btn = ms.querySelector('.ms-btn');
+      const menu = ms.querySelector('.ms-menu');
+      btn.addEventListener('click', () => {
+        const opening = menu.hidden;
+        menus.forEach(close);
+        if (opening) {
+          menu.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+          menu.querySelector('input')?.focus();
+        }
+      });
+      menu.addEventListener('change', () => {
+        relabel(ms);
+        apply();
+      });
+      ms.querySelector('.ms-clear').addEventListener('click', () => {
+        menu.querySelectorAll('input').forEach((i) => (i.checked = false));
+        relabel(ms);
+        apply();
+      });
+      ms.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !menu.hidden) {
+          close(ms);
+          btn.focus();
+        }
+      });
+    }
+    document.addEventListener('click', (e) => {
+      for (const ms of menus) if (!ms.contains(e.target)) close(ms);
+    });
+    for (const btn of kinds) {
+      btn.addEventListener('click', () => {
+        const on = btn.getAttribute('aria-pressed') === 'true';
+        const others = kinds.filter((b) => b !== btn && b.getAttribute('aria-pressed') === 'true');
+        if (on && others.length === 0) return;
+        btn.setAttribute('aria-pressed', String(!on));
+        apply();
+      });
+    }
     const params = new URLSearchParams(location.search);
-    for (const [key, el] of [['q', q], ['kind', kind], ['category', category], ['tier', tier]]) {
-      if (params.has(key)) el.value = params.get(key);
+    if (params.has('q')) q.value = params.get('q');
+    for (const ms of menus) {
+      const wanted = new Set((params.get(ms.dataset.filter) ?? '').split(',').filter(Boolean));
+      ms.querySelectorAll('input').forEach((i) => (i.checked = wanted.has(i.value)));
+      relabel(ms);
+    }
+    if (params.get('kind') === 'source' || params.get('kind') === 'sink') {
+      for (const b of kinds) b.setAttribute('aria-pressed', String(b.dataset.kind === params.get('kind')));
     }
     apply();
   })();

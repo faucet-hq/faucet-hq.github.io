@@ -12,6 +12,7 @@ import {
   fmtDate,
   cleanDoc,
   docHtml,
+  defaultLines,
   REPO,
   DOCS,
 } from '../../lib/connectors.js';
@@ -86,7 +87,9 @@ const install = [
                     <tr>
                       <td class="nowrap"><code>{f.name}</code>{f.required && <><br /><span class="req">required</span></>}</td>
                       <td class="nowrap"><code>{shown(f.type)}</code></td>
-                      <td class="default"><code>{f.required ? '—' : shown(f.default)}</code></td>
+                      <td class="default">
+                        {(f.required ? ['—'] : defaultLines(f.default)).map((line) => <code>{line}</code>)}
+                      </td>
                       <td class="desc" set:html={docHtml(f.description)} />
                     </tr>
                   ))}
@@ -103,13 +106,17 @@ const install = [
           <div class="score"><strong>{c.score}</strong><span>/ 100 · {tierLabel(c.tier)}</span></div>
           <ul class="dims">
             {(c.conformance?.dimensions ?? []).map((d) => (
-              <li>
+              <li title={d.note}>
                 <span class={d.met ? 'yes' : 'no'} aria-label={d.met ? 'met' : 'not met'}>{d.met ? '✓' : '·'}</span>
                 <span>{d.name}</span>
                 <span class="pts">{d.met ? d.points : 0}/{d.points}</span>
               </li>
             ))}
           </ul>
+          <p class="score-note">
+            Registry entry (40) and config schema (30) make up the 70 needed for Stable; the rest are
+            capability bonuses. <a href={`${DOCS}/reference/conformance.html#how-the-score-is-computed`}>How the score is computed</a>
+          </p>
 
           <h2>Package</h2>
           <dl class="facts">
