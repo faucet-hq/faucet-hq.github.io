@@ -67,6 +67,24 @@ export function docHtml(s) {
   return escapeHtml(first).replace(/`([^`]+)`/g, '<code>$1</code>');
 }
 
+// A config default as it would be written in YAML: scalars bare, objects one
+// `key: value` per line, nested values as inline flow.
+function flow(v) {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return `[${v.map(flow).join(', ')}]`;
+  if (typeof v === 'object') return `{${Object.entries(v).map(([k, x]) => `${k}: ${flow(x)}`).join(', ')}}`;
+  if (typeof v === 'string') return v === '' || /[:#{}[\],]|^\s|\s$/.test(v) ? JSON.stringify(v) : v;
+  return String(v);
+}
+
+export function defaultLines(v) {
+  if (v === null || v === undefined) return ['—'];
+  if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0) {
+    return Object.entries(v).map(([k, x]) => `${k}: ${flow(x)}`);
+  }
+  return [flow(v)];
+}
+
 export const DELIVERY = {
   deterministic: 'Deterministic replay',
   non_deterministic: 'Non-deterministic replay',
