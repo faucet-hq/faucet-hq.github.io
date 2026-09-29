@@ -105,7 +105,7 @@ const install = [
           <ul class="dims">
             {(c.conformance?.dimensions ?? []).map((d) => (
               <li title={d.note}>
-                <span class={d.met ? 'yes' : 'no'} aria-label={d.met ? 'met' : 'not met'}>{d.met ? '✓' : '·'}</span>
+                <span class={`mark ${d.met ? 'yes' : 'no'}`} aria-label={d.met ? 'met' : 'not met'}>{d.met ? '✓' : '–'}</span>
                 <span>{d.name}</span>
                 <span class="pts">{d.met ? d.points : 0}/{d.points}</span>
               </li>
