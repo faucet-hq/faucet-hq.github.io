@@ -3,155 +3,154 @@ import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CTA from '../components/CTA.astro';
+import '../styles/connectors.css';
+import {
+  connectors,
+  community,
+  categories,
+  fmtInt,
+  fmtDate,
+  fetchedAt,
+  faucetVersion,
+  DOCS,
+} from '../lib/connectors.js';
 
-const DOCS = 'https://faucet-hq.github.io/faucet-stream/reference/connectors.html';
-
-// src = has a source connector, sink = has a sink connector.
-// badges: cdc = change-data-capture source, arrow = columnar Arrow fast path.
-const groups = [
-  {
-    name: 'Databases',
-    items: [
-      { n: 'Postgres', src: true, sink: true },
-      { n: 'MySQL', src: true, sink: true },
-      { n: 'SQL Server', src: true, sink: true },
-      { n: 'Oracle', src: true, sink: true },
-      { n: 'SQLite', src: true, sink: true },
-      { n: 'DuckDB', src: true, sink: true },
-      { n: 'MongoDB', src: true, sink: true },
-      { n: 'DynamoDB', src: true, sink: true, badges: ['cdc'] },
-      { n: 'Redis', src: true, sink: true },
-    ],
-  },
-  {
-    name: 'Change data capture',
-    items: [
-      { n: 'Postgres CDC', src: true, sink: false, badges: ['cdc'] },
-      { n: 'MySQL CDC', src: true, sink: false, badges: ['cdc'] },
-      { n: 'SQL Server CDC', src: true, sink: false, badges: ['cdc'] },
-      { n: 'Oracle CDC', src: true, sink: false, badges: ['cdc'] },
-      { n: 'MongoDB CDC', src: true, sink: false, badges: ['cdc'] },
-      { n: 'DynamoDB Streams', src: true, sink: false, badges: ['cdc'] },
-    ],
-  },
-  {
-    name: 'Warehouses',
-    items: [
-      { n: 'BigQuery', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Snowflake', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Databricks', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Redshift', src: true, sink: true },
-      { n: 'ClickHouse', src: true, sink: true },
-      { n: 'Spanner', src: true, sink: true },
-    ],
-  },
-  {
-    name: 'Streaming & queues',
-    items: [
-      { n: 'Kafka', src: true, sink: true },
-      { n: 'Kinesis', src: true, sink: true },
-      { n: 'Pub/Sub', src: true, sink: true },
-      { n: 'SQS', src: true, sink: true },
-      { n: 'NATS', src: true, sink: true },
-      { n: 'RabbitMQ', src: true, sink: true },
-    ],
-  },
-  {
-    name: 'Files & object stores',
-    items: [
-      { n: 'S3', src: true, sink: true, badges: ['arrow'] },
-      { n: 'GCS', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Azure Blob', src: true, sink: true },
-      { n: 'Parquet', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Delta Lake', src: true, sink: true, badges: ['arrow'] },
-      { n: 'Iceberg', src: true, sink: true, badges: ['arrow'] },
-      { n: 'SFTP', src: true, sink: true },
-      { n: 'Local files', src: true, sink: true, badges: ['arrow'] },
-      { n: 'CSV', src: true, sink: true },
-      { n: 'JSON Lines', src: false, sink: true },
-    ],
-  },
-  {
-    name: 'APIs & web',
-    items: [
-      { n: 'REST', src: true, sink: false },
-      { n: 'GraphQL', src: true, sink: false },
-      { n: 'gRPC', src: true, sink: false },
-      { n: 'XML / SOAP', src: true, sink: false },
-      { n: 'WebSocket', src: true, sink: false },
-      { n: 'Webhook', src: true, sink: false },
-      { n: 'HTTP', src: false, sink: true },
-      { n: 'Elasticsearch', src: true, sink: true },
-    ],
-  },
-  {
-    name: 'Bridges & output',
-    items: [
-      { n: 'Singer bridge', src: true, sink: true },
-      { n: 'Stdout', src: false, sink: true },
-    ],
-  },
-];
+const base = import.meta.env.BASE_URL;
+const all = connectors();
+const sources = all.filter((c) => c.kind === 'source').length;
+const sinks = all.filter((c) => c.kind === 'sink').length;
+const usedCategories = categories.filter((cat) => all.some((c) => c.category === cat.id));
+const others = community();
+const asOf = fmtDate(fetchedAt);
+const countBy = (field, id) => all.filter((c) => c[field] === id).length;
+const haystack = (c) =>
+  [c.title, c.name, c.crate, c.description, c.categoryLabel, ...(c.keywords ?? [])].join(' ').toLowerCase();
 ---
 
 <Base
   title="Connectors — faucet-stream"
-  description="Every faucet-stream connector: 43 sources and 35 sinks across databases, CDC, warehouses, streaming, files, and APIs — one config grammar for all of them."
+  description={`Every faucet-stream connector: ${sources} sources and ${sinks} sinks, each with its capabilities, conformance score, install line and config schema.`}
 >
   <Header />
   <main id="main">
-    <section class="section head">
+    <section class="section hub-head">
       <div class="wrap">
-        <span class="eyebrow" data-reveal>Connectors</span>
-        <h1 data-reveal style="--reveal-delay:.05s">43 sources. 35 sinks. One config grammar.</h1>
-        <p class="lede" data-reveal style="--reveal-delay:.1s">
-          Every connector shares the same auth, pagination, batching, and state model —
-          learn one and you know them all. Arrow-native fast paths run columnar
-          end-to-end where both ends support it.
+        <span class="eyebrow" data-reveal>Connector Hub</span>
+        <h1 data-reveal style="--reveal-delay:.05s">{sources} sources. {sinks} sinks. One config grammar.</h1>
+        <p class="hub-lede" data-reveal style="--reveal-delay:.1s">
+          Every connector shares the same auth, pagination, batching and state model. Each page
+          below shows what the connector guarantees, how mature it is, how to install it and every
+          config field it takes — generated from the engine, so it matches the release you run.
         </p>
-        <div class="legend" data-reveal style="--reveal-delay:.14s">
-          <span><i class="dot src"></i> source</span>
-          <span><i class="dot sink"></i> sink</span>
-          <span><i class="badge">CDC</i> change data capture</span>
-          <span><i class="badge">Arrow</i> columnar fast path</span>
-        </div>
+        <p class="hub-asof">
+          faucet {faucetVersion}{asOf && <> · crates.io data as of {asOf}</>}
+        </p>
       </div>
     </section>
 
-    <section class="wrap cat-wrap">
-      {groups.map((g, gi) => (
-        <div class="cat" data-reveal style={`--reveal-delay:${(gi % 3) * 0.05}s`}>
-          <h2>{g.name}</h2>
-          <div class="rows">
-            {g.items.map((it) => (
-              <div class="conn">
-                <span class="conn-name">{it.n}</span>
-                <span class="conn-meta">
-                  {it.badges?.includes('cdc') && <span class="badge">CDC</span>}
-                  {it.badges?.includes('arrow') && <span class="badge">Arrow</span>}
-                  {it.src && <span class="tag src">source</span>}
-                  {it.sink && <span class="tag sink">sink</span>}
-                </span>
-              </div>
-            ))}
-          </div>
+    <section class="wrap">
+      <form class="filters" role="search" onsubmit="return false">
+        <label class="sr-only" for="q">Search connectors</label>
+        <input id="q" type="search" placeholder="Search by name, system or crate" autocomplete="off" />
+        <div class="kind-toggle" role="group" aria-label="Show sources and sinks">
+          <button type="button" class="kind-btn" data-kind="source" aria-pressed="true">
+            Sources <span class="kind-count">{sources}</span>
+          </button>
+          <button type="button" class="kind-btn" data-kind="sink" aria-pressed="true">
+            Sinks <span class="kind-count">{sinks}</span>
+          </button>
         </div>
-      ))}
+        {[
+          { key: 'category', all: 'All categories', many: 'categories', options: usedCategories.map((c) => ({ id: c.id, label: c.label, n: countBy('category', c.id) })) },
+        ].map((f) => (
+          <div class="ms" data-filter={f.key} data-all={f.all} data-many={f.many}>
+            <button type="button" class="ms-btn" aria-haspopup="true" aria-expanded="false" aria-controls={`ms-${f.key}`}>
+              <span class="ms-label">{f.all}</span>
+            </button>
+            <div class="ms-menu" id={`ms-${f.key}`} role="group" aria-label={f.all} hidden>
+              {f.options.map((o) => (
+                <label class="ms-opt">
+                  <input type="checkbox" value={o.id} data-label={o.label} />
+                  <span class="ms-name">{o.label}</span>
+                  <span class="ms-n">{o.n}</span>
+                </label>
+              ))}
+              <button type="button" class="ms-clear">Clear</button>
+            </div>
+          </div>
+        ))}
+        <span class="result-count" id="count" aria-live="polite">{all.length} connectors</span>
+      </form>
+
+      <div class="conn-grid" id="grid">
+        {all.map((c) => (
+          <a
+            class="conn-card"
+            href={`${base}connectors/${c.slug}/`}
+            data-kind={c.kind}
+            data-category={c.category}
+            data-text={haystack(c)}
+          >
+            <span class="card-top">
+              <span class="card-title">{c.title}</span>
+              <span class={`pill ${c.kind}`}>{c.kind}</span>
+            </span>
+            <span class="card-desc">{c.description}</span>
+            <span class="card-meta">
+              <span class="pill score-pill" title="Conformance score">{c.score}/100</span>
+              <span class="pill">{c.categoryLabel}</span>
+              {c.published?.version && <span class="pill">v{c.published.version}</span>}
+            </span>
+          </a>
+        ))}
+      </div>
+      <p class="empty" id="none" hidden>No connector matches. Clear a filter, or search for the system’s name.</p>
     </section>
 
-    <section class="wrap docs-note" data-reveal>
+    <section class="wrap hub-notes">
       <p>
         File formats: the local-file and object-store connectors read and write JSONL, JSON,
         CSV, Excel, XML, Parquet and Avro, and read ORC, picked per file by extension or set
-        explicitly (<a href="https://faucet-hq.github.io/faucet-stream/cookbook/file-formats.html">file formats</a>).
+        explicitly (<a href={`${DOCS}/cookbook/file-formats.html`}>file formats</a>).
         The Singer bridges run any existing tap as a source and any Singer target as a sink.
       </p>
       <p>
-        Full capability matrix — streaming, resumable, compression, delivery guarantees,
-        and maturity tier per connector — lives in the <a href={DOCS}>connector reference</a>.
-        Missing one? Connectors are just Cargo crates —
-        <a href="https://faucet-hq.github.io/faucet-stream/extending/authoring-connectors.html">author your own</a>.
+        The same capabilities side by side, for every connector at once, are in the
+        <a href={`${DOCS}/reference/connectors.html`}>capability matrix</a>.
       </p>
+    </section>
+
+    <section class="wrap community">
+      <h2>Community connectors</h2>
+      <p class="note">
+        Any crate published to crates.io as <code>faucet-source-&lt;name&gt;</code> or
+        <code>faucet-sink-&lt;name&gt;</code> is listed here automatically. They are not
+        conformance-scored, since the hub only reads their crates.io metadata.
+      </p>
+      {others.length > 0 ? (
+        <div class="conn-grid">
+          {others.map((c) => (
+            <a class="conn-card" href={`https://crates.io/crates/${encodeURIComponent(c.name)}`} rel="noopener">
+              <span class="card-top">
+                <span class="card-title">{c.name}</span>
+                <span class="pill community">community</span>
+              </span>
+              {c.description && <span class="card-desc">{c.description}</span>}
+              <span class="card-meta">
+                {c.version && <span class="pill">v{c.version}</span>}
+                <span class="pill">{fmtInt(c.downloads)} downloads</span>
+                <span class="pill">not conformance-scored</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="empty">
+          No community connectors on crates.io yet. Build one with
+          <a href={`${DOCS}/extending/authoring-connectors.html`}>the connector guide</a> and publish it as
+          <code>faucet-source-&lt;name&gt;</code> or <code>faucet-sink-&lt;name&gt;</code> — it shows up here on the next site build.
+        </p>
+      )}
     </section>
 
     <CTA />
@@ -159,118 +158,98 @@ const groups = [
   <Footer />
 </Base>
 
-<style>
-  .head { padding-bottom: 1.5rem; }
-  .head h1 {
-    font-size: clamp(2rem, 4.5vw, 3.2rem);
-    margin-top: 1rem;
-  }
-  .lede {
-    margin-top: 1.1rem;
-    font-size: 1.1rem;
-    color: var(--ink-soft);
-    max-width: 44rem;
-  }
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.2rem;
-    margin-top: 1.6rem;
-    font-size: 0.85rem;
-    color: var(--ink-soft);
-    align-items: center;
-  }
-  .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
-  .dot.src { background: var(--teal); }
-  .dot.sink { background: color-mix(in srgb, var(--ink) 45%, transparent); }
-
-  .cat-wrap {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.4rem 2rem;
-    padding-bottom: 1rem;
-  }
-  .cat h2 {
-    font-family: var(--font-mono);
-    font-size: 0.76rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--teal-deep);
-    margin-bottom: 0.9rem;
-    padding-bottom: 0;
-    border: 0;
-  }
-  .rows {
-    display: flex;
-    flex-direction: column;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--surface);
-    overflow: hidden;
-  }
-  .conn {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .conn:last-child { border-bottom: none; }
-  .conn:hover { background: var(--surface-2); }
-  .conn-name { font-weight: 550; font-size: 0.96rem; }
-  .conn-meta { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .tag {
-    font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 0.68rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--ink-faint);
-  }
-  /* Two-tone, both active: SOURCE = brand teal, SINK = slate (not a faded grey). */
-  .tag.src {
-    color: var(--teal-deep);
-    border-color: color-mix(in srgb, var(--teal) 40%, var(--line));
-    background: color-mix(in srgb, var(--teal) 8%, transparent);
-  }
-  .tag.sink {
-    color: var(--ink-soft);
-    border-color: color-mix(in srgb, var(--ink) 26%, var(--line));
-    background: color-mix(in srgb, var(--ink) 5%, transparent);
-  }
-  .badge {
-    font-family: var(--font-body);
-    font-size: 0.64rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    padding: 0.12rem 0.4rem;
-    border-radius: 5px;
-    background: var(--teal-wash);
-    color: var(--teal-deep);
-    font-style: normal;
-  }
-  i.badge { font-style: normal; }
-
-  .docs-note {
-    padding: 2rem 0 0;
-  }
-  .docs-note p {
-    color: var(--ink-soft);
-    font-size: 0.95rem;
-    border-top: 1px solid var(--line);
-    padding-top: 1.4rem;
-  }
-  .docs-note a {
-    color: var(--teal-deep);
-    border-bottom: 1px solid color-mix(in srgb, var(--teal-deep) 35%, transparent);
-  }
-
-  @media (max-width: 720px) {
-    .cat-wrap { grid-template-columns: 1fr; }
-  }
-</style>
+<script is:inline>
+  (() => {
+    const q = document.getElementById('q');
+    const kinds = [...document.querySelectorAll('.kind-btn')];
+    const menus = [...document.querySelectorAll('.ms')];
+    const picked = (key) => {
+      const ms = menus.find((m) => m.dataset.filter === key);
+      return new Set([...ms.querySelectorAll('input:checked')].map((i) => i.value));
+    };
+    const relabel = (ms) => {
+      const on = [...ms.querySelectorAll('input:checked')];
+      ms.querySelector('.ms-label').textContent =
+        on.length === 0 ? ms.dataset.all : on.length === 1 ? on[0].dataset.label : `${on.length} ${ms.dataset.many}`;
+      ms.classList.toggle('active', on.length > 0);
+    };
+    const close = (ms) => {
+      ms.querySelector('.ms-menu').hidden = true;
+      ms.querySelector('.ms-btn').setAttribute('aria-expanded', 'false');
+    };
+    const count = document.getElementById('count');
+    const none = document.getElementById('none');
+    const cards = [...document.querySelectorAll('#grid .conn-card')];
+    const apply = () => {
+      const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+      const cats = picked('category');
+      const shownKinds = new Set(
+        kinds.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.kind),
+      );
+      let shown = 0;
+      for (const card of cards) {
+        const d = card.dataset;
+        const ok =
+          shownKinds.has(d.kind) &&
+          (cats.size === 0 || cats.has(d.category)) &&
+          words.every((w) => d.text.includes(w));
+        card.hidden = !ok;
+        if (ok) shown++;
+      }
+      count.textContent = `${shown} connector${shown === 1 ? '' : 's'}`;
+      none.hidden = shown !== 0;
+    };
+    q.addEventListener('input', apply);
+    for (const ms of menus) {
+      const btn = ms.querySelector('.ms-btn');
+      const menu = ms.querySelector('.ms-menu');
+      btn.addEventListener('click', () => {
+        const opening = menu.hidden;
+        menus.forEach(close);
+        if (opening) {
+          menu.hidden = false;
+          btn.setAttribute('aria-expanded', 'true');
+          menu.querySelector('input')?.focus();
+        }
+      });
+      menu.addEventListener('change', () => {
+        relabel(ms);
+        apply();
+      });
+      ms.querySelector('.ms-clear').addEventListener('click', () => {
+        menu.querySelectorAll('input').forEach((i) => (i.checked = false));
+        relabel(ms);
+        apply();
+      });
+      ms.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !menu.hidden) {
+          close(ms);
+          btn.focus();
+        }
+      });
+    }
+    document.addEventListener('click', (e) => {
+      for (const ms of menus) if (!ms.contains(e.target)) close(ms);
+    });
+    for (const btn of kinds) {
+      btn.addEventListener('click', () => {
+        const on = btn.getAttribute('aria-pressed') === 'true';
+        const others = kinds.filter((b) => b !== btn && b.getAttribute('aria-pressed') === 'true');
+        if (on && others.length === 0) return;
+        btn.setAttribute('aria-pressed', String(!on));
+        apply();
+      });
+    }
+    const params = new URLSearchParams(location.search);
+    if (params.has('q')) q.value = params.get('q');
+    for (const ms of menus) {
+      const wanted = new Set((params.get(ms.dataset.filter) ?? '').split(',').filter(Boolean));
+      ms.querySelectorAll('input').forEach((i) => (i.checked = wanted.has(i.value)));
+      relabel(ms);
+    }
+    if (params.get('kind') === 'source' || params.get('kind') === 'sink') {
+      for (const b of kinds) b.setAttribute('aria-pressed', String(b.dataset.kind === params.get('kind')));
+    }
+    apply();
+  })();
+</script>

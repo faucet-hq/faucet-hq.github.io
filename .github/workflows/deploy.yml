@@ -78,7 +78,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm ci
-          npm run build
+          GITHUB_TOKEN="${{ github.token }}" npm run build
 
       - name: Assemble site root
         run: |
@@ -93,7 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm ci
-          npm run build
+          GITHUB_TOKEN="${{ github.token }}" npm run build
 
       - name: Add dev preview under /dev/
         if: steps.dev.outputs.exists == 'true'
