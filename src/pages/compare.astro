@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CTA from '../components/CTA.astro';
+import { counts } from '../lib/connectors.js';
 
 const README = 'https://github.com/faucet-hq/faucet-stream#how-it-compares';
 const BENCH = 'https://github.com/faucet-hq/faucet-stream/blob/main/BENCHMARKS.md';
@@ -16,7 +17,7 @@ const rows = [
   { f: 'Single static binary', v: ['yes', 'no', 'no', 'n/a'] },
   { f: 'Config-driven (YAML/JSON)', v: ['yes', 'yes', 'via UI/API', 'via UI'] },
   { f: 'Embeddable as a library', v: ['yes (Rust)', 'no', 'no', 'no'] },
-  { f: 'Connectors', v: ['78, growing', '600+ taps', '350+', '500+'] },
+  { f: 'Connectors', v: [`${counts.total}, growing`, '600+ taps', '350+', '500+'] },
   { f: 'Runs existing Singer taps and targets', v: ['yes (bridges)', 'yes (native)', 'no', 'no'] },
   { f: 'Change data capture', v: ['yes', 'partial', 'yes', 'yes'] },
   { f: 'Incremental + resumable state', v: ['yes', 'yes', 'yes', 'yes'] },

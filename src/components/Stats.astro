@@ -1,6 +1,8 @@
 ---
+import { counts } from '../lib/connectors.js';
+
 const stats = [
-  { n: '78', l: 'connectors', s: '43 sources · 35 sinks' },
+  { n: String(counts.total), l: 'connectors', s: `${counts.sources} sources · ${counts.sinks} sinks` },
   { n: '712k', l: 'rows / second', s: '1M-row CSV → JSONL' },
   { n: '~96×', l: 'faster than Meltano', s: 'exact row parity' },
   { n: '1', l: 'binary to ship', s: 'no daemon, no runtime' },

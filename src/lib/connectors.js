@@ -114,3 +114,23 @@ export function capabilityRows(c) {
   flag('Compression', cap.compression);
   return rows;
 }
+
+// Site-wide connector counts, so every page tracks the release snapshot.
+export const counts = {
+  total: snapshot.connectors.length,
+  sources: snapshot.connectors.filter((c) => c.kind === 'source').length,
+  sinks: snapshot.connectors.filter((c) => c.kind === 'sink').length,
+};
+
+// One card per category: each system named once, even when it ships both a
+// source and a sink.
+export function categoryGroups() {
+  return snapshot.categories
+    .map((cat) => ({
+      name: cat.label,
+      items: [...new Set(snapshot.connectors.filter((c) => c.category === cat.id).map((c) => c.title))].sort(
+        (a, b) => a.localeCompare(b),
+      ),
+    }))
+    .filter((g) => g.items.length > 0);
+}
