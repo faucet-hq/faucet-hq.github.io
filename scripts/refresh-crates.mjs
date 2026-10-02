@@ -11,6 +11,7 @@ const UA = 'faucet-hq.github.io connector hub (https://github.com/faucet-hq/fauc
 const TIMEOUT_MS = 10_000;
 const NAME_RE = /^faucet-(source|sink)-[a-z0-9][a-z0-9_-]*$/;
 const TEAM = 'github:faucet-hq:owners';
+const REPO_RE = /^https:\/\/github\.com\/faucet-hq\/faucet-stream\/?$/;
 
 async function page(query, n, teamId) {
   const scope = teamId ? `team_id=${teamId}` : `q=${encodeURIComponent(query)}`;
@@ -30,6 +31,20 @@ async function teamCrates() {
   });
   if (!res.ok) throw new Error(`team ${TEAM}: HTTP ${res.status}`);
   return search('', (await res.json()).team.id);
+}
+
+// A connector crate published since the last ownership change is owned only
+// by the publishing account, not the crates.io team. The engine feed names it,
+// so look it up directly and accept it when it points at the engine repository.
+async function engineCrate(name) {
+  const res = await fetch(`https://crates.io/api/v1/crates/${encodeURIComponent(name)}`, {
+    headers: { 'User-Agent': UA, Accept: 'application/json' },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+  const c = (await res.json()).crate;
+  return REPO_RE.test(c?.repository ?? '') ? c : null;
 }
 
 async function search(query, teamId) {
@@ -122,7 +137,15 @@ async function main() {
   const firstParty = new Set(snapshot.connectors.map((c) => c.crate));
   const owned = new Map((await teamCrates()).map((c) => [c.name, c]));
   const crates = {};
-  for (const name of [...firstParty].sort()) if (owned.has(name)) crates[name] = entry(owned.get(name));
+  for (const name of [...firstParty].sort()) {
+    if (!owned.has(name)) {
+      await new Promise((r) => setTimeout(r, 1100));
+      const c = await engineCrate(name);
+      if (!c) continue;
+      owned.set(name, c);
+    }
+    crates[name] = entry(owned.get(name));
+  }
   const seen = new Map();
   for (const q of ['faucet-source', 'faucet-sink']) {
     for (const c of await search(q)) seen.set(c.name, c);
