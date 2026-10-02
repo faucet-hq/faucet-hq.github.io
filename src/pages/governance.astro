@@ -161,18 +161,18 @@ approvals:
 
     <section class="wrap gov-wrap">
       {guards.map((g, i) => (
-        <article class="gcard" data-reveal style={`--reveal-delay:${(i % 2) * 0.06}s`}>
+        <article class="gcard" style={`--reveal-delay:${(i % 2) * 0.06}s`}>
           <div class="gcard-copy">
             <h2>{g.name}</h2>
             <p>{g.desc}</p>
-            <a class="glink" href={g.doc}>Docs →</a>
+            <a class="glink" href={g.doc}>Docs</a>
           </div>
           <pre class="gcard-code"><code>{g.code}</code></pre>
         </article>
       ))}
     </section>
 
-    <section class="wrap gov-note" data-reveal>
+    <section class="wrap gov-note">
       <p>
         All of it is opt-in config on the same pipeline — no extra services, no
         downstream bolt-ons. See the <a href="https://faucet-hq.github.io/faucet-stream/">full guide</a>

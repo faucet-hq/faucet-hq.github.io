@@ -49,6 +49,7 @@ const jsonLd = {
 
     <!-- Apply the saved theme before paint so there's no flash (FOUC). -->
     <script is:inline>
+      document.documentElement.classList.add('js');
       (() => {
         try {
           const t = localStorage.getItem('theme');

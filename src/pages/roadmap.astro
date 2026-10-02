@@ -106,7 +106,7 @@ const horizons = [
       </div>
     </section>
 
-    <section class="wrap shipped" data-reveal>
+    <section class="wrap shipped">
       <h2>The foundation, shipped</h2>
       <p>
         Exactly-once and effectively-once delivery, unified write modes / upsert, CDC with
@@ -126,14 +126,14 @@ const horizons = [
 
     {horizons.map((h) => (
       <section class="wrap horizon">
-        <div class="horizon-head" data-reveal>
+        <div class="horizon-head">
           <span class={`htag htag--${h.tag.toLowerCase()}`}>{h.tag}</span>
           <h2>{h.heading}</h2>
           <p>{h.blurb}</p>
         </div>
         <div class="theme-grid">
           {h.themes.map((t) => (
-            <article class="theme" data-reveal>
+            <article class="theme">
               <h3>{t.title}</h3>
               <p>{t.body}</p>
               <div class="issues">
@@ -147,7 +147,7 @@ const horizons = [
       </section>
     ))}
 
-    <section class="wrap note" data-reveal>
+    <section class="wrap note">
       <p>
         Priorities shift as the work and the community do. For the authoritative,
         always-current picture — and to weigh in — follow

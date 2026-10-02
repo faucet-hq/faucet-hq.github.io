@@ -7,7 +7,7 @@ const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
 
 <section class="section" id="config">
   <div class="wrap code-grid">
-    <div class="code-copy" data-reveal>
+    <div class="code-copy">
       <span class="eyebrow">Declare it once</span>
       <h2>A pipeline is a file, not a codebase.</h2>
       <p>
@@ -23,7 +23,7 @@ const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
         <li><code>${'{'}env:…{'}'}</code> &amp; secrets-manager interpolation</li>
         <li>Page-level embedded-DuckDB <code>sql</code> transform</li>
       </ul>
-      <a class="btn btn--ghost" href={CLI}>Full config grammar →</a>
+      <a class="btn btn--ghost" href={CLI}>Full config grammar</a>
       <p class="api-note">
         Running it as a service? The control plane ships a full
         <a href={OPENAPI}>OpenAPI&nbsp;3 spec</a> — import it into Postman, Insomnia,
@@ -31,7 +31,7 @@ const OPENAPI = `${import.meta.env.BASE_URL}openapi.yaml`;
       </p>
     </div>
 
-    <div class="code-card" data-reveal style="--reveal-delay:.08s">
+    <div class="code-card">
       <div class="tabs" role="tablist" aria-label="Example format">
         <input type="radio" name="ex" id="ex-yaml" checked />
         <label for="ex-yaml" role="tab">pipeline.yaml</label>
