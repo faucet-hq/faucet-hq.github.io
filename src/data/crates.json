@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-10-02T09:10:16.676Z",
+  "fetched_at": "2026-10-02T10:12:59.561Z",
   "crates": {
     "faucet-sink-azure-blob": {
       "name": "faucet-sink-azure-blob",
@@ -37,6 +37,15 @@
       "description": "CSV file sink connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
+    "faucet-sink-databricks": {
+      "name": "faucet-sink-databricks",
+      "version": "1.0.0",
+      "downloads": 27,
+      "recent_downloads": 27,
+      "updated_at": "2026-09-30T08:40:34.347403Z",
+      "description": "Databricks SQL warehouse sink (COPY INTO, MERGE upsert, overwrite, exactly-once) for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
     "faucet-sink-delta": {
       "name": "faucet-sink-delta",
       "version": "1.2.1",
@@ -55,6 +64,15 @@
       "description": "DuckDB sink connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
+    "faucet-sink-dynamodb": {
+      "name": "faucet-sink-dynamodb",
+      "version": "1.0.0",
+      "downloads": 27,
+      "recent_downloads": 27,
+      "updated_at": "2026-09-30T08:52:35.533104Z",
+      "description": "Amazon DynamoDB sink for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
     "faucet-sink-elasticsearch": {
       "name": "faucet-sink-elasticsearch",
       "version": "1.6.0",
@@ -62,6 +80,15 @@
       "recent_downloads": 719,
       "updated_at": "2026-09-30T07:45:48.023177Z",
       "description": "Elasticsearch sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-file": {
+      "name": "faucet-sink-file",
+      "version": "1.0.1",
+      "downloads": 37,
+      "recent_downloads": 37,
+      "updated_at": "2026-09-30T18:06:40.834235Z",
+      "description": "Local file sink (JSONL, JSON, CSV, XML, Excel, Avro, Parquet; rollover, atomic finalisation) for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-sink-gcs": {
@@ -154,6 +181,15 @@
       "description": "NATS sink connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
+    "faucet-sink-oracle": {
+      "name": "faucet-sink-oracle",
+      "version": "1.0.0",
+      "downloads": 15,
+      "recent_downloads": 15,
+      "updated_at": "2026-09-30T12:22:02.788461Z",
+      "description": "Oracle Database sink for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
     "faucet-sink-parquet": {
       "name": "faucet-sink-parquet",
       "version": "1.4.0",
@@ -179,6 +215,15 @@
       "recent_downloads": 528,
       "updated_at": "2026-09-30T07:50:10.165904Z",
       "description": "Google Cloud Pub/Sub sink connector for faucet-stream (batched publish, ordering keys, bounded concurrency, partial-failure DLQ)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-rabbitmq": {
+      "name": "faucet-sink-rabbitmq",
+      "version": "1.0.1",
+      "downloads": 37,
+      "recent_downloads": 37,
+      "updated_at": "2026-09-30T18:14:23.836954Z",
+      "description": "RabbitMQ (AMQP 0.9.1) sink connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-sink-redis": {
@@ -215,6 +260,15 @@
       "recent_downloads": 507,
       "updated_at": "2026-09-30T18:14:04.311191Z",
       "description": "SFTP sink connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-sink-singer": {
+      "name": "faucet-sink-singer",
+      "version": "1.0.1",
+      "downloads": 35,
+      "recent_downloads": 35,
+      "updated_at": "2026-09-30T18:02:36.365604Z",
+      "description": "Singer target bridge sink for the faucet-stream ecosystem — run any Singer target as a faucet sink",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-sink-snowflake": {
@@ -325,6 +379,15 @@
       "description": "DuckDB query source connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
+    "faucet-source-dynamodb": {
+      "name": "faucet-source-dynamodb",
+      "version": "1.0.0",
+      "downloads": 22,
+      "recent_downloads": 22,
+      "updated_at": "2026-09-30T12:22:51.990826Z",
+      "description": "Amazon DynamoDB source (parallel scan, query, Streams CDC) for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
     "faucet-source-elasticsearch": {
       "name": "faucet-source-elasticsearch",
       "version": "1.5.0",
@@ -332,6 +395,15 @@
       "recent_downloads": 756,
       "updated_at": "2026-09-30T07:30:06.160320Z",
       "description": "Elasticsearch source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-file": {
+      "name": "faucet-source-file",
+      "version": "1.0.1",
+      "downloads": 38,
+      "recent_downloads": 38,
+      "updated_at": "2026-09-30T18:06:31.999024Z",
+      "description": "Local file source (JSONL, JSON, CSV, Excel, XML, Parquet, Avro, ORC; path, directory, glob or URL) for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-source-gcs": {
@@ -359,6 +431,15 @@
       "recent_downloads": 722,
       "updated_at": "2026-09-30T07:19:39.126105Z",
       "description": "gRPC API source connector for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-iceberg": {
+      "name": "faucet-source-iceberg",
+      "version": "1.0.1",
+      "downloads": 30,
+      "recent_downloads": 30,
+      "updated_at": "2026-09-30T18:15:17.364391Z",
+      "description": "Apache Iceberg table source for the faucet-stream ecosystem — projection, pushdown, time travel, incremental snapshot reads",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-source-kafka": {
@@ -442,6 +523,24 @@
       "description": "NATS source connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
+    "faucet-source-oracle": {
+      "name": "faucet-source-oracle",
+      "version": "1.0.0",
+      "downloads": 15,
+      "recent_downloads": 15,
+      "updated_at": "2026-09-30T12:24:17.617288Z",
+      "description": "Oracle Database query source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-oracle-cdc": {
+      "name": "faucet-source-oracle-cdc",
+      "version": "1.0.0",
+      "downloads": 15,
+      "recent_downloads": 15,
+      "updated_at": "2026-09-30T12:24:24.448273Z",
+      "description": "Oracle Database CDC (LogMiner) source for the faucet-stream ecosystem",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
     "faucet-source-parquet": {
       "name": "faucet-source-parquet",
       "version": "1.5.0",
@@ -476,6 +575,15 @@
       "recent_downloads": 519,
       "updated_at": "2026-09-30T07:26:20.249453Z",
       "description": "Google Cloud Pub/Sub source connector for faucet-stream (streaming pull, ack at durable page boundaries, resumable termination)",
+      "repository": "https://github.com/faucet-hq/faucet-stream"
+    },
+    "faucet-source-rabbitmq": {
+      "name": "faucet-source-rabbitmq",
+      "version": "1.0.0",
+      "downloads": 26,
+      "recent_downloads": 26,
+      "updated_at": "2026-09-30T08:07:19.181959Z",
+      "description": "RabbitMQ (AMQP 0.9.1) source connector for the faucet-stream ecosystem",
       "repository": "https://github.com/faucet-hq/faucet-stream"
     },
     "faucet-source-redis": {
