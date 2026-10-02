@@ -58,35 +58,62 @@ function entry(c) {
 }
 
 // The engine attaches its `faucet conformance --export` feed to every CLI
-// release; take the newest one that has it, and keep the committed snapshot
-// unless it is complete.
-async function refreshSnapshot() {
-  const res = await fetch('https://api.github.com/repos/faucet-hq/faucet-stream/releases?per_page=50', {
-    headers: {
-      'User-Agent': UA,
-      Accept: 'application/vnd.github+json',
-      ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
-    },
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`releases: HTTP ${res.status}`);
-  const release = (await res.json()).find(
-    (r) => r.tag_name?.startsWith('faucet-cli-v') && !r.draft && r.assets?.some((a) => a.name === 'connectors.json'),
-  );
-  if (!release) return console.log('connectors.json: no CLI release carries the export yet; keeping the snapshot');
-  const asset = release.assets.find((a) => a.name === 'connectors.json');
-  const feed = await (
-    await fetch(asset.browser_download_url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(TIMEOUT_MS) })
-  ).json();
-  const complete =
+// release. release-plz publishes one GitHub release per crate, so the CLI
+// release can sit hundreds deep in the release list: resolve the CLI tags
+// directly, newest version first, and take the first one carrying the feed.
+const GH = 'https://api.github.com/repos/faucet-hq/faucet-stream';
+const ghHeaders = () => ({
+  'User-Agent': UA,
+  Accept: 'application/vnd.github+json',
+  ...(process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {}),
+});
+
+function cliVersions(refs) {
+  const parse = (ref) => /^refs\/tags\/faucet-cli-v(\d+)\.(\d+)\.(\d+)$/.exec(ref)?.slice(1).map(Number);
+  return refs
+    .map((r) => ({ tag: r.ref.slice('refs/tags/'.length), v: parse(r.ref) }))
+    .filter((r) => r.v)
+    .sort((a, b) => b.v[0] - a.v[0] || b.v[1] - a.v[1] || b.v[2] - a.v[2])
+    .map((r) => r.tag);
+}
+
+function isCompleteFeed(feed) {
+  return (
     feed?.format === 'faucet-connector-export' &&
     feed.version === 1 &&
     Array.isArray(feed.connectors) &&
     feed.connectors.length > 0 &&
-    feed.connectors.every((c) => c.id && c.crate && c.config_schema);
-  if (!complete) throw new Error(`${release.tag_name} connectors.json is incomplete; keeping the snapshot`);
-  writeFileSync(SNAPSHOT, JSON.stringify(feed, null, 2) + '\n');
-  console.log(`connectors.json: ${feed.connectors.length} connectors from ${release.tag_name}`);
+    feed.connectors.every((c) => c.id && c.crate && c.config_schema)
+  );
+}
+
+async function gh(path) {
+  const res = await fetch(`${GH}${path}`, { headers: ghHeaders(), signal: AbortSignal.timeout(TIMEOUT_MS) });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.json();
+}
+
+async function refreshSnapshot() {
+  const tags = cliVersions((await gh('/git/matching-refs/tags/faucet-cli-v')) ?? []);
+  for (const tag of tags.slice(0, 5)) {
+    const release = await gh(`/releases/tags/${tag}`);
+    const asset = release && !release.draft && release.assets?.find((a) => a.name === 'connectors.json');
+    if (!asset) {
+      console.log(`connectors.json: ${tag} has no export yet; trying the previous CLI release`);
+      continue;
+    }
+    const res = await fetch(asset.browser_download_url, {
+      headers: { 'User-Agent': UA },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`${tag} connectors.json: HTTP ${res.status}`);
+    const feed = await res.json();
+    if (!isCompleteFeed(feed)) throw new Error(`${tag} connectors.json is incomplete; keeping the snapshot`);
+    writeFileSync(SNAPSHOT, JSON.stringify(feed, null, 2) + '\n');
+    return console.log(`connectors.json: ${feed.connectors.length} connectors from ${tag}`);
+  }
+  console.log('connectors.json: no recent CLI release carries the export; keeping the snapshot');
 }
 
 async function main() {
