@@ -44,7 +44,7 @@ const icons = {
 
 <section class="section" id="why">
   <div class="wrap">
-    <div class="section-head" data-reveal>
+    <div class="section-head">
       <span class="eyebrow">Why faucet-stream</span>
       <h2>One engine for the whole movement path.</h2>
       <p>
@@ -55,7 +55,7 @@ const icons = {
 
     <div class="cards">
       {features.map((f, i) => (
-        <article class="card" data-reveal style={`--reveal-delay:${(i % 3) * 0.06}s`}>
+        <article class="card" style={`--reveal-delay:${(i % 3) * 0.06}s`}>
           <span class="card-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="22" height="22" set:html={icons[f.icon]} />
           </span>

@@ -104,7 +104,7 @@ origins:
 
     <section class="section band compose" id="compose">
       <div class="wrap">
-        <div class="section-head" data-reveal>
+        <div class="section-head">
           <span class="eyebrow">Try a pairing</span>
           <h2>Pick any two. Get the command.</h2>
           <p>Choose a source to see which sinks it runs on, pick one to see how each stream will be written, and copy the command that runs it.</p>
@@ -122,7 +122,7 @@ origins:
     <section class="section catalog" id="sources">
       <div class="wrap">
         <div class="catalog-head">
-          <div class="section-head" data-reveal>
+          <div class="section-head">
             <span class="eyebrow">Catalog</span>
             <h2>Source templates</h2>
             <p>One file per system: auth, pagination, incremental cursors and the streams it produces. Written once, it runs on every sink below.</p>
@@ -149,7 +149,7 @@ origins:
     <section class="section band catalog" id="sinks">
       <div class="wrap">
         <div class="catalog-head">
-          <div class="section-head" data-reveal>
+          <div class="section-head">
             <span class="eyebrow">Destinations</span>
             <h2>Sink templates</h2>
             <p>Where rows land. Each sink lists the write modes it supports natively; a source asks for a mode per stream.</p>
@@ -174,7 +174,7 @@ origins:
 
     <section class="section band publish" id="publish">
       <div class="wrap">
-      <div class="section-head publish-head" data-reveal>
+      <div class="section-head publish-head">
       <span class="eyebrow">Publish</span>
       <h2>Registering a template is a pull request.</h2>
       <p>
@@ -192,15 +192,15 @@ origins:
       </div>
       <div class="publish-grid">
         <div class="pub-card">
-          <h3>1 · Open a skeleton</h3>
+          <h3>1. Open a skeleton</h3>
           <p>Rename the <code>your-github-login</code> folder to your GitHub user or org. GitHub forks the catalog for you and opens a pull request when you save; the first PR into a namespace also adds its <code>OWNERS</code> file.</p>
           <div class="actions pub-choices">
-            <a class="btn" href={PUBLISH_SOURCE} target="_blank" rel="noopener noreferrer">New source template →</a>
-            <a class="btn btn--ghost" href={PUBLISH_SINK} target="_blank" rel="noopener noreferrer">New sink template →</a>
+            <a class="btn" href={PUBLISH_SOURCE} target="_blank" rel="noopener noreferrer">New source template</a>
+            <a class="btn btn--ghost" href={PUBLISH_SINK} target="_blank" rel="noopener noreferrer">New sink template</a>
           </div>
         </div>
         <div class="pub-card">
-          <h3>2 · Check it locally</h3>
+          <h3>2. Check it locally</h3>
           <pre><code><span class="cmd-note"># Install the CLI first (see below)</span>
 faucet hub lint  --hub .
 faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/jsonl
@@ -208,7 +208,7 @@ faucet hub check --hub . --source your-github-login/my-system --sink faucet-hq/b
           <p>Every source must compose with at least two sinks. See <a href={CONTRIBUTING}>CONTRIBUTING</a> for the rules the lint enforces.</p>
         </div>
         <div class="pub-card">
-          <h3>3 · Or keep it private</h3>
+          <h3>3. Or keep it private</h3>
           <p>Your organisation's templates can live in any repository with the same layout:</p>
           <pre><code><span class="cmd-note"># Install the CLI first (see below)</span>
 faucet run --hub github:acme/catalog --source acme/erp --sink acme/snowflake …</code></pre>

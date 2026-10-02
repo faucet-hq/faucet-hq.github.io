@@ -125,7 +125,7 @@ const groups = [
 
     <section class="section">
       <div class="wrap">
-        <div class="section-head" data-reveal>
+        <div class="section-head">
           <span class="eyebrow">The metric catalog</span>
           <h2>Counters, gauges, and histograms across the whole path.</h2>
           <p>Over 120 metrics across the runtime — a representative set per subsystem below;
@@ -133,7 +133,7 @@ const groups = [
         </div>
         <div class="cat-grid">
           {groups.map((g, i) => (
-            <div class="cat" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+            <div class="cat" style={`--reveal-delay:${(i % 3) * 0.05}s`}>
               <h3>{g.name}</h3>
               <div class="rows">
                 {g.rows.map((r) => (
@@ -147,16 +147,16 @@ const groups = [
             </div>
           ))}
         </div>
-        <p class="cat-more" data-reveal>
+        <p class="cat-more">
           Plus metrics for backfill, scheduling, serve/cluster, notifications, and cleanup —
-          <a href={DOCS}>see all 120+ in the reference →</a>
+          <a href={DOCS}>see all 120+ in the reference</a>
         </p>
       </div>
     </section>
 
     <section class="section wire">
       <div class="wrap wire-grid">
-        <div class="wire-copy" data-reveal>
+        <div class="wire-copy">
           <span class="eyebrow">Wire it up</span>
           <h2>Scrape it in two minutes.</h2>
           <p>
@@ -172,9 +172,9 @@ const groups = [
             <li><code>run_id</code> is a span attribute only — never a high-cardinality label.</li>
             <li>Drop-guard timers sample even on cancellation; panics surface as a typed error kind.</li>
           </ul>
-          <a class="btn btn--ghost" href={DOCS}>Observability reference →</a>
+          <a class="btn btn--ghost" href={DOCS}>Observability reference</a>
         </div>
-        <div class="wire-code" data-reveal style="--reveal-delay:.08s">
+        <div class="wire-code">
           <pre><code><span class="c"># faucet serve: /metrics on its HTTP listener</span>
 faucet serve --listen <span class="s">127.0.0.1:8080</span>
 
@@ -198,7 +198,7 @@ rate(faucet_sink_records_total[5m])
 
     <section class="section wire">
       <div class="wrap wire-grid">
-        <div class="wire-copy" data-reveal>
+        <div class="wire-copy">
           <span class="eyebrow">Status and state</span>
           <h2>One screen per pipeline.</h2>
           <p>
@@ -212,9 +212,9 @@ rate(faucet_sink_records_total[5m])
             <li>State is versioned: after an upgrade, faucet migrates an older bookmark or refuses one it can't read, never guesses.</li>
             <li>Also served over HTTP at <code>/v1/status</code> and <code>/v1/state</code>.</li>
           </ul>
-          <a class="btn btn--ghost" href="https://faucet-hq.github.io/faucet-stream/cookbook/state-and-status.html">State and status guide →</a>
+          <a class="btn btn--ghost" href="https://faucet-hq.github.io/faucet-stream/cookbook/state-and-status.html">State and status guide</a>
         </div>
-        <div class="wire-code" data-reveal style="--reveal-delay:.08s">
+        <div class="wire-code">
           <pre><code><span class="c"># health check, for cron or Nagios</span>
 faucet status <span class="s">orders.yaml</span>
 faucet status <span class="s">orders.yaml</span> --json

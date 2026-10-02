@@ -177,14 +177,13 @@ p { text-wrap: pretty; }
   padding-block: clamp(4rem, 9vw, 7.5rem);
 }
 
-/* ---- eyebrow: the mono utility face carries structure ---- */
+/* ---- eyebrow: names the section in plain sentence case ---- */
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--teal-deep);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--teal-text);
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
@@ -263,15 +262,15 @@ code, kbd, pre {
   outline-offset: 2px;
 }
 
-/* ---- scroll reveal ---- */
-[data-reveal] {
+/* ---- scroll reveal (only when JS runs, so the page never stays blank) ---- */
+.js [data-reveal] {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
   transition-delay: var(--reveal-delay, 0s);
   will-change: opacity, transform;
 }
-[data-reveal].is-in {
+.js [data-reveal].is-in {
   opacity: 1;
   transform: none;
 }
