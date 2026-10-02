@@ -177,13 +177,14 @@ p { text-wrap: pretty; }
   padding-block: clamp(4rem, 9vw, 7.5rem);
 }
 
-/* ---- eyebrow: names the section in plain sentence case ---- */
+/* ---- eyebrow: the mono utility face carries structure ---- */
 .eyebrow {
-  font-family: var(--font-body);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--teal-text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;

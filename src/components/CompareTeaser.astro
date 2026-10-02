@@ -9,7 +9,7 @@ const points = [
 
 <section class="section cmp-teaser">
   <div class="wrap">
-    <div class="section-head">
+    <div class="section-head" data-reveal>
       <span class="eyebrow">How it compares</span>
       <h2>An all-in-one platform — not a pile of services.</h2>
       <p>
@@ -20,15 +20,15 @@ const points = [
 
     <div class="cmp-points">
       {points.map((p, i) => (
-        <div class="cmp-point" style={`--reveal-delay:${(i % 3) * 0.06}s`}>
+        <div class="cmp-point" data-reveal style={`--reveal-delay:${(i % 3) * 0.06}s`}>
           <span class="cmp-vs">{p.vs}</span>
           <p>{p.txt}</p>
         </div>
       ))}
     </div>
 
-    <div class="cmp-cta">
-      <a class="btn btn--ghost" href={COMPARE}>See the full comparison</a>
+    <div class="cmp-cta" data-reveal>
+      <a class="btn btn--ghost" href={COMPARE}>See the full comparison →</a>
     </div>
   </div>
 </section>

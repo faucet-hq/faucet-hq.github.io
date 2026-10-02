@@ -1,6 +1,6 @@
 ---
 const stats = [
-  { n: '78', l: 'connectors', s: '43 sources, 35 sinks' },
+  { n: '78', l: 'connectors', s: '43 sources · 35 sinks' },
   { n: '712k', l: 'rows / second', s: '1M-row CSV → JSONL' },
   { n: '~96×', l: 'faster than Meltano', s: 'exact row parity' },
   { n: '1', l: 'binary to ship', s: 'no daemon, no runtime' },
@@ -10,7 +10,7 @@ const stats = [
 <section class="stats" aria-label="At a glance">
   <div class="wrap grid">
     {stats.map((s, i) => (
-      <div class="stat" style={`--reveal-delay:${i * 0.06}s`}>
+      <div class="stat" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
         <span class="stat-n">{s.n}</span>
         <span class="stat-l">{s.l}</span>
         <span class="stat-s">{s.s}</span>

@@ -85,7 +85,7 @@ const mem = [
 
     <section class="section band">
       <div class="wrap">
-        <div class="band-head">
+        <div class="band-head" data-reveal>
           <span class="eyebrow eyebrow--onDark">Scenario A · CSV → JSONL · 1M rows</span>
           <h2>The best case, in two pictures.</h2>
         </div>
@@ -116,13 +116,13 @@ const mem = [
 
     <section class="section">
       <div class="wrap">
-        <div class="section-head">
+        <div class="section-head" data-reveal>
           <span class="eyebrow">All three scenarios</span>
           <h2>The gap shrinks as the work moves from parse-bound to sink-bound.</h2>
           <p>Quote the ~96× CSV figure as the upper bound, not the typical case. When the
           database write dominates, both tools hit the same wall and the gap narrows to ~16×.</p>
         </div>
-        <div class="scroll">
+        <div class="scroll" data-reveal>
           <table class="bench">
             <thead>
               <tr><th>Scenario</th><th>Bottleneck</th><th>faucet (rows/s)</th><th>Meltano</th><th>Throughput gap</th><th>Peak RAM (faucet vs Meltano)</th><th>Memory gap</th></tr>
@@ -147,7 +147,7 @@ const mem = [
 
     <section class="section run">
       <div class="wrap run-grid">
-        <div class="run-copy">
+        <div class="run-copy" data-reveal>
           <span class="eyebrow">Run it yourself</span>
           <h2>One independent confirmation beats a new connector.</h2>
           <p>
@@ -161,9 +161,9 @@ const mem = [
             <li><b>B &amp; C</b> add Docker Postgres.</li>
             <li>Reported run: Apple M3 Pro, 12 cores, 18 GiB, macOS.</li>
           </ul>
-          <a class="btn btn--ghost" href={REPO_BENCH}>Full methodology &amp; caveats</a>
+          <a class="btn btn--ghost" href={REPO_BENCH}>Full methodology &amp; caveats →</a>
         </div>
-        <div class="run-code">
+        <div class="run-code" data-reveal style="--reveal-delay:.08s">
           <pre><code><span class="c"># build the release binary the harness uses</span>
 cargo build -p faucet-cli --release \
   --no-default-features \
@@ -183,7 +183,7 @@ make bench-smoke
       </div>
     </section>
 
-    <section class="wrap caveats">
+    <section class="wrap caveats" data-reveal>
       <p>
         <b>Read before quoting.</b> This measures single-machine batch throughput of specific
         moves — not distributed throughput, connector breadth, or correctness. Sink- and

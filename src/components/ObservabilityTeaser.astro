@@ -5,7 +5,7 @@ const pills = ['Prometheus metrics', 'OTLP tracing spans', '120+ metrics', 'zero
 
 <section class="section obs-teaser">
   <div class="wrap">
-    <div class="section-head">
+    <div class="section-head" data-reveal>
       <span class="eyebrow">Observability</span>
       <h2>Metrics and traces, built in.</h2>
       <p>
@@ -15,12 +15,12 @@ const pills = ['Prometheus metrics', 'OTLP tracing spans', '120+ metrics', 'zero
       </p>
     </div>
 
-    <div class="obs-pills">
+    <div class="obs-pills" data-reveal style="--reveal-delay:.08s">
       {pills.map((p) => <span>{p}</span>)}
     </div>
 
-    <div class="obs-cta">
-      <a class="btn btn--ghost" href={OBS}>Explore observability</a>
+    <div class="obs-cta" data-reveal style="--reveal-delay:.12s">
+      <a class="btn btn--ghost" href={OBS}>Explore observability →</a>
     </div>
   </div>
 </section>

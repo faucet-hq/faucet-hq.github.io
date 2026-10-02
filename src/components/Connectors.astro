@@ -30,7 +30,7 @@ const groups = [
 
 <section class="section conn" id="connectors">
   <div class="wrap">
-    <div class="conn-head">
+    <div class="conn-head" data-reveal>
       <div class="section-head">
         <span class="eyebrow">Connectors</span>
         <h2>43 sources. 35 sinks. One config grammar.</h2>
@@ -40,12 +40,12 @@ const groups = [
           columnar end-to-end where both ends support it.
         </p>
       </div>
-      <a class="btn btn--ghost conn-all" href={CONNECTORS}>Browse the catalog</a>
+      <a class="btn btn--ghost conn-all" href={CONNECTORS}>Browse the catalog →</a>
     </div>
 
     <div class="conn-grid">
       {groups.map((g, i) => (
-        <article class="conn-card" style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+        <article class="conn-card" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
           <h3>{g.name}</h3>
           <ul>
             {g.items.map((it) => <li>{it}</li>)}

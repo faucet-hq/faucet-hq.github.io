@@ -15,7 +15,7 @@ const GOV = `${import.meta.env.BASE_URL}governance`;
 
 <section class="section gov" id="governance">
   <div class="wrap">
-    <div class="section-head">
+    <div class="section-head" data-reveal>
       <span class="eyebrow">Governance in flight</span>
       <h2>The guardrails live in the pipe — not bolted on downstream.</h2>
       <p>
@@ -24,7 +24,7 @@ const GOV = `${import.meta.env.BASE_URL}governance`;
       </p>
     </div>
 
-    <div class="gate" aria-hidden="true">
+    <div class="gate" data-reveal aria-hidden="true">
       <span class="gate-node">source</span>
       <span class="gate-line"><i></i><i></i><i></i></span>
       <span class="gate-core">governance</span>
@@ -34,15 +34,15 @@ const GOV = `${import.meta.env.BASE_URL}governance`;
 
     <div class="gov-grid">
       {guards.map((g, i) => (
-        <article class="gov-item" style={`--reveal-delay:${(i % 3) * 0.05}s`}>
+        <article class="gov-item" data-reveal style={`--reveal-delay:${(i % 3) * 0.05}s`}>
           <h3>{g.name}</h3>
           <p>{g.desc}</p>
         </article>
       ))}
     </div>
 
-    <div class="gov-cta">
-      <a class="btn btn--ghost" href={GOV}>Explore governance</a>
+    <div class="gov-cta" data-reveal>
+      <a class="btn btn--ghost" href={GOV}>Explore governance →</a>
     </div>
   </div>
 </section>
