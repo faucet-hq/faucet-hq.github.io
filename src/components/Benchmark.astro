@@ -15,16 +15,16 @@ const mem = [
 
 <section class="bench section" id="benchmarks">
   <div class="wrap bench-grid">
-    <div class="bench-copy">
+    <div class="bench-copy" data-reveal>
       <span class="eyebrow eyebrow--dark">Benchmarks</span>
-      <h2>The same million rows — 1.4&#8239;seconds, not two&nbsp;minutes.</h2>
+      <h2>The same million rows — <span class="hl">1.4&#8239;seconds</span>, not two&nbsp;minutes.</h2>
       <p>
         A reproducible 1M-row CSV → JSONL move: faucet-stream finishes in ~1.4s;
         Meltano takes ~2¼ minutes for the identical, row-for-row output. That's the
         best case (it maximally exposes Python's per-row overhead) — sink-bound moves
         like Postgres → Postgres narrow the gap, and every caveat is in the open.
       </p>
-      <a class="btn btn--onDark" href={BENCH}>See the full benchmarks</a>
+      <a class="btn btn--onDark" href={BENCH}>See the full benchmarks →</a>
     </div>
 
     <div class="bench-charts" data-reveal style="--reveal-delay:.1s">
@@ -55,7 +55,7 @@ const mem = [
       </div>
 
       <p class="bench-foot">
-        ~96× faster, ~62× less memory, exact row parity, one binary with no daemon
+        ~96× faster · ~62× less memory · exact row parity · single binary, no daemon
       </p>
     </div>
   </div>
@@ -80,6 +80,7 @@ const mem = [
     font-size: clamp(1.9rem, 4vw, 2.9rem);
     margin-top: 1rem;
   }
+  .bench h2 .hl { color: var(--teal); }
   .bench-copy p {
     margin-top: 1rem;
     color: var(--night-soft);

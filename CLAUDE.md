@@ -31,13 +31,6 @@ and forces a later force-push to re-sync. If `dev` ever diverges from `main`
 `git push --force origin dev` after fast-forwarding `dev` to `main`, then resume
 the `dev` → `main` flow.
 
-## Design work
-
-Load the `frontend-design` skill before building a **new page** or reshaping an
-existing one's layout; keep the established brand (teal on slate ink, Geist + Geist Mono)
-and don't re-skin. Small edits inside an existing page don't need it.
-Render and look at the result in both themes before calling it done.
-
 ## Auth
 
 Pushed under the personal GitHub account that owns `faucet-hq`. Make sure that
