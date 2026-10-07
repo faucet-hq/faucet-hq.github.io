@@ -2,6 +2,7 @@
 (function () {
   const ORIGIN = 'https://giscus.app';
   const COUNTS_URL = 'https://raw.githubusercontent.com/faucet-hq/faucet-hq.github.io/data/votes.json';
+  const MIN_SHOWN = 3;
   const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
   // giscus returns from GitHub sign-in to this page with ?giscus=<session>; client.js strips it once loaded.
   const returningFromSignIn = new URLSearchParams(location.search).has('giscus');
@@ -78,7 +79,7 @@
     }
     for (const el of slots) {
       const n = votes[el.dataset.votesTerm] || 0;
-      if (n > 0) {
+      if (n >= MIN_SHOWN) {
         el.textContent = '★ ' + n;
         el.title = n + (n === 1 ? ' vote' : ' votes');
         el.hidden = false;
