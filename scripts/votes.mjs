@@ -6,20 +6,30 @@ const OWNER = 'faucet-hq';
 const NAME = 'faucet-hq.github.io';
 const CATEGORY = 'Announcements';
 
-export function score(node) {
-  const up = Math.max(0, node.upvoteCount || 0);
-  const thumbs = (node.reactionGroups || []).find((g) => g.content === 'THUMBS_UP');
-  return up + Math.max(0, thumbs?.reactors?.totalCount || 0);
+const STAR_REACTIONS = new Set(['THUMBS_UP', 'HEART', 'ROCKET']);
+
+export function voters(reactions) {
+  const logins = new Set();
+  for (const r of reactions || []) {
+    if (STAR_REACTIONS.has(r.content) && r.user?.login) logins.add(r.user.login);
+  }
+  return logins;
 }
 
 export function tally(nodes) {
-  const votes = {};
+  const byTerm = {};
   for (const n of nodes) {
     const term = (n.title || '').trim();
     if (!/^(blog|papers)\/[a-z0-9-]+$/.test(term)) continue;
-    votes[term] = (votes[term] || 0) + score(n);
+    byTerm[term] ??= new Set();
+    for (const login of voters(n.reactions)) byTerm[term].add(login);
   }
-  return Object.fromEntries(Object.entries(votes).filter(([, v]) => v > 0).sort(([a], [b]) => a.localeCompare(b)));
+  return Object.fromEntries(
+    Object.entries(byTerm)
+      .map(([t, s]) => [t, s.size])
+      .filter(([, v]) => v > 0)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  );
 }
 
 async function gql(token, query, variables) {
@@ -32,6 +42,22 @@ async function gql(token, query, variables) {
   const body = await r.json();
   if (body.errors) throw new Error(`GitHub GraphQL: ${JSON.stringify(body.errors)}`);
   return body.data;
+}
+
+async function allReactions(token, node) {
+  let page = node.reactions;
+  const out = [...page.nodes];
+  while (page.pageInfo.hasNextPage) {
+    const d = await gql(
+      token,
+      `query($id:ID!,$a:String){node(id:$id){... on Discussion{
+         reactions(first:100,after:$a){pageInfo{hasNextPage endCursor} nodes{content user{login}}}}}}`,
+      { id: node.id, a: page.pageInfo.endCursor },
+    );
+    page = d.node.reactions;
+    out.push(...page.nodes);
+  }
+  return out;
 }
 
 async function fetchNodes(token) {
@@ -49,11 +75,11 @@ async function fetchNodes(token) {
       token,
       `query($o:String!,$n:String!,$c:ID!,$a:String){repository(owner:$o,name:$n){
          discussions(first:100,categoryId:$c,after:$a){pageInfo{hasNextPage endCursor}
-           nodes{title upvoteCount reactionGroups{content reactors{totalCount}}}}}}`,
+           nodes{id title reactions(first:100){pageInfo{hasNextPage endCursor} nodes{content user{login}}}}}}}`,
       { o: OWNER, n: NAME, c: cat.id, a: after },
     );
     const page = d.repository.discussions;
-    nodes.push(...page.nodes);
+    for (const n of page.nodes) nodes.push({ title: n.title, reactions: await allReactions(token, n) });
     if (!page.pageInfo.hasNextPage) return nodes;
     after = page.pageInfo.endCursor;
   }
