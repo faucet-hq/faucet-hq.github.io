@@ -3,6 +3,8 @@
   const ORIGIN = 'https://giscus.app';
   const COUNTS_URL = 'https://raw.githubusercontent.com/faucet-hq/faucet-hq.github.io/data/votes.json';
   const darkMq = window.matchMedia('(prefers-color-scheme: dark)');
+  // giscus returns from GitHub sign-in to this page with ?giscus=<session>; client.js strips it once loaded.
+  const returningFromSignIn = new URLSearchParams(location.search).has('giscus');
 
   function theme() {
     const t = document.documentElement.getAttribute('data-theme');
@@ -15,6 +17,19 @@
     if (frame && frame.contentWindow) {
       frame.contentWindow.postMessage({ giscus: { setConfig: { theme: theme() } } }, ORIGIN);
     }
+  }
+
+  function returnToBox(host) {
+    const box = host.closest('section') || host;
+    const go = () => box.scrollIntoView({ block: 'start' });
+    go();
+    // The iframe grows once it loads, so settle the scroll again after its first messages.
+    let settles = 0;
+    window.addEventListener('message', function onMsg(e) {
+      if (e.origin !== ORIGIN) return;
+      go();
+      if (++settles >= 3) window.removeEventListener('message', onMsg);
+    });
   }
 
   let mounted = false;
@@ -47,6 +62,7 @@
       if (v != null && v !== '') s.setAttribute('data-' + k, v);
     }
     host.appendChild(s);
+    if (returningFromSignIn) returnToBox(host);
   }
 
   async function counts() {
