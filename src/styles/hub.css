@@ -318,3 +318,4 @@
 .hub-page .topic:hover { color: var(--teal-text); text-decoration: underline; text-underline-offset: 3px; }
 .hub-page .tpl-facts a { color: var(--teal-text); text-decoration: none; }
 .hub-page .tpl-facts a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hub-page .tpl-votes .votes-frame { max-width: 46rem; min-height: 120px; }

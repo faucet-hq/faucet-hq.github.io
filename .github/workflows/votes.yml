@@ -1,0 +1,46 @@
+name: Votes
+
+# Writes blog/paper vote counts to votes.json on the `data` branch, which never triggers a deploy.
+
+on:
+  schedule:
+    - cron: "41 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  discussions: read
+
+concurrency:
+  group: votes
+  cancel-in-progress: false
+
+jobs:
+  votes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test
+        run: node --test site/scripts/votes.test.mjs
+      - name: Collect
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node site/scripts/votes.mjs "$RUNNER_TEMP/votes.json"
+      - name: Publish to the data branch
+        run: |
+          git init -q data && cd data
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin data; then git checkout -q -B data FETCH_HEAD; else git checkout -q --orphan data; fi
+          cp "$RUNNER_TEMP/votes.json" votes.json
+          git add votes.json
+          if git diff --cached --quiet; then echo "no vote changed"; exit 0; fi
+          git config user.name "faucet-site-bot"
+          git config user.email "faucet-site-bot@users.noreply.github.com"
+          git commit -qm "chore: refresh vote counts"
+          git push -q origin data

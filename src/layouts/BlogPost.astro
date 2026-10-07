@@ -3,6 +3,7 @@ import Base from './Base.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import CTA from '../components/CTA.astro';
+import Votes from '../components/Votes.astro';
 
 const base = import.meta.env.BASE_URL;
 export interface Props {
@@ -36,6 +37,7 @@ const { title, dek, description, date, tag, read, tags = [] } = Astro.props;
         )}
       </header>
       <slot />
+      <Votes />
       <p class="cta-inline">
         More on the <a href={`${base}blog`}>blog</a>, or read the
         <a href="https://faucet-hq.github.io/faucet-stream/">documentation</a>.

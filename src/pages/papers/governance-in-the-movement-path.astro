@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import CTA from '../../components/CTA.astro';
+import Votes from '../../components/Votes.astro';
 
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const base = import.meta.env.BASE_URL;
@@ -325,6 +326,7 @@ const compare = [
         </p>
       </section>
 
+      <Votes />
       <p class="cta-inline">
         Explore the guardrails in the <a href={`${base}governance`}>governance overview</a> or the
         <a href={DOCS}>full documentation</a>.
