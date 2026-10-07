@@ -42,6 +42,16 @@ const base = import.meta.env.BASE_URL;
       <div class="wrap tpl-details" id="tpl-details"></div>
     </section>
 
+    <section class="section" id="votes" hidden>
+      <div class="wrap tpl-votes">
+        <div class="section-head">
+          <span class="eyebrow">Votes</span>
+          <h2>Recommend this template</h2>
+          <p>React with 👍 to star it, or leave a comment. You sign in with GitHub inside the box below; this site never sees your account. Star counts on the Hub list refresh hourly.</p>
+        </div>
+        <div class="votes-frame" id="votes-frame"></div>
+      </div>
+    </section>
     <section class="section band" id="more" hidden>
       <div class="wrap" id="tpl-more"></div>
     </section>
@@ -52,6 +62,7 @@ const base = import.meta.env.BASE_URL;
 
 <script is:inline define:vars={{ HUB_BASE: base }}>window.HUB_BASE = HUB_BASE;</script>
 <script is:inline src={`${base}hub-core.js`}></script>
+<script is:inline src={`${base}votes.js`}></script>
 <script is:inline>
   (async () => {
     const H = window.HubCore;
@@ -101,8 +112,10 @@ const base = import.meta.env.BASE_URL;
     // the one unpinned runs use. A single version says nothing the page doesn't.
     const version = t.stable && t.newest && t.stable !== t.newest
       ? `<a class="kind ver" href="#versions" title="Unpinned runs use v${t.stable}; v${t.newest} is newer">v${t.stable} stable · v${t.newest} newest</a>` : '';
+    const voteNo = ((tr.star_url || '').match(/\/discussions\/(\d+)$/) || [])[1];
     const links = [
-      tr.star_url ? `<a class="btn" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer">★ Upvote on GitHub</a>` : '',
+      voteNo ? `<a class="btn" href="#votes">★ Vote</a>`
+        : tr.star_url ? `<a class="btn" href="${esc(tr.star_url)}" target="_blank" rel="noopener noreferrer">★ Upvote on GitHub</a>` : '',
       t.file ? `<a class="btn btn--ghost" href="${H.HUB_REPO}/blob/main/${esc(t.file)}" target="_blank" rel="noopener noreferrer">View the file ↗</a>` : '',
       t.docs ? `<a class="btn btn--ghost" href="${esc(t.docs)}" target="_blank" rel="noopener noreferrer">${kind === 'source' ? 'API docs' : 'Docs'} ↗</a>` : '',
     ].join('');
@@ -115,6 +128,18 @@ const base = import.meta.env.BASE_URL;
       ${facts.length ? `<div class="tpl-facts">${facts.join('')}</div>` : ''}
       ${links ? `<div class="actions">${links}</div>` : ''}`;
     head.setAttribute('aria-busy', 'false');
+
+    if (voteNo && window.FaucetVotes) {
+      $('votes').hidden = false;
+      window.FaucetVotes.mount($('votes-frame'), {
+        repo: 'faucet-hq/template-hub',
+        repoId: 'R_kgDOUnLrSw',
+        category: 'Templates',
+        categoryId: 'DIC_kwDOUnLrS84DGR25',
+        mapping: 'number',
+        term: voteNo,
+      });
+    }
 
     // ── run it ──────────────────────────────────────────────────────────
     $('run').hidden = false;

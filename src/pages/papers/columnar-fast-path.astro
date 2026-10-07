@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import CTA from '../../components/CTA.astro';
+import Votes from '../../components/Votes.astro';
 
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const base = import.meta.env.BASE_URL;
@@ -286,6 +287,7 @@ const tax = [
         </p>
       </section>
 
+      <Votes />
       <p class="cta-inline">
         See the throughput numbers in the <a href={`${base}benchmarks`}>benchmarks</a>, or read the
         <a href={DOCS}>full documentation</a>.

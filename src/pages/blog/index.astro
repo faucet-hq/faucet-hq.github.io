@@ -155,6 +155,7 @@ const allTags = [...counts.keys()].sort(
         <a class="post" href={p.href} data-tags={p.tags.join('|')}>
           <div class="post-top">
             <span class="pdate">{p.date}</span>
+            <span class="pvotes" data-votes-term={p.href.slice(base.length)} hidden></span>
           </div>
           <h2>{p.title}</h2>
           <p>{p.blurb}</p>
@@ -173,6 +174,7 @@ const allTags = [...counts.keys()].sort(
   </main>
   <Footer />
 </Base>
+<script is:inline src={`${base}votes.js`} defer></script>
 
 <script is:inline>
   (function () {
@@ -261,7 +263,8 @@ const allTags = [...counts.keys()].sort(
   .post { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 1.6rem; display: flex; flex-direction: column; transition: border-color 0.18s ease, box-shadow 0.2s ease, transform 0.18s ease; }
   .post[hidden] { display: none; }
   .post:hover { border-color: color-mix(in srgb, var(--teal) 40%, var(--line)); box-shadow: var(--shadow-md); transform: translateY(-2px); }
-  .post-top { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 0.5rem; }
+  .post-top { display: flex; justify-content: flex-end; align-items: center; gap: 0.7rem; margin-bottom: 0.5rem; }
+  .post-top .pvotes { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
   .pdate { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-faint); }
   .post h2 { font-size: 1.25rem; line-height: 1.25; }
   .post p { margin-top: 0.5rem; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.6; flex: 1; }

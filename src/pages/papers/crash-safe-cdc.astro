@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import CTA from '../../components/CTA.astro';
+import Votes from '../../components/Votes.astro';
 
 const DOCS = 'https://faucet-hq.github.io/faucet-stream/';
 const base = import.meta.env.BASE_URL;
@@ -272,6 +273,7 @@ const sources = [
         </p>
       </section>
 
+      <Votes />
       <p class="cta-inline">
         See the CDC connectors in the <a href={DOCS}>documentation</a>, or read the companion paper on
         <a href={`${base}papers/governance-in-the-movement-path`}>governance in the movement path</a>.

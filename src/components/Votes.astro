@@ -1,0 +1,30 @@
+---
+// One GitHub Discussion per page, keyed by its base-free path so /dev/ staging and production share votes.
+const base = import.meta.env.BASE_URL;
+const prefix = base.replace(/\/+$/, '');
+const path = Astro.url.pathname.replace(/\/+$/, '');
+const term = (path.startsWith(prefix) ? path.slice(prefix.length) : path).replace(/^\/+/, '');
+---
+
+<section class="votes" id="votes" aria-labelledby="votes-title">
+  <h2 id="votes-title">Was this useful?</h2>
+  <p class="votes-lede">React with 👍 to vote, or leave a comment. You sign in with GitHub inside the box below; this site never sees your account.</p>
+  <div
+    class="votes-frame"
+    data-votes-mount
+    data-repo="faucet-hq/faucet-hq.github.io"
+    data-repo-id="R_kgDOUAly2A"
+    data-category="Announcements"
+    data-category-id="DIC_kwDOUAly2M4DHPlH"
+    data-mapping="specific"
+    data-term={term}
+  ></div>
+</section>
+<script is:inline src={`${base}votes.js`} defer></script>
+
+<style is:global>
+  .votes { margin-top: 2.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+  .votes h2 { font-size: 1.25rem; margin: 0; }
+  .votes .votes-lede { margin-top: 0.5rem; font-size: 0.92rem; line-height: 1.6; color: var(--ink-faint); }
+  .votes .votes-frame { margin-top: 1rem; min-height: 120px; }
+</style>
