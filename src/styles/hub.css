@@ -183,13 +183,14 @@
 .hub-page .fit-filter { height: 2.1rem; padding: 0 0.85rem; font-size: 0.82rem; }
 .hub-page .fit-more { font-size: 0.82rem; }
 
-/* One badge style: same face, size, case and height for official, @owner and kind. */
-.hub-page .official, .hub-page .owner, .hub-page .kind {
+/* One badge style: same face, size, case and height for official, @owner, kind and tested. */
+.hub-page .official, .hub-page .owner, .hub-page .kind, .hub-page .tested {
   font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0; text-transform: none;
   line-height: 1.5; padding: 0.05rem 0.55rem; border: 1px solid var(--line); border-radius: 999px; white-space: nowrap;
 }
 .hub-page .official { border-color: transparent; }
 .hub-page .kind { color: var(--ink-faint); }
+.hub-page .tested { color: var(--teal-text); border-color: color-mix(in srgb, var(--teal-text) 45%, transparent); }
 .hub-page span.official:hover { text-decoration: none; }
 .hub-page a.kind { text-decoration: none; transition: color .15s, border-color .15s; }
 .hub-page a.kind:hover { color: var(--teal-text); border-color: var(--teal-text); }

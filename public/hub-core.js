@@ -67,6 +67,16 @@
       ? `<a class="owner" href="https://github.com/${esc(t.owner)}" target="_blank" rel="noopener noreferrer" title="published by ${esc(t.owner)}">@${esc(t.owner)}</a>`
       : `<span class="owner" title="unscoped template">unscoped</span>`);
 
+  // Shown only for a template that declares tests (index.json `has_tests`).
+  const testsTag = (t) => {
+    if (!t.has_tests) return '';
+    const n = t.test_cases || 0;
+    const title = n
+      ? `declares ${plural(n, 'test case')} in its tests: block`
+      : 'declares a generated or shared test suite in its tests: block';
+    return `<span class="tested" title="${esc(title)}">tested${n ? ` · ${n}` : ''}</span>`;
+  };
+
   // A catalog card: just enough to recognise and compare. Everything else is on the template's page.
   function card(kind, t) {
     const tr = trustOf(t);
@@ -76,7 +86,7 @@
     ].filter(Boolean).join('<span aria-hidden="true">·</span>');
     return `<a class="card card--link" href="${detailUrl(kind, t)}" data-owner="${esc(ownerKey(t))}" data-type="${esc(typeOf(kind, t))}" data-search="${esc([idOf(t), t.owner, t.description, typeOf(kind, t), ...(t.tags || [])].join(' ').toLowerCase())}">
       <h3 class="mono">${titleOf(t)}</h3>
-      <div class="badges">${ownerTag(t)}<span class="kind">${esc(typeOf(kind, t))}</span></div>
+      <div class="badges">${ownerTag(t)}<span class="kind">${esc(typeOf(kind, t))}</span>${testsTag(t)}</div>
       ${t.description ? `<p class="desc">${esc(t.description)}</p>` : ''}
       ${foot ? `<div class="card-foot">${foot}</div>` : ''}
     </a>`;
@@ -188,6 +198,6 @@
 
   window.HubCore = {
     HUB_REPO, OFFICIAL_OWNER, BASE, load, esc, plural, natural, idOf, isOfficial, trustOf, starsOf, SORTS,
-    detailUrl, titleOf, typeOf, ownerKey, ownerTag, ownerBadge, card, pairing, fitOf, FIT_RANK,
+    detailUrl, titleOf, typeOf, ownerKey, ownerTag, ownerBadge, testsTag, card, pairing, fitOf, FIT_RANK,
   };
 })();
