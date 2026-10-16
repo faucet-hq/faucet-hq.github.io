@@ -4,12 +4,12 @@ const BENCH = `${import.meta.env.BASE_URL}benchmarks`;
 // throughput (higher = better) and visibly *smaller* for memory (lower = better).
 // A tiny floor keeps the losing/winning sliver visible.
 const rows = [
-  { tool: 'faucet-stream', val: '712,000', unit: 'rows/s', pct: 100, self: true },
-  { tool: 'Meltano (Singer)', val: '7,400', unit: 'rows/s', pct: 4 },
+  { tool: 'faucet-stream', val: '701,000', unit: 'rows/s', pct: 100, self: true },
+  { tool: 'Meltano (Singer)', val: '8,700', unit: 'rows/s', pct: 4 },
 ];
 const mem = [
-  { tool: 'faucet-stream', val: '11.8', unit: 'MiB', pct: 3, self: true },
-  { tool: 'Meltano (Singer)', val: '724', unit: 'MiB', pct: 100 },
+  { tool: 'faucet-stream', val: '20', unit: 'MiB', pct: 3, self: true },
+  { tool: 'Meltano (Singer)', val: '819', unit: 'MiB', pct: 100 },
 ];
 ---
 
@@ -20,7 +20,7 @@ const mem = [
       <h2>The same million rows — <span class="hl">1.4&#8239;seconds</span>, not two&nbsp;minutes.</h2>
       <p>
         A reproducible 1M-row CSV → JSONL move: faucet-stream finishes in ~1.4s;
-        Meltano takes ~2¼ minutes for the identical, row-for-row output. That's the
+        Meltano takes nearly two minutes to deliver the same rows. That's the
         best case (it maximally exposes Python's per-row overhead) — sink-bound moves
         like Postgres → Postgres narrow the gap, and every caveat is in the open.
       </p>
@@ -55,7 +55,7 @@ const mem = [
       </div>
 
       <p class="bench-foot">
-        ~96× faster · ~62× less memory · exact row parity · single binary, no daemon
+        ~80× faster · ~40× less memory · exact row parity · single binary, no daemon
       </p>
     </div>
   </div>
